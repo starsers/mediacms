@@ -23,6 +23,9 @@ body {
   min-height: 100%;
   color: var(--body-text-color);
   background-color: var(--body-bg-color);
+  background-image: var(--body-bg-image, none);
+  background-attachment: fixed;
+  background-size: cover;
 
   transition-property: overflow;
   transition-duration: 0.2s;

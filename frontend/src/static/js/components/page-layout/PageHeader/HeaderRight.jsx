@@ -96,7 +96,7 @@ function UploadMediaButton({ user, links }) {
     <div>
       <PopupTrigger contentRef={popupContentRef}>
         <CircleIconButton title={translateString('Upload media')}>
-          <MaterialIcon type="video_call" />
+          <MaterialIcon type="edit" />
           <span className="hidden-txt">{translateString('Upload media')}</span>
         </CircleIconButton>
       </PopupTrigger>

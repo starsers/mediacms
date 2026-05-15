@@ -3,8 +3,16 @@
 
 .page-header {
   background-color: var(--header-bg-color);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px rgba(31, 107, 255, 0.08);
 
   .circle-icon-button {
+    --txt-color: var(--header-circle-button-color);
+    --bg-color: transparent;
+    --bg-focus-color: rgba(31, 107, 255, 0.1);
+    --bg-active-color: rgba(31, 107, 255, 0.16);
+
     color: var(--header-circle-button-color);
   }
 

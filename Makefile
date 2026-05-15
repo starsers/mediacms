@@ -1,3 +1,9 @@
+ifeq ($(OS),Windows_NT)
+COPY_STATIC = powershell -NoProfile -Command "Copy-Item -Path 'frontend/dist/static/*' -Destination 'static/' -Recurse -Force"
+else
+COPY_STATIC = cp -r frontend/dist/static/* static/
+endif
+
 .PHONY: admin-shell build-frontend
 
 admin-shell:
@@ -11,7 +17,7 @@ admin-shell:
 
 build-frontend:
 	docker compose -f docker-compose-dev.yaml exec frontend npm run dist
-	cp -r frontend/dist/static/* static/
+	$(COPY_STATIC)
 	docker compose -f docker-compose-dev.yaml restart web
 
 test:

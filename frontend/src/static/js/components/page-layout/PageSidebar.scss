@@ -1,5 +1,7 @@
 .page-sidebar {
   background-color: var(--sidebar-bg-color);
+  background-image: var(--sidebar-bg-image, none);
+  box-shadow: 12px 0 32px rgba(15, 76, 188, 0.18);
 
   .nav-menu + .nav-menu {
     border-top-color: var(--sidebar-nav-border-color);
@@ -8,15 +10,64 @@
   .nav-menu {
     color: var(--sidebar-nav-item-text-color);
 
+    li {
+      > a,
+      > button {
+        width: calc(100% - 24px);
+        margin: 2px 12px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease,
+          transform 0.18s ease;
+      }
+
+      > a:hover,
+      > a:focus,
+      > button:hover,
+      > button:focus {
+        color: #f7fbff;
+        background: rgba(255, 255, 255, 0.14);
+      }
+
+      &.link-item.active {
+        background-color: transparent;
+
+        > a {
+          color: #f7fbff;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.14));
+          border-color: rgba(255, 255, 255, 0.28);
+          box-shadow: 0 10px 24px rgba(15, 76, 188, 0.24);
+          transform: translateX(4px);
+        }
+      }
+    }
+
     .menu-item-icon {
       color: var(--sidebar-nav-item-icon-color);
       max-width: 24px;
       overflow: hidden;
+      transition: color 0.18s ease, transform 0.18s ease;
+
+      .material-icons {
+        font-size: 22px;
+      }
+    }
+
+    li > a:hover .menu-item-icon,
+    li > a:focus .menu-item-icon,
+    li > button:hover .menu-item-icon,
+    li > button:focus .menu-item-icon,
+    li.link-item.active .menu-item-icon {
+      color: #f7fbff;
+    }
+
+    li.link-item.active .menu-item-icon {
+      transform: scale(1.08);
     }
   }
 
   .page-sidebar-bottom {
-    background-color: var(--sidebar-bg-color);
+    background-color: transparent;
 
     a {
       color: var(--sidebar-bottom-link-color);
@@ -242,9 +293,9 @@
   input[type='checkbox']:after,
   input[type='checkbox']:checked:before,
   input[type='checkbox']:checked:after {
-    transition: ease 0.2s;
     -webkit-transition: ease 0.2s;
     -moz-transition: ease 0.2s;
     -o-transition: ease 0.2s;
+    transition: ease 0.2s;
   }
 }

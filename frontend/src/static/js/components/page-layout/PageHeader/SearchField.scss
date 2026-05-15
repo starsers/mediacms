@@ -16,8 +16,8 @@
 
     &:hover,
     &:focus {
-      background-color: var(--search-field-submit-bg-color);
-      border-color: var(--search-field-submit-border-color);
+      background-color: var(--search-field-submit-hover-bg-color);
+      border-color: var(--search-field-submit-hover-border-color);
     }
   }
 }
@@ -76,10 +76,10 @@
 
   input[type='text'] {
     width: 100%;
-    padding: 0 10px;
+    padding: 0 12px;
     font-size: 16.52px;
     border-width: 1px;
-    border-radius: 2px 0 0 2px;
+    border-radius: 12px 0 0 12px;
   }
 
   button[type='submit'] {
@@ -90,7 +90,7 @@
     width: 64px;
     padding: 0;
     border-width: 1px 1px 1px 0;
-    border-radius: 0 2px 2px 0;
+    border-radius: 0 12px 12px 0;
 
     .material-icons {
       opacity: 0.6;

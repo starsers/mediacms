@@ -61,7 +61,7 @@ export function SidebarNavigationMenu() {
     ) {
       items.push({
         link: links.recommended,
-        icon: 'done_outline',
+        icon: 'assessment',
         text: translateString("Recommended"),
         className: 'nav-item-recommended',
       });
@@ -70,7 +70,7 @@ export function SidebarNavigationMenu() {
     if (PageStore.get('config-enabled').pages.latest && PageStore.get('config-enabled').pages.latest.enabled) {
       items.push({
         link: links.latest,
-        icon: 'new_releases',
+        icon: 'update',
         text: translateString("Latest"),
         className: 'nav-item-latest',
       });
@@ -83,7 +83,7 @@ export function SidebarNavigationMenu() {
     ) {
       items.push({
         link: links.archive.tags,
-        icon: 'local_offer',
+        icon: 'label',
         text: translateString("Tags"),
         className: 'nav-item-tags',
       });
@@ -96,7 +96,7 @@ export function SidebarNavigationMenu() {
     ) {
       items.push({
         link: links.archive.categories,
-        icon: 'list_alt',
+        icon: 'dashboard',
         text: translateString("Categories"),
         className: 'nav-item-categories',
       });
@@ -109,7 +109,7 @@ export function SidebarNavigationMenu() {
     ) {
       items.push({
         link: links.members,
-        icon: 'people',
+        icon: 'person',
         text: translateString("Members"),
         className: 'nav-item-members',
       });
@@ -136,7 +136,7 @@ export function SidebarNavigationMenu() {
       if (userCan.addMedia) {
         items.push({
           link: links.user.addMedia,
-          icon: 'video_call',
+          icon: 'edit',
           text: translateString("Upload"),
           className: 'nav-item-upload-media',
         });
@@ -144,7 +144,7 @@ export function SidebarNavigationMenu() {
         if (userPages.media) {
           items.push({
             link: userPages.media,
-            icon: 'video_library',
+            icon: 'folder',
             text: translateString("My media"),
             className: 'nav-item-my-media',
           });
@@ -197,7 +197,7 @@ export function SidebarNavigationMenu() {
 
     items.push({
       link: '/about',
-      icon: 'contact_support',
+      icon: 'info',
       text: translateString("About"),
       className: 'nav-item-about',
     });
@@ -211,7 +211,7 @@ export function SidebarNavigationMenu() {
 
     items.push({
       link: '/contact',
-      icon: 'alternate_email',
+      icon: 'mail',
       text: translateString("Contact"),
       className: 'nav-item-contact',
     });
@@ -232,7 +232,7 @@ export function SidebarNavigationMenu() {
     if (userCan.manageMedia) {
       items.push({
         link: links.manage.media,
-        icon: 'miscellaneous_services',
+        icon: 'folder',
         text: translateString("Manage media"),
         className: 'nav-item-manage-media',
       });
@@ -241,7 +241,7 @@ export function SidebarNavigationMenu() {
     if (userCan.manageUsers) {
       items.push({
         link: links.manage.users,
-        icon: 'miscellaneous_services',
+        icon: 'person',
         text: translateString("Manage users"),
         className: 'nav-item-manage-users',
       });
@@ -250,7 +250,7 @@ export function SidebarNavigationMenu() {
     if (userCan.manageComments) {
       items.push({
         link: links.manage.comments,
-        icon: 'miscellaneous_services',
+        icon: 'forum',
         text: translateString("Manage comments"),
         className: 'nav-item-manage-comments',
       });
