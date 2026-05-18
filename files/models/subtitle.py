@@ -104,6 +104,24 @@ class TranscriptionRequest(models.Model):
         return f"Transcription request for {self.media.title} - {self.status}"
 
 
+class VideoCaptionerRequest(models.Model):
+    media = models.ForeignKey("Media", on_delete=models.CASCADE, related_name="videocaptioner_requests")
+    add_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=MEDIA_ENCODING_STATUS, default="pending", db_index=True)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    asr = models.CharField(max_length=50, default="bijian")
+    source_language = models.CharField(max_length=20, default="auto")
+    logs = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "VideoCaptioner Request"
+        verbose_name_plural = "VideoCaptioner Requests"
+        ordering = ["-add_date"]
+
+    def __str__(self):
+        return f"VideoCaptioner request for {self.media.title} - {self.status}"
+
+
 @receiver(post_save, sender=Subtitle)
 def subtitle_save(sender, instance, created, **kwargs):
     from .. import tasks

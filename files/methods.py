@@ -446,6 +446,17 @@ def can_transcribe_video(user):
     return False
 
 
+def can_use_videocaptioner(user):
+    if not getattr(settings, 'USE_VIDEOCAPTIONER_TRANSCRIBE', False):
+        return False
+
+    if is_mediacms_editor(user):
+        return True
+    if getattr(settings, 'USER_CAN_TRANSCRIBE_VIDEO', False):
+        return True
+    return False
+
+
 def kill_ffmpeg_process(filepath):
     """Kill ffmpeg process that is processing a specific file
 

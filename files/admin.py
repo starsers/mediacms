@@ -19,6 +19,7 @@ from .models import (
     Tag,
     TinyMCEMedia,
     TranscriptionRequest,
+    VideoCaptionerRequest,
     VideoTrimRequest,
 )
 
@@ -251,6 +252,14 @@ class TranscriptionRequestAdmin(admin.ModelAdmin):
     ordering = ("-add_date",)
 
 
+class VideoCaptionerRequestAdmin(admin.ModelAdmin):
+    list_display = ["media", "add_date", "status", "language", "asr", "source_language"]
+    list_filter = ["status", "language", "asr", "add_date"]
+    search_fields = ["media__title"]
+    readonly_fields = ("add_date", "logs")
+    ordering = ("-add_date",)
+
+
 class PageAdminForm(forms.ModelForm):
     description = forms.CharField(widget=TinyMCE())
 
@@ -289,5 +298,6 @@ admin.site.register(Subtitle, SubtitleAdmin)
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(VideoTrimRequest, VideoTrimRequestAdmin)
 admin.site.register(TranscriptionRequest, TranscriptionRequestAdmin)
+admin.site.register(VideoCaptionerRequest, VideoCaptionerRequestAdmin)
 
 Media._meta.app_config.verbose_name = "Media"

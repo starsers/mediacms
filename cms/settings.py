@@ -595,6 +595,11 @@ USER_CAN_TRANSCRIBE_VIDEO = True
 # Whisper transcribe options - https://github.com/openai/whisper
 WHISPER_MODEL = "base"
 
+USE_VIDEOCAPTIONER_TRANSCRIBE = False
+VIDEOCAPTIONER_COMMAND = "videocaptioner"
+VIDEOCAPTIONER_ASR = "bijian"
+VIDEOCAPTIONER_LANGUAGE = "auto"
+
 # show a custom text in the sidebar footer, otherwise the default will be shown if this is empty
 SIDEBAR_FOOTER_TEXT = ""
 

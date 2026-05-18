@@ -2,16 +2,23 @@ version: "3"
 
 services:
   migrations:
-    image: mediacms/mediacms:full
+    build:
+      target: full
+    image: mediacms/mediacms-dev:full
+    pull_policy: never
+
   web:
-    image: mediacms/mediacms:full
+    image: mediacms/mediacms-dev:full
+    pull_policy: never
     environment:
       USE_VIDEOCAPTIONER_TRANSCRIBE: 'True'
       VIDEOCAPTIONER_COMMAND: 'videocaptioner'
       VIDEOCAPTIONER_ASR: 'bijian'
       VIDEOCAPTIONER_LANGUAGE: 'auto'
+
   celery_worker:
-    image: mediacms/mediacms:full
+    image: mediacms/mediacms-dev:full
+    pull_policy: never
     environment:
       USE_VIDEOCAPTIONER_TRANSCRIBE: 'True'
       VIDEOCAPTIONER_COMMAND: 'videocaptioner'

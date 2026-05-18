@@ -23,20 +23,22 @@ from ..forms import (
     MediaPublishForm,
     ReplaceMediaForm,
     SubtitleForm,
+    VideoCaptionerRequestForm,
     WhisperSubtitlesForm,
 )
 from ..frontend_translations import translate_string
 from ..helpers import get_alphanumeric_and_spaces
 from ..methods import (
     can_transcribe_video,
+    can_use_videocaptioner,
     create_video_trim_request,
     get_user_or_session,
     handle_video_chapters,
     is_media_allowed_type,
     is_mediacms_editor,
 )
-from ..models import Category, Media, Page, Playlist, Subtitle, Tag, VideoTrimRequest
-from ..tasks import save_user_action, video_trim_task
+from ..models import Category, Media, Page, Playlist, Subtitle, Tag, VideoCaptionerRequest, VideoTrimRequest
+from ..tasks import save_user_action, video_captioner_transcribe, video_trim_task
 
 
 def get_page(request, slug):
@@ -104,7 +106,9 @@ def add_subtitle(request):
     # Initialize variables
     form = None
     whisper_form = None
+    videocaptioner_form = None
     show_whisper_form = can_transcribe_video(request.user)
+    show_videocaptioner_form = can_use_videocaptioner(request.user) and media.media_type in ["video", "audio"]
 
     if request.method == "POST":
         if 'submit' in request.POST:
@@ -127,6 +131,18 @@ def add_subtitle(request):
                 messages.add_message(request, messages.INFO, "Request for transcription was sent")
                 return HttpResponseRedirect(media.get_absolute_url())
 
+        elif 'submit_videocaptioner' in request.POST and show_videocaptioner_form:
+            running_request = VideoCaptionerRequest.objects.filter(media=media, status__in=["pending", "running"]).first()
+            if running_request:
+                messages.add_message(request, messages.INFO, "VideoCaptioner subtitle generation is already running")
+                return HttpResponseRedirect(media.get_absolute_url())
+            videocaptioner_form = VideoCaptionerRequestForm(media, request.POST, prefix="videocaptioner_form")
+            if videocaptioner_form.is_valid():
+                videocaptioner_request = videocaptioner_form.save()
+                video_captioner_transcribe.apply_async(args=[videocaptioner_request.id], countdown=10)
+                messages.add_message(request, messages.INFO, "VideoCaptioner subtitle generation was queued")
+                return HttpResponseRedirect(media.get_absolute_url())
+
     # GET request or form invalid
     if form is None:
         form = SubtitleForm(media_item=media, prefix="form")
@@ -134,8 +150,19 @@ def add_subtitle(request):
     if show_whisper_form and whisper_form is None:
         whisper_form = WhisperSubtitlesForm(request.user, instance=media, prefix="whisper_form")
 
+    if show_videocaptioner_form and videocaptioner_form is None:
+        videocaptioner_form = VideoCaptionerRequestForm(media, prefix="videocaptioner_form")
+
     subtitles = media.subtitles.all()
-    context = {"media_object": media, "form": form, "subtitles": subtitles, "whisper_form": whisper_form}
+    videocaptioner_requests = media.videocaptioner_requests.all()[:5]
+    context = {
+        "media_object": media,
+        "form": form,
+        "subtitles": subtitles,
+        "whisper_form": whisper_form,
+        "videocaptioner_form": videocaptioner_form,
+        "videocaptioner_requests": videocaptioner_requests,
+    }
     return render(request, "cms/add_subtitle.html", context)
 
 

@@ -90,6 +90,20 @@ function EditMediaButton(props) {
     );
 }
 
+function EditCaptionsButton(props) {
+    let link = props.link;
+
+    if (link && inEmbeddedApp()) {
+        link += '&mode=lms_embed_mode';
+    }
+
+    return (
+        <a href={link} rel="nofollow" title={translateString('Captions')} className="edit-media-icon">
+            <i className="material-icons">closed_caption</i>
+        </a>
+    );
+}
+
 export default function ViewerInfoContent(props) {
     const { userCan } = useUser();
 
@@ -247,6 +261,10 @@ export default function ViewerInfoContent(props) {
                         <div className="media-author-actions">
                             {userCan.editMedia ? (
                                 <EditMediaButton link={MediaPageStore.get('media-data').edit_url} />
+                            ) : null}
+
+                            {userCan.editMedia && ['video', 'audio'].includes(MediaPageStore.get('media-type')) ? (
+                                <EditCaptionsButton link={MediaPageStore.get('media-edit-subtitle-url')} />
                             ) : null}
 
                             {userCan.deleteMedia ? (

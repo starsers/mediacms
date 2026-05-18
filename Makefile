@@ -4,7 +4,10 @@ else
 COPY_STATIC = cp -r frontend/dist/static/* static/
 endif
 
-.PHONY: admin-shell build-frontend
+COMPOSE_DEV = docker compose -f docker-compose-dev.yaml
+COMPOSE_DEV_FULL = docker compose -f docker-compose-dev.yaml -f docker-compose-dev.full.yaml
+
+.PHONY: admin-shell build-frontend dev-full-build dev-full-up dev-full-down dev-full-logs
 
 admin-shell:
 	@container_id=$$(docker compose ps -q web); \
@@ -16,10 +19,22 @@ admin-shell:
 	fi
 
 build-frontend:
-	docker compose -f docker-compose-dev.yaml exec frontend npm run dist
+	$(COMPOSE_DEV) exec frontend npm run dist
 	$(COPY_STATIC)
-	docker compose -f docker-compose-dev.yaml restart web
+	$(COMPOSE_DEV) restart web
+
+dev-full-build:
+	$(COMPOSE_DEV_FULL) build migrations
+
+dev-full-up: dev-full-build
+	$(COMPOSE_DEV_FULL) up -d
+
+dev-full-down:
+	$(COMPOSE_DEV_FULL) down
+
+dev-full-logs:
+	$(COMPOSE_DEV_FULL) logs -f web celery_worker
 
 test:
-	docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
+	$(COMPOSE_DEV) exec --env TESTING=True -T web pytest
 

@@ -7,7 +7,7 @@ from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle
+from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle, VideoCaptionerRequest
 from .widgets import CategoryModalWidget
 
 _PUBLISH_STATE_HTML = (Path(__file__).parent.parent / 'templates/cms/partials/media_publish_state.html').read_text()
@@ -351,6 +351,39 @@ class EditSubtitleForm(forms.Form):
     def __init__(self, subtitle, *args, **kwargs):
         super(EditSubtitleForm, self).__init__(*args, **kwargs)
         self.fields["subtitle"].initial = subtitle.subtitle_file.read().decode("utf-8")
+
+
+class VideoCaptionerRequestForm(forms.ModelForm):
+    class Meta:
+        model = VideoCaptionerRequest
+        fields = ("language",)
+        labels = {
+            "language": "Subtitle language",
+        }
+
+    def __init__(self, media, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.media = media
+        self.helper = FormHelper()
+        self.helper.form_tag = True
+        self.helper.form_class = 'post-form'
+        self.helper.form_method = 'post'
+        self.helper.form_enctype = "multipart/form-data"
+        self.helper.form_show_errors = False
+        self.helper.layout = Layout(
+            HTML('<p>Use VideoCaptioner to generate a WebVTT subtitle track from this media file.</p>'),
+            CustomField('language'),
+            FormActions(Submit('submit_videocaptioner', 'Generate with VideoCaptioner', css_class='primaryAction')),
+        )
+
+    def save(self, commit=True):
+        request = super().save(commit=False)
+        request.media = self.media
+        request.asr = getattr(settings, 'VIDEOCAPTIONER_ASR', 'bijian')
+        request.source_language = getattr(settings, 'VIDEOCAPTIONER_LANGUAGE', 'auto')
+        if commit:
+            request.save()
+        return request
 
 
 class ContactForm(forms.Form):
