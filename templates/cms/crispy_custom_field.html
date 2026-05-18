@@ -1,4 +1,8 @@
 {% load crispy_forms_field %}
+{% load custom_filters %}
+{% load i18n %}
+
+{% get_current_language as LANGUAGE_CODE %}
 
 
 <style>
@@ -86,9 +90,9 @@
         <div class="controls">
             <label for="{{ field.id_for_label }}" class="control-label" style="font-weight: normal;">
                 {% crispy_field field %}
-                <span style="margin-left: 5px;">{{ field.label }}</span>
+                <span style="margin-left: 5px;">{{ field.label|custom_translate:LANGUAGE_CODE }}</span>
                 {% if field.help_text %}
-                    <span class="help-text-inline">- {{ field.help_text|safe }}</span>
+                    <span class="help-text-inline">- {{ field.help_text|custom_translate:LANGUAGE_CODE|safe }}</span>
                 {% endif %}
             </label>
             {% if field.errors %}
@@ -103,9 +107,9 @@
         <div class="control-label-container">
             {% if field.label %}
                 <label for="{{ field.id_for_label }}" class="control-label">
-                    {{ field.label }}
+                    {{ field.label|custom_translate:LANGUAGE_CODE }}
                     {% if field.help_text %}
-                        <span class="help-text-inline">- {{ field.help_text|safe }}</span>
+                        <span class="help-text-inline">- {{ field.help_text|custom_translate:LANGUAGE_CODE|safe }}</span>
                     {% endif %}
                 </label>
             {% endif %}
