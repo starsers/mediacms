@@ -73,4 +73,22 @@
 	{% endif %}
 
 
+	{% if videocaptioner_form %}
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				var languageSelect = document.getElementById('id_videocaptioner_form-language_code');
+				if (!languageSelect) {
+					return;
+				}
+				var titleInput = document.getElementById(languageSelect.dataset.titleInput);
+				var titles = JSON.parse(languageSelect.dataset.languageTitles || '{}');
+				languageSelect.addEventListener('change', function () {
+					if (titleInput && titles[languageSelect.value]) {
+						titleInput.value = titles[languageSelect.value];
+					}
+				});
+			});
+		</script>
+	{% endif %}
+
 {% endblock innercontent %}

@@ -599,6 +599,8 @@ USE_VIDEOCAPTIONER_TRANSCRIBE = False
 VIDEOCAPTIONER_COMMAND = "videocaptioner"
 VIDEOCAPTIONER_ASR = "bijian"
 VIDEOCAPTIONER_LANGUAGE = "auto"
+VIDEOCAPTIONER_SUBTITLE_LANGUAGE_CODE = "zh-Hans"
+VIDEOCAPTIONER_SUBTITLE_LANGUAGE_TITLE = "简体中文"
 
 # show a custom text in the sidebar footer, otherwise the default will be shown if this is empty
 SIDEBAR_FOOTER_TEXT = ""
