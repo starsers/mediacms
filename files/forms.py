@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 from crispy_forms.bootstrap import FormActions
@@ -8,7 +7,7 @@ from django import forms
 from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import MEDIA_STATES, Category, Language, Media, MediaPermission, Subtitle, VideoCaptionerRequest
+from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle
 from .widgets import CategoryModalWidget
 
 _PUBLISH_STATE_HTML = (Path(__file__).parent.parent / 'templates/cms/partials/media_publish_state.html').read_text()
@@ -36,6 +35,7 @@ class MediaMetadataForm(forms.ModelForm):
             "description",
             "enable_comments",
             "thumbnail_time",
+            "is_important",
         )
 
         widgets = {
@@ -89,6 +89,8 @@ class MediaMetadataForm(forms.ModelForm):
 
         if self.instance.media_type == "video":
             self.helper.layout.append(CustomField('thumbnail_time'))
+        if is_mediacms_editor(self.user):
+            self.helper.layout.append(CustomField('is_important'))
         if getattr(settings, 'ALLOW_CUSTOM_MEDIA_URLS', False):
             self.helper.layout.insert(0, CustomField('friendly_token'))
 
@@ -352,70 +354,6 @@ class EditSubtitleForm(forms.Form):
     def __init__(self, subtitle, *args, **kwargs):
         super(EditSubtitleForm, self).__init__(*args, **kwargs)
         self.fields["subtitle"].initial = subtitle.subtitle_file.read().decode("utf-8")
-
-
-class VideoCaptionerRequestForm(forms.ModelForm):
-    LANGUAGE_CHOICES = (
-        ("zh-Hans", "简体中文"),
-        ("zh-Hant", "繁體中文"),
-        ("en", "English"),
-        ("ja", "日本語"),
-        ("ko", "한국어"),
-        ("fr", "Français"),
-        ("de", "Deutsch"),
-        ("es", "Español"),
-        ("it", "Italiano"),
-        ("pt", "Português"),
-        ("ru", "Русский"),
-        ("ar", "العربية"),
-        ("hi", "हिन्दी"),
-        ("id", "Bahasa Indonesia"),
-        ("th", "ไทย"),
-        ("vi", "Tiếng Việt"),
-    )
-    language_code = forms.ChoiceField(label="Subtitle language", choices=LANGUAGE_CHOICES)
-    language_title = forms.CharField(label="Subtitle title", max_length=100)
-
-    class Meta:
-        model = VideoCaptionerRequest
-        fields = ()
-
-    def __init__(self, media, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.media_item = media
-        default_code = getattr(settings, 'VIDEOCAPTIONER_SUBTITLE_LANGUAGE_CODE', 'zh-Hans')
-        default_title = getattr(settings, 'VIDEOCAPTIONER_SUBTITLE_LANGUAGE_TITLE', '简体中文')
-        language_titles = dict(self.LANGUAGE_CHOICES)
-        self.fields["language_code"].initial = default_code
-        self.fields["language_title"].initial = language_titles.get(default_code, default_title)
-        self.fields["language_code"].widget.attrs["data-language-titles"] = json.dumps(language_titles, ensure_ascii=False)
-        self.fields["language_code"].widget.attrs["data-title-input"] = "id_videocaptioner_form-language_title"
-        self.helper = FormHelper()
-        self.helper.form_tag = True
-        self.helper.form_class = 'post-form'
-        self.helper.form_method = 'post'
-        self.helper.form_enctype = "multipart/form-data"
-        self.helper.form_show_errors = False
-        self.helper.layout = Layout(
-            HTML('<p>Use VideoCaptioner to generate a WebVTT subtitle track from this media file.</p>'),
-            CustomField('language_code'),
-            CustomField('language_title'),
-            FormActions(Submit('submit_videocaptioner', 'Generate with VideoCaptioner', css_class='primaryAction')),
-        )
-
-    def save(self, commit=True):
-        request = super().save(commit=False)
-        language, _ = Language.objects.update_or_create(
-            code=self.cleaned_data["language_code"],
-            defaults={"title": self.cleaned_data["language_title"]},
-        )
-        request.language = language
-        request.media = self.media_item
-        request.asr = getattr(settings, 'VIDEOCAPTIONER_ASR', 'bijian')
-        request.source_language = getattr(settings, 'VIDEOCAPTIONER_LANGUAGE', 'auto')
-        if commit:
-            request.save()
-        return request
 
 
 class ContactForm(forms.Form):

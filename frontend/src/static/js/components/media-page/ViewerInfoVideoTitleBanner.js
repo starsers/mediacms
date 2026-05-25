@@ -8,6 +8,7 @@ import {
     OtherMediaDownloadLink,
     VideoMediaDownloadLink,
     MediaSaveButton,
+    MediaWaicActions,
     MediaShareButton,
     MediaMoreOptionsIcon,
 } from '../media-actions/';
@@ -99,6 +100,8 @@ export default class ViewerInfoVideoTitleBanner extends ViewerInfoTitleBanner {
                             MemberContext._currentValue.can.saveMedia ? (
                                 <MediaSaveButton />
                             ) : null}
+
+                            {!MemberContext._currentValue.is.anonymous ? <MediaWaicActions /> : null}
 
                             {!this.props.allowDownload || !MemberContext._currentValue.can.downloadMedia ? null : !this
                                   .downloadLink ? (

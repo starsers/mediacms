@@ -23,22 +23,20 @@ from ..forms import (
     MediaPublishForm,
     ReplaceMediaForm,
     SubtitleForm,
-    VideoCaptionerRequestForm,
     WhisperSubtitlesForm,
 )
 from ..frontend_translations import translate_string
 from ..helpers import get_alphanumeric_and_spaces
 from ..methods import (
     can_transcribe_video,
-    can_use_videocaptioner,
     create_video_trim_request,
     get_user_or_session,
     handle_video_chapters,
     is_media_allowed_type,
     is_mediacms_editor,
 )
-from ..models import Category, Media, Page, Playlist, Subtitle, Tag, VideoCaptionerRequest, VideoTrimRequest
-from ..tasks import save_user_action, video_captioner_transcribe, video_trim_task
+from ..models import Category, Media, Page, Playlist, Subtitle, Tag, VideoTrimRequest
+from ..tasks import save_user_action, video_trim_task
 
 
 def get_page(request, slug):
@@ -106,9 +104,7 @@ def add_subtitle(request):
     # Initialize variables
     form = None
     whisper_form = None
-    videocaptioner_form = None
     show_whisper_form = can_transcribe_video(request.user)
-    show_videocaptioner_form = can_use_videocaptioner(request.user) and media.media_type in ["video", "audio"]
 
     if request.method == "POST":
         if 'submit' in request.POST:
@@ -131,18 +127,6 @@ def add_subtitle(request):
                 messages.add_message(request, messages.INFO, "Request for transcription was sent")
                 return HttpResponseRedirect(media.get_absolute_url())
 
-        elif 'submit_videocaptioner' in request.POST and show_videocaptioner_form:
-            running_request = VideoCaptionerRequest.objects.filter(media=media, status__in=["pending", "running"]).first()
-            if running_request:
-                messages.add_message(request, messages.INFO, "VideoCaptioner subtitle generation is already running")
-                return HttpResponseRedirect(media.get_absolute_url())
-            videocaptioner_form = VideoCaptionerRequestForm(media, request.POST, prefix="videocaptioner_form")
-            if videocaptioner_form.is_valid():
-                videocaptioner_request = videocaptioner_form.save()
-                video_captioner_transcribe.apply_async(args=[videocaptioner_request.id], countdown=10)
-                messages.add_message(request, messages.INFO, "VideoCaptioner subtitle generation was queued")
-                return HttpResponseRedirect(media.get_absolute_url())
-
     # GET request or form invalid
     if form is None:
         form = SubtitleForm(media_item=media, prefix="form")
@@ -150,19 +134,8 @@ def add_subtitle(request):
     if show_whisper_form and whisper_form is None:
         whisper_form = WhisperSubtitlesForm(request.user, instance=media, prefix="whisper_form")
 
-    if show_videocaptioner_form and videocaptioner_form is None:
-        videocaptioner_form = VideoCaptionerRequestForm(media, prefix="videocaptioner_form")
-
     subtitles = media.subtitles.all()
-    videocaptioner_requests = media.videocaptioner_requests.all()[:5]
-    context = {
-        "media_object": media,
-        "form": form,
-        "subtitles": subtitles,
-        "whisper_form": whisper_form,
-        "videocaptioner_form": videocaptioner_form,
-        "videocaptioner_requests": videocaptioner_requests,
-    }
+    context = {"media_object": media, "form": form, "subtitles": subtitles, "whisper_form": whisper_form}
     return render(request, "cms/add_subtitle.html", context)
 
 
@@ -218,6 +191,47 @@ def categories(request):
 
     context = {}
     return render(request, "cms/categories.html", context)
+
+@login_required
+def notifications(request):
+    """Personal workspace: notifications page"""
+    return render(request, "cms/notifications.html", {})
+
+
+@login_required
+def approvals(request):
+    """Personal workspace: approval center"""
+    return render(request, "cms/approvals.html", {})
+
+
+@login_required
+def permissions_center(request):
+    """Personal workspace: permissions center"""
+    return render(request, "cms/permissions.html", {})
+
+
+
+@login_required
+def clip(request):
+    """Online clip editor - WAIC"""
+    context = {}
+    return render(request, "cms/clip.html", context)
+
+
+@login_required
+def clip_editor(request):
+    """Jianshen video editor iframe"""
+    import os
+    from django.conf import settings
+    from django.http import HttpResponse, Http404
+    path = os.path.join(settings.BASE_DIR, 'static', 'jianshen', 'index.html')
+    if not os.path.exists(path):
+        raise Http404("jianshen index.html not found")
+    with open(path) as f:
+        html = f.read()
+    # Inject <base> tag so relative URLs (./assets/...) resolve to /static/jianshen/
+    html = html.replace('<head>', '<head><base href="/static/jianshen/">')
+    return HttpResponse(html)
 
 
 def contact(request):
@@ -643,8 +657,34 @@ def featured_media(request):
 
 def index(request):
     """Index view"""
+    from datetime import date
+    from ..models import Category, Media
 
-    context = {}
+    # 分类统计 — 取不包含子分类标识的顶级分类
+    categories = []
+    all_cats = Category.objects.all().order_by('title')
+    for cat in all_cats:
+        # 跳过子分类（标题含 " > "）
+        if ' > ' in cat.title:
+            continue
+        count = Media.objects.filter(category=cat, state='public').count()
+        categories.append({
+            'title': cat.title,
+            'count': count,
+        })
+
+    # 首页统计
+    total_media = Media.objects.filter(state='public').count()
+    today_media = Media.objects.filter(
+        state='public', add_date__date=date.today()
+    ).count()
+
+    context = {
+        'categories': categories,
+        'total_media': total_media,
+        'today_media': today_media,
+        'category_count': len(categories),
+    }
     return render(request, "cms/index.html", context)
 
 
@@ -777,6 +817,7 @@ def view_media(request):
     save_user_action.delay(user_or_session, friendly_token=friendly_token, action="watch")
     context = {}
     context["media"] = friendly_token
+    context["media_id"] = media.id
     context["media_object"] = media
 
     context["CAN_DELETE_MEDIA"] = False

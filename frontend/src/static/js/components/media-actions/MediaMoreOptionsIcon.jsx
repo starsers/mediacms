@@ -217,7 +217,7 @@ export function MediaMoreOptionsIcon(props) {
 
   const site = SiteContext._currentValue;
 
-  const downloadLink = formatInnerLink(MediaPageStore.get('media-original-url'), site.url);
+  const downloadLink = formatInnerLink(MediaPageStore.get('media-original-url'), site.url) + '?dl=1';
   const mediaData = MediaPageStore.get('media-data');
   const mediaIsVideo = 'video' === mediaData.media_type;
 

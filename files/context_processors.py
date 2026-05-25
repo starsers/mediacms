@@ -22,7 +22,9 @@ def stuff(request):
     ret["LOAD_FROM_CDN"] = settings.LOAD_FROM_CDN
     ret["CAN_LOGIN"] = settings.LOGIN_ALLOWED
     ret["CAN_REGISTER"] = settings.REGISTER_ALLOWED
-    ret["CAN_UPLOAD_MEDIA"] = settings.UPLOAD_MEDIA_ALLOWED
+    ret["CAN_UPLOAD_MEDIA"] = (
+        settings.UPLOAD_MEDIA_ALLOWED and request.user.is_authenticated
+    )
     ret["TIMESTAMP_IN_TIMEBAR"] = settings.TIMESTAMP_IN_TIMEBAR
     ret["CAN_MENTION_IN_COMMENTS"] = settings.ALLOW_MENTION_IN_COMMENTS
     ret["CAN_LIKE_MEDIA"] = settings.CAN_LIKE_MEDIA

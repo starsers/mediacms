@@ -41,4 +41,7 @@ templates/todo-MS4.md
 .secret_key.lock
 FRONTEND_PAGES.md
 .claude/settings.local.json
-CLAUDE.md
+
+static\jianshen\assets\
+
+frontend/dist/**

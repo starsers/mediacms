@@ -1,21 +1,9 @@
 MediaCMS.contents = {
+    header: {
+        right: '<button class="circle-icon-button notification-bell" title="消息通知" onclick="window.location.href=\'/notifications\'"><span><span><i class="material-icons">notifications</i></span></span><span class="notification-badge" id="notification-count" style="display:none">0</span></button><script>(function(){function u(){fetch("/api/v1/notifications/count/").then(function(r){return r.json()}).then(function(d){var b=document.getElementById("notification-count");if(b){b.textContent=d.count;b.style.display=d.count>0?"inline-block":"none"}}).catch(function(){});setTimeout(u,30000)}u()})();<\/script>',
+    },
     sidebar: {
-        navMenuItems: [{
-                text: "About",
-                link: "/about",
-                icon: 'contact_support',
-            },
-            {
-                text: "Terms",
-                link: "/tos",
-                icon: 'insert_drive_file',
-            },
-            {
-                text: "Contact",
-                link: "/contact",
-                icon: 'alternate_email',
-            }
-        ],
+        navMenuItems: [],
         belowNavMenu: null,
         footer: {% if SIDEBAR_FOOTER_TEXT %}'{{ SIDEBAR_FOOTER_TEXT|escapejs }}'{% else %}'Powered by <a href="//mediacms.io" title="mediacms.io" target="_blank">mediacms.io</a>'{% endif %},
     },

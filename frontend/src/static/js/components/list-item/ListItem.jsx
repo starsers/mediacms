@@ -175,6 +175,7 @@ export function listItemProps(props, item, index) {
     singleLinkContent: props.singleLinkContent || false,
     hasMediaViewer: 0 === index && 'video' === item.media_type && !!props.firstItemViewer,
     hasMediaViewerDescr: false,
+    subtitle_matches: item.subtitle_matches || [],
   };
 
   args.hasMediaViewerDescr = args.hasMediaViewer && !!props.firstItemDescr;
@@ -268,10 +269,12 @@ export function ListItem(props) {
       isMediaItem = true;
       args.duration = props.duration;
       args.preview_thumbnail = props.previewThumbnail;
+      args.subtitle_matches = props.subtitle_matches || [];
       break;
     case 'audio':
       isMediaItem = true;
       args.duration = props.duration;
+      args.subtitle_matches = props.subtitle_matches || [];
       break;
     case 'image':
       isMediaItem = true;

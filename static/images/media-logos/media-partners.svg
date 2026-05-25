@@ -1,0 +1,47 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="60" viewBox="0 0 800 60">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c41e3a"/><stop offset="100%" stop-color="#a01830"/></linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1a56db"/><stop offset="100%" stop-color="#1e40af"/></linearGradient>
+    <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e60012"/><stop offset="100%" stop-color="#cc0010"/></linearGradient>
+    <linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2d5c9b"/><stop offset="100%" stop-color="#1a3a6b"/></linearGradient>
+    <linearGradient id="g5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5a623"/><stop offset="100%" stop-color="#e09510"/></linearGradient>
+    <linearGradient id="g6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#333333"/><stop offset="100%" stop-color="#111111"/></linearGradient>
+  </defs>
+  <rect width="800" height="60" fill="transparent"/>
+  <!-- 新华社 -->
+  <g transform="translate(10,0)">
+    <rect x="0" y="10" width="110" height="40" rx="6" fill="url(#g1)"/>
+    <text x="55" y="36" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="700">新华社</text>
+  </g>
+  <!-- 人民日报 -->
+  <g transform="translate(130,0)">
+    <rect x="0" y="10" width="110" height="40" rx="6" fill="url(#g3)"/>
+    <text x="55" y="36" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="700">人民日报</text>
+  </g>
+  <!-- 央视 -->
+  <g transform="translate(250,0)">
+    <rect x="0" y="10" width="90" height="40" rx="6" fill="url(#g2)"/>
+    <text x="45" y="36" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="700">CCTV</text>
+  </g>
+  <!-- 澎湃新闻 -->
+  <g transform="translate(350,0)">
+    <rect x="0" y="10" width="110" height="40" rx="6" fill="url(#g4)"/>
+    <text x="55" y="36" text-anchor="middle" fill="white" font-family="sans-serif" font-size="15" font-weight="700">澎湃新闻</text>
+  </g>
+  <!-- 第一财经 -->
+  <g transform="translate(470,0)">
+    <rect x="0" y="10" width="100" height="40" rx="6" fill="url(#g5)"/>
+    <text x="50" y="36" text-anchor="middle" fill="white" font-family="sans-serif" font-size="15" font-weight="700">第一财经</text>
+  </g>
+  <!-- 凤凰网 -->
+  <g transform="translate(580,0)">
+    <rect x="0" y="10" width="90" height="40" rx="6" fill="url(#g6)"/>
+    <text x="45" y="36" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="700">凤凰网</text>
+  </g>
+  <!-- 新浪 -->
+  <g transform="translate(680,0)">
+    <rect x="0" y="10" width="110" height="40" rx="6" fill="#ff8c00"/>
+    <text x="55" y="36" text-anchor="middle" fill="white" font-family="sans-serif" font-size="16" font-weight="700">新浪新闻</text>
+  </g>
+</svg>

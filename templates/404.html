@@ -1,9 +1,12 @@
 {% extends "base.html" %}
+{% load i18n %}
+{% load custom_filters %}
 
-{% block headtitle %} - error{% endblock headtitle %}
+{% block headtitle %}{% get_current_language as LANGUAGE_CODE %} - {{ "Error" | custom_translate:LANGUAGE_CODE }}{% endblock headtitle %}
 
 {% block innercontent %}
-	<p>you are lost!</p>
+{% get_current_language as LANGUAGE_CODE %}
+	<p>{{ "Page not found" | custom_translate:LANGUAGE_CODE }}</p>
 {% endblock %}
 
 

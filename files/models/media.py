@@ -19,11 +19,12 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
+from pgvector.django import VectorField
 
 from .. import helpers
 from ..stop_words import STOP_WORDS
 from .encoding import EncodeProfile, Encoding
-from .subtitle import TranscriptionRequest
+from .subtitle import Subtitle, TranscriptionRequest
 from .utils import (
     ENCODE_RESOLUTIONS_KEYS,
     MEDIA_ENCODING_STATUS,
@@ -209,10 +210,38 @@ class Media(models.Model):
     allow_whisper_transcribe = models.BooleanField("Transcribe auto-detected language", default=False)
     allow_whisper_transcribe_and_translate = models.BooleanField("Transcribe auto-detected language and translate to English", default=False)
 
+    # Important media — flagged by editors to notify all users
+    is_important = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Marked as important — triggers notification to all users",
+    )
+
+    # Approval workflow
+    approval_status = models.CharField(
+        max_length=20,
+        choices=[('pending', 'Pending'), ('submitted', 'Submitted'), ('approved', 'Approved'), ('rejected', 'Rejected')],
+        default='pending',
+        db_index=True,
+        help_text='Approval status',
+    )
+
+    # AI analysis fields
+    ai_summary = models.TextField(blank=True, help_text="AI-generated content summary (separate from user-editable description)")
+    ai_metadata = models.JSONField(blank=True, null=True, help_text="Type-specific AI metadata: document(page_count,author,keywords), image(resolution,colors,objects), video(keyframes,chapters), audio(speaker_count), etc.")
+    language = models.CharField(max_length=10, blank=True, help_text="Detected content language code, e.g. zh / en / ja")
+    transcript_text = models.TextField(blank=True, help_text="AI speech-to-text full transcript with timestamps (JSON) for video/audio")
+    embedding = VectorField(dimensions=1024, blank=True, null=True, help_text="AI text embedding vector (1024-dim) for semantic similarity search")
+
     # keep track if media file has changed, on saves
     __original_media_file = None
     __original_thumbnail_time = None
     __original_uploaded_poster = None
+    __original_allow_whisper_transcribe = None
+    __original_allow_whisper_transcribe_and_translate = None
+
+    # Archived media hidden from listings
+    is_archived = models.BooleanField(default=False, db_index=True, help_text="Archived media hidden from listings")
 
     class Meta:
         ordering = ["-add_date"]
@@ -240,7 +269,11 @@ class Media(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.title:
-            self.title = self.media_file.path.split("/")[-1]
+            try:
+                if self.media_file and self.media_file.path:
+                    self.title = self.media_file.path.split("/")[-1]
+            except ValueError:
+                pass  # media_file not yet set on first save
 
         strip_text_items = ["title", "description"]
         for item in strip_text_items:
@@ -358,6 +391,10 @@ class Media(models.Model):
 
         items = [self.friendly_token, self.title, self.user.username, self.user.email, self.user.name, self.description, a_tags]
 
+        # Include AI-generated summary in search
+        if self.ai_summary:
+            items.append(self.ai_summary)
+
         for subtitle in self.subtitles.all():
             items.append(subtitle.subtitle_text)
 
@@ -371,11 +408,61 @@ class Media(models.Model):
 
         return True
 
+    def find_subtitle_matches(self, query: str):
+        """Find subtitle segments containing the search query.
+        Returns list of {text, start_seconds, end_seconds} for matching VTT segments.
+        """
+        import re
+        try:
+            import pysubs2
+        except ImportError:
+            return []
+
+        query_lower = query.lower()
+        matches = []
+        for sub in self.subtitles.all():
+            if not sub.subtitle_file:
+                continue
+            try:
+                subs = pysubs2.load(sub.subtitle_file.path, encoding="utf-8")
+                for line in subs:
+                    if query_lower in line.text.lower():
+                        matches.append({
+                            "text": line.text.strip(),
+                            "start": int(line.start) / 1000.0,  # pysubs2 uses ms
+                            "end": int(line.end) / 1000.0,
+                        })
+            except Exception:
+                continue
+
+        # Deduplicate & limit
+        seen = set()
+        unique = []
+        for m in matches:
+            key = (m["text"], int(m["start"]))
+            if key not in seen:
+                seen.add(key)
+                unique.append(m)
+            if len(unique) >= 5:
+                break
+        return unique
+
     def media_init(self):
         """Normally this is called when a media is uploaded
         Performs all related tasks, as check for media type,
         video duration, encode
         """
+        # Auto-fill title from original filename if not provided
+        if not self.title:
+            import os as _os
+            raw_name = _os.path.basename(self.media_file.name)
+            # Strip UUID prefix added by upload_to (e.g. "abc123def.test.txt" -> "test.txt")
+            parts = raw_name.split(".", 1)
+            if len(parts) >= 2 and len(parts[0]) == 32:
+                raw_name = parts[1]  # Remove 32-char hex UUID
+            self.title = _os.path.splitext(raw_name)[0][:100]
+            self.save(update_fields=["title"])
+
         self.set_media_type()
         from ..methods import is_media_allowed_type
 
@@ -397,6 +484,25 @@ class Media(models.Model):
                 self.encode()
         elif self.media_type == "image":
             self.set_thumbnail(force=True)
+
+        # Dispatch AI analysis tasks based on media type
+        from .. import tasks as _tasks
+        if self.media_type in ("video", "audio", "image", "document", "pdf",
+                               "text", "spreadsheet", "presentation"):
+            _tasks.ai_analyze_media.apply_async(
+                args=[self.friendly_token], countdown=3)
+        if self.media_type in ("video", "audio"):
+            # Use local Whisper instead of DashScope API
+            # Skip transcription if media already has subtitles
+            has_subtitle = Subtitle.objects.filter(media=self).exists()
+            if not has_subtitle:
+                # Trigger Whisper transcription (local, offline)
+                TranscriptionRequest.objects.get_or_create(
+                    media=self, translate_to_english=False,
+                    defaults={'status': 'pending'})
+                _tasks.whisper_transcribe.apply_async(
+                    args=[self.friendly_token, False], countdown=10)
+
         return True
 
     def set_media_type(self, save=True):
@@ -415,7 +521,7 @@ class Media(models.Model):
             elif kind == "video":
                 self.media_type = "video"
 
-        if self.media_type in ["image", "pdf"]:
+        if self.media_type in ["image", "pdf", "document"]:
             self.encoding_status = "success"
         else:
             ret = helpers.media_file_info(self.media_file.path)
@@ -1027,7 +1133,13 @@ def media_save(sender, instance, created, **kwargs):
     if created:
         from ..methods import notify_users
 
-        instance.media_init()
+        # Only run media_init if media_file is actually attached
+        try:
+            if instance.media_file and instance.media_file.path:
+                instance.media_init()
+        except (ValueError, OSError):
+            pass  # File not yet attached, will run on next save
+
         notify_users(friendly_token=instance.friendly_token, action="media_added")
 
     instance.user.update_user_media()

@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-hans">
 <head>
     {% block head %}
 
@@ -24,6 +24,21 @@
         {% block extra_head %}{% endblock extra_head %}
 
         {% include "config/index.html" %}
+
+        <style>
+            /* WAIC: force compact items */
+            :root, body {
+                --default-item-width: 210px !important;
+                --item-width: 210px !important;
+            }
+            /* Compact tag/category cards */
+            .item.tag-item { width: 210px !important; max-width: 210px !important; }
+            .item.tag-item .item-thumb { width: 178px !important; height: 118px !important; }
+            /* Theme toggle: compact */
+            .sidebar-theme-switcher { margin: 2px 12px !important; padding: 3px 8px !important; max-height: 32px !important; }
+            /* User avatar same size as other icons */
+            .page-header-right .circle-icon-button img { width: 40px !important; height: 40px !important; border-radius: 50% !important; object-fit: cover !important; }
+        </style>
 
         {% if not USE_ROUNDED_CORNERS %}
         <style>
@@ -51,6 +66,24 @@
     {% block externalscripts %}{% endblock externalscripts %}
 
     {% include "common/body-scripts.html" %}
+
+    {# WAIC: 消息铃铛注入 #}
+    <script>
+    (function() {
+        function injectBell() {
+            var right = document.querySelector('.page-header-right > div');
+            var thumb = document.querySelector('.page-header-right .user-thumb, .page-header-right .user-options');
+            if (!right || !thumb) { setTimeout(injectBell, 200); return; }
+            if (document.querySelector('.waic-notify-bell, .page-header-right .notification-bell')) return;
+            var bell = document.createElement('div');
+            bell.className = 'waic-notify-bell';
+            bell.innerHTML = '<button class="circle-icon-button" title="消息" aria-label="消息通知"><span><span><i class="material-icons" data-icon="notifications"></i><span class="waic-badge">0</span></span></span></button>';
+            right.insertBefore(bell, thumb.parentNode || thumb);
+        }
+        setTimeout(injectBell, 500);
+        document.addEventListener('DOMContentLoaded', function() { setTimeout(injectBell, 300); });
+    })();
+    </script>
 
     {% block bottomimports %}{% endblock bottomimports %}
 

@@ -111,13 +111,13 @@ export class SearchPage extends Page {
 
     if (null !== this.state.resultsCount) {
       if (!validQuery) {
-        title = 'No results for "' + this.state.searchQuery + '"';
+        title = translateString('No results for') + ' "' + this.state.searchQuery + '"';
       } else {
         if (this.state.searchCategories) {
-          title = null === this.state.resultsCount || 0 === this.state.resultsCount ? 'No' : this.state.resultsCount;
+          title = null === this.state.resultsCount || 0 === this.state.resultsCount ? translateString('No') : this.state.resultsCount;
           title += ' ' + translateString(inEmbeddedApp() ? 'media in course' : 'media in category') + ' "' + this.state.searchCategories + '"';
         } else if (this.state.searchTags) {
-          title = null === this.state.resultsCount || 0 === this.state.resultsCount ? 'No' : this.state.resultsCount;
+          title = null === this.state.resultsCount || 0 === this.state.resultsCount ? translateString('No') : this.state.resultsCount;
           title += ' ' + translateString('media in tag') + ' "' + this.state.searchTags + '"';
         } else {
           if (null === this.state.resultsCount || 0 === this.state.resultsCount) {
@@ -125,9 +125,9 @@ export class SearchPage extends Page {
           } else {
             title =
               this.state.resultsCount +
-              ' result' +
-              (1 < this.state.resultsCount ? 's' : '') +
-              ' for "' +
+              ' ' +
+              translateString(1 === this.state.resultsCount ? 'result for' : 'results for') +
+              ' "' +
               this.state.searchQuery +
               '"';
           }
@@ -211,6 +211,7 @@ export class SearchPage extends Page {
             hideViews={!PageStore.get('config-media-item').displayViews}
             hideAuthor={!PageStore.get('config-media-item').displayAuthor}
             hideDate={!PageStore.get('config-media-item').displayPublishDate}
+            emptyMessage={translateString('No results found')}
           />
         )}
       </MediaListWrapper>

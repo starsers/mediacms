@@ -1,65 +1,62 @@
 body {
-  --body-text-color: #15365f;
-  --body-bg-color: #edf4ff;
-  --body-bg-image: radial-gradient(circle at 18% 0%, rgba(89, 167, 255, 0.28), transparent 32rem),
-    radial-gradient(circle at 86% 12%, rgba(31, 107, 255, 0.16), transparent 28rem);
+  --body-text-color: #111;
+  --body-bg-color: #fafafa;
 
-  --hr-color: rgba(31, 107, 255, 0.16);
+  --hr-color: #e1e1e1;
 
-  --dotted-outline-color: rgba(21, 54, 95, 0.42);
+  --dotted-outline-color: rgba(0, 0, 0, 0.4);
 
   /* ################################################## */
 
-  --input-color: #15365f;
-  --input-bg-color: rgba(255, 255, 255, 0.88);
-  --input-border-color: rgba(31, 107, 255, 0.2);
+  --input-color: hsl(0, 0%, 7%);
+  --input-bg-color: hsl(0, 0%, 100%);
+  --input-border-color: hsl(0, 0%, 80%);
 
   /* ################################################## */
 
-  --header-bg-color: rgba(247, 251, 255, 0.88);
+  --header-bg-color: #fff;
 
-  --header-circle-button-color: #15365f;
+  --header-circle-button-color: #606060;
 
-  --header-popup-menu-color: #15365f;
-  --header-popup-menu-icon-color: rgba(21, 54, 95, 0.6);
-
-  /* ################################################## */
-
-  --sidebar-bg-color: #ffffff;
-  --sidebar-bg-image: linear-gradient(180deg, #0f4cbc 0%, #1f6bff 56%, #59a7ff 100%);
-
-  --sidebar-nav-border-color: rgba(255, 255, 255, 0.18);
-
-  --sidebar-nav-item-text-color: rgba(247, 251, 255, 0.76);
-  --sidebar-nav-item-icon-color: rgba(247, 251, 255, 0.78);
-
-  --sidebar-bottom-link-color: rgba(247, 251, 255, 0.82);
+  --header-popup-menu-color: rgb(13, 13, 13);
+  --header-popup-menu-icon-color: rgb(144, 144, 144);
 
   /* ################################################## */
 
-  --spinner-loader-color: rgba(21, 54, 95, 0.8);
+  --sidebar-bg-color: #f5f5f5;
+
+  --sidebar-nav-border-color: #eee;
+
+  --sidebar-nav-item-text-color: rgb(13, 13, 13);
+  --sidebar-nav-item-icon-color: rgb(144, 144, 144);
+
+  --sidebar-bottom-link-color: initial;
 
   /* ################################################## */
 
-  --nav-menu-active-item-bg-color: rgba(255, 255, 255, 0.18);
-
-  --nav-menu-item-hover-bg-color: rgba(255, 255, 255, 0.14);
-
-  --in-popup-nav-menu-item-hover-bg-color: rgba(31, 107, 255, 0.1);
+  --spinner-loader-color: rgba(17, 17, 17, 0.8);
 
   /* ################################################## */
 
-  --search-field-input-text-color: #15365f;
-  --search-field-input-bg-color: rgba(255, 255, 255, 0.82);
-  --search-field-input-border-color: rgba(31, 107, 255, 0.18);
+  --nav-menu-active-item-bg-color: rgba(0, 0, 0, 0.1);
 
-  --search-field-submit-text-color: #1f6bff;
+  --nav-menu-item-hover-bg-color: rgba(0, 0, 0, 0.04);
 
-  --search-field-submit-bg-color: rgba(247, 251, 255, 0.96);
-  --search-field-submit-border-color: rgba(31, 107, 255, 0.18);
+  --in-popup-nav-menu-item-hover-bg-color: #eee;
 
-  --search-field-submit-hover-bg-color: rgba(31, 107, 255, 0.1);
-  --search-field-submit-hover-border-color: rgba(31, 107, 255, 0.28);
+  /* ################################################## */
+
+  --search-field-input-text-color: #111;
+  --search-field-input-bg-color: #fff;
+  --search-field-input-border-color: #ccc;
+
+  --search-field-submit-text-color: #333;
+
+  --search-field-submit-bg-color: #f8f8f8;
+  --search-field-submit-border-color: #d3d3d3;
+
+  --search-field-submit-hover-bg-color: #f0f0f0;
+  --search-field-submit-hover-border-color: #c6c6c6;
 
   /* ################################################## */
 
@@ -71,15 +68,15 @@ body {
 
   /* ################################################## */
 
-  --popup-bg-color: rgba(247, 251, 255, 0.96);
+  --popup-bg-color: #fff;
 
-  --popup-hr-bg-color: rgba(31, 107, 255, 0.14);
+  --popup-hr-bg-color: #eee;
 
-  --popup-top-text-color: #15365f;
-  --popup-top-bg-color: rgba(31, 107, 255, 0.1);
+  --popup-top-text-color: rgb(13, 13, 13);
+  --popup-top-bg-color: #eee;
 
-  --popup-msg-title-text-color: #15365f;
-  --popup-msg-main-text-color: rgba(21, 54, 95, 0.78);
+  --popup-msg-title-text-color: rgb(17, 17, 17);
+  --popup-msg-main-text-color: rgba(17, 17, 17, 0.8);
 
   /* ################################################## */
 
@@ -111,20 +108,20 @@ body {
 
   /* ################################################## */
 
-  --item-bg-color: rgba(247, 251, 255, 0.82);
+  --item-bg-color: #fafafa;
 
-  --item-title-text-color: #15365f;
+  --item-title-text-color: #111;
 
-  --item-thumb-bg-color: rgba(31, 107, 255, 0.1);
+  --item-thumb-bg-color: var(--sidebar-bg-color);
 
-  --item-meta-text-color: rgba(21, 54, 95, 0.62);
-  --item-meta-link-text-color: rgba(21, 54, 95, 0.72);
-  --item-meta-link-hover-text-color: #15365f;
+  --item-meta-text-color: rgba(17, 17, 17, 0.6);
+  --item-meta-link-text-color: var(--item-text-color);
+  --item-meta-link-hover-text-color: rgba(17, 17, 17, 0.8);
 
-  --profile-page-item-content-title-bg-color: rgba(247, 251, 255, 0.94);
+  --profile-page-item-content-title-bg-color: #fff;
 
-  --playlist-item-main-view-full-link-text-color: rgba(21, 54, 95, 0.66);
-  --playlist-item-main-view-full-link-hover-text-color: #15365f;
+  --playlist-item-main-view-full-link-text-color: rgb(96, 96, 96);
+  --playlist-item-main-view-full-link-hover-text-color: rgb(13, 13, 13);
 
   /* ################################################## */
 
@@ -133,8 +130,8 @@ body {
 
   /* ################################################## */
 
-  --media-list-row-border-color: rgba(31, 107, 255, 0.14);
-  --media-list-header-title-link-text-color: rgba(21, 54, 95, 0.66);
+  --media-list-row-border-color: #eee;
+  --media-list-header-title-link-text-color: rgba(17, 17, 17, 0.6);
 
   /* ################################################## */
 
@@ -158,57 +155,57 @@ body {
 
   /* ################################################## */
 
-  --playlist-view-header-bg-color: rgba(247, 251, 255, 0.82);
+  --playlist-view-header-bg-color: #fafafa;
 
-  --playlist-view-header-toggle-text-color: rgba(21, 54, 95, 0.66);
+  --playlist-view-header-toggle-text-color: rgb(96, 96, 96);
 
-  --playlist-view-header-toggle-bg-color: rgba(247, 251, 255, 0.82);
+  --playlist-view-header-toggle-bg-color: #fafafa;
 
-  --playlist-view-title-link-text-color: #15365f;
+  --playlist-view-title-link-text-color: rgb(13, 13, 13);
 
-  --playlist-view-meta-text-color: rgba(21, 54, 95, 0.62);
-  --playlist-view-meta-link-color: rgba(21, 54, 95, 0.66);
-  --playlist-view-meta-link-hover-text-color: #15365f;
+  --playlist-view-meta-text-color: rgba(17, 17, 17, 0.6);
+  --playlist-view-meta-link-color: rgba(17, 17, 17, 0.6);
+  --playlist-view-meta-link-hover-text-color: rgb(13, 13, 13);
 
-  --playlist-view-status-text-color: rgba(21, 54, 95, 0.62);
-  --playlist-view-status-bg-color: rgba(31, 107, 255, 0.08);
+  --playlist-view-status-text-color: rgba(17, 17, 17, 0.6);
+  --playlist-view-status-bg-color: rgba(0, 0, 0, 0.05);
 
-  --playlist-view-status-icon-text-color: rgba(21, 54, 95, 0.42);
+  --playlist-view-status-icon-text-color: rgba(17, 17, 17, 0.4);
 
-  --playlist-view-actions-bg-color: rgba(247, 251, 255, 0.82);
+  --playlist-view-actions-bg-color: #fafafa;
 
-  --playlist-view-media-bg-color: rgba(31, 107, 255, 0.1);
+  --playlist-view-media-bg-color: var(--sidebar-bg-color);
 
-  --playlist-view-media-order-number-color: rgba(21, 54, 95, 0.52);
+  --playlist-view-media-order-number-color: rgb(136, 136, 136);
 
-  --playlist-view-item-title-text-color: #15365f;
+  --playlist-view-item-title-text-color: rgb(13, 13, 13);
 
-  --playlist-view-item-author-text-color: #15365f;
+  --playlist-view-item-author-text-color: rgb(13, 13, 13);
 
-  --playlist-view-item-author-bg-color: rgba(31, 107, 255, 0.1);
-
-  /* ################################################## */
-
-  --profile-page-bg-color: rgba(247, 251, 255, 0.82);
-
-  --profile-page-header-bg-color: rgba(237, 244, 255, 0.9);
-
-  --profile-page-info-videos-number-text-color: rgba(21, 54, 95, 0.62);
-
-  --profile-page-nav-link-text-color: rgba(21, 54, 95, 0.62);
-  --profile-page-nav-link-hover-text-color: #15365f;
-
-  --profile-page-nav-link-active-text-color: #15365f;
-  --profile-page-nav-link-active-after-bg-color: #1f6bff;
+  --playlist-view-item-author-bg-color: var(--sidebar-bg-color);
 
   /* ################################################## */
 
-  --add-media-page-tmplt-dialog-bg-color: rgba(247, 251, 255, 0.96);
-  --add-media-page-tmplt-uploader-bg-color: rgba(247, 251, 255, 0.9);
-  --add-media-page-tmplt-dropzone-bg-color: rgba(255, 255, 255, 0.66);
-  --add-media-page-tmplt-drag-drop-inner-text-color: rgba(21, 54, 95, 0.48);
-  --add-media-page-tmplt-upload-item-spiner-text-color: rgba(21, 54, 95, 0.34);
-  --add-media-page-tmplt-upload-item-actions-text-color: rgba(21, 54, 95, 0.46);
+  --profile-page-bg-color: #fff;
+
+  --profile-page-header-bg-color: var(--body-bg-color);
+
+  --profile-page-info-videos-number-text-color: rgba(17, 17, 17, 0.6);
+
+  --profile-page-nav-link-text-color: rgba(17, 17, 17, 0.6);
+  --profile-page-nav-link-hover-text-color: #111;
+
+  --profile-page-nav-link-active-text-color: #111;
+  --profile-page-nav-link-active-after-bg-color: rgba(17, 17, 17, 0.6);
+
+  /* ################################################## */
+
+  --add-media-page-tmplt-dialog-bg-color: #fff;
+  --add-media-page-tmplt-uploader-bg-color: #fff;
+  --add-media-page-tmplt-dropzone-bg-color: rgba(255, 255, 255, 0.5);
+  --add-media-page-tmplt-drag-drop-inner-text-color: rgba(17, 17, 17, 0.4);
+  --add-media-page-tmplt-upload-item-spiner-text-color: rgba(17, 17, 17, 0.32);
+  --add-media-page-tmplt-upload-item-actions-text-color: rgba(17, 17, 17, 0.4);
 
   /* ################################################## */
 
@@ -222,58 +219,58 @@ body {
 
   /* ################################################## */
 
-  --playlist-page-bg-color: rgba(247, 251, 255, 0.82);
-  --playlist-page-details-text-color: rgba(21, 54, 95, 0.62);
-  --playlist-page-thumb-bg-color: rgba(31, 107, 255, 0.1);
-  --playlist-page-title-link-text-color: #15365f;
+  --playlist-page-bg-color: rgb(250, 250, 250);
+  --playlist-page-details-text-color: rgb(96, 96, 96);
+  --playlist-page-thumb-bg-color: rgba(0, 0, 0, 0.07);
+  --playlist-page-title-link-text-color: rgb(13, 13, 13);
 
-  --playlist-page-actions-circle-icon-text-color: rgba(21, 54, 95, 0.56);
-  --playlist-page-actions-circle-icon-bg-color: rgba(247, 251, 255, 0.92);
+  --playlist-page-actions-circle-icon-text-color: rgb(144, 144, 144);
+  --playlist-page-actions-circle-icon-bg-color: rgb(250, 250, 250);
 
-  --playlist-page-actions-nav-item-button-text-color: #15365f;
+  --playlist-page-actions-nav-item-button-text-color: rgb(10, 10, 10);
 
   --playlist-page-actions-popup-message-bottom-cancel-button-text-color: rgba(17, 17, 17, 0.6);
   --playlist-page-actions-popup-message-bottom-cancel-button-hover-text-color: #111;
   --playlist-page-actions-popup-message-bottom-cancel-button-icon-hover-text-color: #111;
 
-  --playlist-page-status-text-color: rgba(21, 54, 95, 0.62);
-  --playlist-page-status-bg-color: rgba(31, 107, 255, 0.08);
+  --playlist-page-status-text-color: rgba(17, 17, 17, 0.6);
+  --playlist-page-status-bg-color: rgba(0, 0, 0, 0.1);
 
-  --playlist-page-status-icon-text-color: rgba(21, 54, 95, 0.42);
+  --playlist-page-status-icon-text-color: rgba(17, 17, 17, 0.4);
 
-  --playlist-page-author-border-top-color: rgba(31, 107, 255, 0.14);
-  --playlist-page-author-name-link-color: #15365f;
+  --playlist-page-author-border-top-color: rgba(0, 0, 0, 0.1);
+  --playlist-page-author-name-link-color: rgb(13, 13, 13);
 
-  --playlist-page-author-edit-playlist-icon-button-text-color: rgba(21, 54, 95, 0.62);
+  --playlist-page-author-edit-playlist-icon-button-text-color: rgb(96, 96, 96);
 
-  --playlist-page-author-edit-playlist-icon-button-bg-color: rgba(247, 251, 255, 0.92);
+  --playlist-page-author-edit-playlist-icon-button-bg-color: #fafafa;
 
-  --playlist-page-author-edit-playlist-icon-button-active-text-color: #15365f;
+  --playlist-page-author-edit-playlist-icon-button-active-text-color: rgb(13, 13, 13);
 
-  --playlist-page-author-edit-playlist-form-wrap-text-color: #15365f;
-  --playlist-page-author-edit-playlist-form-wrap-bg-color: rgba(247, 251, 255, 0.96);
+  --playlist-page-author-edit-playlist-form-wrap-text-color: rgb(13, 13, 13);
+  --playlist-page-author-edit-playlist-form-wrap-bg-color: #fff;
 
-  --playlist-page-author-edit-playlist-form-wrap-border-color: rgba(31, 107, 255, 0.14);
+  --playlist-page-author-edit-playlist-form-wrap-border-color: #eee;
 
-  --playlist-page-author-edit-playlist-form-wrap-title-circle-icon-hover-text-color: #15365f;
+  --playlist-page-author-edit-playlist-form-wrap-title-circle-icon-hover-text-color: #111;
 
-  --playlist-page-author-edit-playlist-author-thumb-text-color: rgba(21, 54, 95, 0.66);
-  --playlist-page-author-edit-playlist-author-thumb-bg-color: rgba(31, 107, 255, 0.1);
+  --playlist-page-author-edit-playlist-author-thumb-text-color: #606060;
+  --playlist-page-author-edit-playlist-author-thumb-bg-color: rgba(0, 0, 0, 0.07);
 
-  --playlist-page-details-bg-color: rgba(247, 251, 255, 0.82);
+  --playlist-page-details-bg-color: #fafafa;
 
-  --playlist-page-video-list-bg-color: rgba(31, 107, 255, 0.08);
+  --playlist-page-video-list-bg-color: #f5f5f5;
 
-  --playlist-page-video-list-item-title-bg-color: rgba(247, 251, 255, 0.88);
+  --playlist-page-video-list-item-title-bg-color: #f5f5f5;
 
-  --playlist-page-video-list-item-hover-bg-color: rgba(31, 107, 255, 0.1);
+  --playlist-page-video-list-item-hover-bg-color: #ebebeb;
 
-  --playlist-page-video-list-item-title-hover-bg-color: rgba(31, 107, 255, 0.1);
+  --playlist-page-video-list-item-title-hover-bg-color: #ebebeb;
 
-  --playlist-page-video-list-item-after-bg-color: rgba(31, 107, 255, 0.14);
-  --playlist-page-video-list-item-order-text-color: rgba(21, 54, 95, 0.56);
+  --playlist-page-video-list-item-after-bg-color: rgba(0, 0, 0, 0.1);
+  --playlist-page-video-list-item-order-text-color: rgb(96, 96, 96);
 
-  --playlist-page-video-list-item-options-icon-hover-color: #15365f;
+  --playlist-page-video-list-item-options-icon-hover-color: #111;
 
   --playlist-page-video-list-item-options-popup-cancel-removal-button-text-color: rgba(17, 17, 17, 0.6);
   --playlist-page-video-list-item-options-popup-cancel-removal-button-hover-text-color: #111;
@@ -290,58 +287,58 @@ body {
   --profile-banner-wrap-popup-bottom-cancel-removal-button-hover-text-color: #111;
   --profile-banner-wrap-popup-bottom-cancel-removal-button-hover-icon-text-color: #111;
 
-  --media-title-banner-border-color: rgba(31, 107, 255, 0.14);
-  --media-title-labels-area-text-color: rgba(21, 54, 95, 0.62);
-  --media-title-labels-area-bg-color: rgba(31, 107, 255, 0.08);
-  --media-title-views-text-color: rgba(21, 54, 95, 0.62);
+  --media-title-banner-border-color: #eee;
+  --media-title-labels-area-text-color: rgba(17, 17, 17, 0.6);
+  --media-title-labels-area-bg-color: rgba(238, 238, 238, 0.6);
+  --media-title-views-text-color: rgba(17, 17, 17, 0.6);
 
-  --media-actions-not-popup-circle-icon-focus-bg-color: rgba(31, 107, 255, 0.08);
-  --media-actions-not-popup-circle-icon-active-bg-color: rgba(31, 107, 255, 0.12);
-  --media-actions-like-before-border-color: rgba(21, 54, 95, 0.42);
-  --media-actions-share-title-text-color: #15365f;
-  --media-actions-share-options-nav-button-text-color: rgba(21, 54, 95, 0.46);
-  --media-actions-share-options-link-text-color: #15365f;
-  --media-actions-share-copy-field-border-color: rgba(31, 107, 255, 0.16);
-  --media-actions-share-copy-field-bg-color: rgba(247, 251, 255, 0.9);
-  --media-actions-share-copy-field-input-text-color: #15365f;
-  --media-actions-more-options-popup-bg-color: rgba(247, 251, 255, 0.96);
-  --media-actions-more-options-popup-nav-link-text-color: #15365f;
-  --media-actions-share-fullscreen-popup-main-bg-color: rgba(237, 244, 255, 0.96);
+  --media-actions-not-popup-circle-icon-focus-bg-color: rgba(0, 0, 0, 0.04);
+  --media-actions-not-popup-circle-icon-active-bg-color: rgba(0, 0, 0, 0.07);
+  --media-actions-like-before-border-color: rgba(17, 17, 17, 0.4);
+  --media-actions-share-title-text-color: #111;
+  --media-actions-share-options-nav-button-text-color: rgba(17, 17, 17, 0.4);
+  --media-actions-share-options-link-text-color: rgb(17, 17, 17);
+  --media-actions-share-copy-field-border-color: rgb(237, 237, 237);
+  --media-actions-share-copy-field-bg-color: rgb(250, 250, 250);
+  --media-actions-share-copy-field-input-text-color: rgb(17, 17, 17);
+  --media-actions-more-options-popup-bg-color: #fff;
+  --media-actions-more-options-popup-nav-link-text-color: rgb(10, 10, 10);
+  --media-actions-share-fullscreen-popup-main-bg-color: #fff;
 
-  --report-form-title-text-color: #15365f;
-  --report-form-field-label-text-color: rgba(21, 54, 95, 0.62);
-  --report-form-field-input-text-color: #15365f;
-  --report-form-field-input-border-color: rgba(31, 107, 255, 0.16);
-  --report-form-field-input-bg-color: rgba(247, 251, 255, 0.9);
-  --report-form-help-text-color: rgba(21, 54, 95, 0.62);
+  --report-form-title-text-color: #111;
+  --report-form-field-label-text-color: rgba(17, 17, 17, 0.6);
+  --report-form-field-input-text-color: #111;
+  --report-form-field-input-border-color: rgb(237, 237, 237);
+  --report-form-field-input-bg-color: rgb(250, 250, 250);
+  --report-form-help-text-color: rgba(17, 17, 17, 0.6);
 
-  --form-actions-bottom-border-top-color: rgba(31, 107, 255, 0.14);
+  --form-actions-bottom-border-top-color: rgb(238, 238, 238);
 
-  --media-author-banner-name-text-color: #15365f;
-  --media-author-banner-date-text-color: rgba(21, 54, 95, 0.62);
+  --media-author-banner-name-text-color: #0a0a0a;
+  --media-author-banner-date-text-color: rgba(17, 17, 17, 0.6);
 
-  --media-content-banner-border-color: rgba(31, 107, 255, 0.14);
+  --media-content-banner-border-color: #eee;
 
-  --share-embed-inner-on-right-border-color: rgba(31, 107, 255, 0.14);
-  --share-embed-inner-on-right-ttl-text-color: #15365f;
-  --share-embed-inner-on-right-icon-text-color: rgba(21, 54, 95, 0.42);
-  --share-embed-inner-textarea-text-color: rgba(21, 54, 95, 0.8);
-  --share-embed-inner-textarea-border-color: rgba(31, 107, 255, 0.16);
-  --share-embed-inner-textarea-bg-color: rgba(247, 251, 255, 0.9);
-  --share-embed-inner-embed-wrap-iconn-text-color: rgba(21, 54, 95, 0.42);
+  --share-embed-inner-on-right-border-color: rgb(238, 238, 238);
+  --share-embed-inner-on-right-ttl-text-color: #111;
+  --share-embed-inner-on-right-icon-text-color: rgba(17, 17, 17, 0.4);
+  --share-embed-inner-textarea-text-color: rgba(17, 17, 17, 0.8);
+  --share-embed-inner-textarea-border-color: rgb(237, 237, 237);
+  --share-embed-inner-textarea-bg-color: rgb(250, 250, 250);
+  --share-embed-inner-embed-wrap-iconn-text-color: rgba(17, 17, 17, 0.4);
 
-  --media-status-info-item-text-color: #15365f;
+  --media-status-info-item-text-color: #111;
 
-  --viewer-sidebar-auto-play-border-bottom-color: rgba(31, 107, 255, 0.14);
-  --viewer-sidebar-auto-play-next-label-text-color: #15365f;
-  --viewer-sidebar-auto-play-option-text-color: rgba(21, 54, 95, 0.66);
+  --viewer-sidebar-auto-play-border-bottom-color: rgba(0, 0, 0, 0.1);
+  --viewer-sidebar-auto-play-next-label-text-color: #0a0a0a;
+  --viewer-sidebar-auto-play-option-text-color: #606060;
 
   /* ################################################## */
 
-  --user-action-form-inner-bg-color: rgba(247, 251, 255, 0.96);
-  --user-action-form-inner-title-border-bottom-color: rgba(31, 107, 255, 0.14);
+  --user-action-form-inner-bg-color: #fff;
+  --user-action-form-inner-title-border-bottom-color: var(--sidebar-nav-border-color);
 
-  --user-action-form-inner-input-border-color: rgba(31, 107, 255, 0.18);
-  --user-action-form-inner-input-text-color: #15365f;
-  --user-action-form-inner-input-bg-color: rgba(255, 255, 255, 0.88);
+  --user-action-form-inner-input-border-color: #d3d3d3;
+  --user-action-form-inner-input-text-color: #000;
+  --user-action-form-inner-input-bg-color: #fff;
 }

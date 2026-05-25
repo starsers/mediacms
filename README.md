@@ -95,40 +95,6 @@ There are two ways to run MediaCMS, through Docker Compose and through installin
 
   A complete guide can be found on the blog post [How to self-host and share your videos in 2021](https://medium.com/@MediaCMS.io/how-to-self-host-and-share-your-videos-in-2021-14067e3b291b).
 
-### Local Docker commands
-
-Start the normal Docker stack:
-
-```bash
-docker compose up -d --build
-```
-
-Start the normal stack with full transcription/VideoCaptioner support:
-
-```bash
-docker compose -f docker-compose.yaml -f docker-compose.full.yaml up -d --build
-```
-
-Start the development stack:
-
-```bash
-docker compose -f docker-compose-dev.yaml up -d --build
-```
-
-Start the development stack with full transcription/VideoCaptioner support:
-
-```bash
-make dev-full-up
-```
-
-`make dev-full-up` builds the full development image first and then starts the services, which avoids concurrent Docker builds exporting the same `mediacms/mediacms-dev:full` image tag. Useful related targets:
-
-```bash
-make dev-full-build
-make dev-full-down
-make dev-full-logs
-```
-
 ## Documentation
 
 * [Users documentation](docs/user_docs.md) page

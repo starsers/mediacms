@@ -315,6 +315,8 @@ class Notification(models.Model):
     action = models.CharField(max_length=30, blank=True)
     notify = models.BooleanField(default=False)
     method = models.CharField(max_length=20, choices=NOTIFICATION_METHODS, default="email")
+    link = models.CharField(max_length=200, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     def save(self, *args, **kwargs):
         super(Notification, self).save(*args, **kwargs)

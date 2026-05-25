@@ -60,7 +60,9 @@ export function LazyLoadItemListAsync(props) {
 
   return !countedItems ? (
     <PendingItemsList className={classname.listOuter} />
-  ) : !items.length ? null : (
+  ) : !items.length ? (
+    props.emptyMessage ? <div className="items-list-empty-message">{props.emptyMessage}</div> : null
+  ) : (
     <div className={classname.listOuter}>
       {renderBeforeListWrap()}
 

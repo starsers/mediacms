@@ -7,13 +7,15 @@ import { NavigationMenuList } from '../../_shared';
 import { translateString } from '../../../utils/helpers/';
 
 export function SidebarNavigationMenu() {
-  const { userCan, isAnonymous, pages: userPages } = useUser();
+  const { userCan, isAnonymous, pages: userPages, is: userIs = {} } = useUser();
 
   const links = useContext(LinksContext);
   const sidebar = useContext(SidebarContext);
 
   const currentUrl = urlParse(window.location.href);
   const currentHostPath = (currentUrl.host + currentUrl.pathname).replace(/\/+$/, '');
+  const windowUserIs = window.MediaCMS && window.MediaCMS.user && window.MediaCMS.user.is ? window.MediaCMS.user.is : {};
+  const canSeeMembersNav = !isAnonymous && (userIs.admin || windowUserIs.admin);
 
   function formatItems(items) {
     return items.map((item) => {
@@ -61,7 +63,7 @@ export function SidebarNavigationMenu() {
     ) {
       items.push({
         link: links.recommended,
-        icon: 'assessment',
+        icon: 'done_outline',
         text: translateString("Recommended"),
         className: 'nav-item-recommended',
       });
@@ -70,7 +72,7 @@ export function SidebarNavigationMenu() {
     if (PageStore.get('config-enabled').pages.latest && PageStore.get('config-enabled').pages.latest.enabled) {
       items.push({
         link: links.latest,
-        icon: 'update',
+        icon: 'new_releases',
         text: translateString("Latest"),
         className: 'nav-item-latest',
       });
@@ -83,7 +85,7 @@ export function SidebarNavigationMenu() {
     ) {
       items.push({
         link: links.archive.tags,
-        icon: 'label',
+        icon: 'local_offer',
         text: translateString("Tags"),
         className: 'nav-item-tags',
       });
@@ -96,20 +98,29 @@ export function SidebarNavigationMenu() {
     ) {
       items.push({
         link: links.archive.categories,
-        icon: 'dashboard',
+        icon: 'list_alt',
         text: translateString("Categories"),
         className: 'nav-item-categories',
+      });
+    }
+
+    if (userCan.addMedia) {
+      items.push({
+        link: '/clip/',
+        icon: 'content_cut',
+        text: translateString('Online editing'),
+        className: 'nav-item-clip',
       });
     }
 
     if (
       PageStore.get('config-enabled').pages.members &&
       PageStore.get('config-enabled').pages.members.enabled &&
-      userCan.canSeeMembersPage
+      canSeeMembersNav
     ) {
       items.push({
         link: links.members,
-        icon: 'person',
+        icon: 'people',
         text: translateString("Members"),
         className: 'nav-item-members',
       });
@@ -136,7 +147,7 @@ export function SidebarNavigationMenu() {
       if (userCan.addMedia) {
         items.push({
           link: links.user.addMedia,
-          icon: 'edit',
+          icon: 'video_call',
           text: translateString("Upload"),
           className: 'nav-item-upload-media',
         });
@@ -144,7 +155,7 @@ export function SidebarNavigationMenu() {
         if (userPages.media) {
           items.push({
             link: userPages.media,
-            icon: 'folder',
+            icon: 'video_library',
             text: translateString("My media"),
             className: 'nav-item-my-media',
           });
@@ -159,6 +170,14 @@ export function SidebarNavigationMenu() {
           className: 'nav-item-my-playlists',
         });
       }
+
+      // Permissions Center — visible to all logged-in users
+      items.push({
+        link: '/permissions',
+        icon: 'admin_panel_settings',
+        text: '权限中心',
+        className: 'nav-item-permissions',
+      });
     }
 
     return items.length ? <NavigationMenuList key="main-second" items={formatItems(items)} /> : null;
@@ -197,7 +216,7 @@ export function SidebarNavigationMenu() {
 
     items.push({
       link: '/about',
-      icon: 'info',
+      icon: 'contact_support',
       text: translateString("About"),
       className: 'nav-item-about',
     });
@@ -211,7 +230,7 @@ export function SidebarNavigationMenu() {
 
     items.push({
       link: '/contact',
-      icon: 'mail',
+      icon: 'alternate_email',
       text: translateString("Contact"),
       className: 'nav-item-contact',
     });
@@ -232,7 +251,7 @@ export function SidebarNavigationMenu() {
     if (userCan.manageMedia) {
       items.push({
         link: links.manage.media,
-        icon: 'folder',
+        icon: 'miscellaneous_services',
         text: translateString("Manage media"),
         className: 'nav-item-manage-media',
       });
@@ -241,7 +260,7 @@ export function SidebarNavigationMenu() {
     if (userCan.manageUsers) {
       items.push({
         link: links.manage.users,
-        icon: 'person',
+        icon: 'miscellaneous_services',
         text: translateString("Manage users"),
         className: 'nav-item-manage-users',
       });
@@ -250,7 +269,7 @@ export function SidebarNavigationMenu() {
     if (userCan.manageComments) {
       items.push({
         link: links.manage.comments,
-        icon: 'forum',
+        icon: 'miscellaneous_services',
         text: translateString("Manage comments"),
         className: 'nav-item-manage-comments',
       });
@@ -259,5 +278,5 @@ export function SidebarNavigationMenu() {
     return items.length ? <NavigationMenuList key="admin" items={formatItems(items)} /> : null;
   }
 
-  return [MainMenuFirstSection(), MainMenuSecondSection(), UserMenuSection(), CustomMenuSection(), AdminMenuSection()];
+  return [MainMenuFirstSection(), MainMenuSecondSection(), UserMenuSection(), AdminMenuSection()];
 }

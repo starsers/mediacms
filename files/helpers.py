@@ -133,9 +133,12 @@ def get_file_type(filename):
             file_type = "audio"
         elif "pdf" in kind.mime:
             file_type = "pdf"
-    else:
-        # TODO: do something for files not supported by filetype lib
-        pass
+    # 扩展名回落检测 — 支持文档类（filetype 库对 Office 文件识别不稳定）
+    if file_type is None:
+        ext = os.path.splitext(filename)[1].lower()
+        if ext in ('.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
+                    '.txt', '.md', '.csv', '.json', '.xml', '.log', '.rst'):
+            file_type = "document"
     return file_type
 
 

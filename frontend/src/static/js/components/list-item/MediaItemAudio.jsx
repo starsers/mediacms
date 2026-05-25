@@ -7,6 +7,12 @@ import { MediaPlaylistOptions } from '../media-playlist-options/MediaPlaylistOpt
 import { MediaItemDuration, MediaItemPlaylistIndex, itemClassname } from './includes/items/';
 import { MediaItem } from './MediaItem';
 
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
 export function MediaItemAudio(props) {
   const type = props.type;
   const isSelectMediaMode = inSelectMediaEmbedMode();
@@ -145,12 +151,42 @@ export function MediaItemAudio(props) {
             {titleComponent()}
             {metaComponents()}
             {descriptionComponent()}
+            {props.subtitle_matches && props.subtitle_matches.length > 0 && (
+              <div className="subtitle-matches">
+                {props.subtitle_matches.slice(0, 3).map((m, i) => (
+                  <a
+                    key={i}
+                    href={props.link + '&t=' + Math.floor(m.start)}
+                    className="subtitle-match"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="subtitle-time">{formatTime(m.start)}</span>
+                    <span className="subtitle-text">{m.text.length > 80 ? m.text.slice(0, 80) + '...' : m.text}</span>
+                  </a>
+                ))}
+              </div>
+            )}
           </UnderThumbWrapper>
         ) : (
           <UnderThumbWrapper title={props.title} link={props.link}>
             {titleComponent()}
             {metaComponents()}
             {descriptionComponent()}
+            {props.subtitle_matches && props.subtitle_matches.length > 0 && (
+              <div className="subtitle-matches">
+                {props.subtitle_matches.slice(0, 3).map((m, i) => (
+                  <a
+                    key={i}
+                    href={props.link + '&t=' + Math.floor(m.start)}
+                    className="subtitle-match"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="subtitle-time">{formatTime(m.start)}</span>
+                    <span className="subtitle-text">{m.text.length > 80 ? m.text.slice(0, 80) + '...' : m.text}</span>
+                  </a>
+                ))}
+              </div>
+            )}
           </UnderThumbWrapper>
         )}
 

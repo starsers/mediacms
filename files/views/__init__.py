@@ -11,9 +11,14 @@ from .media import MediaList  # noqa: F401
 from .media import MediaSearch  # noqa: F401
 from .media import media_share  # noqa: F401
 from .pages import about  # noqa: F401
+from .pages import notifications  # noqa: F401
+from .pages import approvals  # noqa: F401
+from .pages import permissions_center  # noqa: F401
 from .pages import add_subtitle  # noqa: F401
 from .pages import approval_required  # noqa: F401
 from .pages import categories  # noqa: F401
+from .pages import clip  # noqa: F401
+from .pages import clip_editor  # noqa: F401
 from .pages import contact  # noqa: F401
 from .pages import edit_chapters  # noqa: F401
 from .pages import edit_media  # noqa: F401

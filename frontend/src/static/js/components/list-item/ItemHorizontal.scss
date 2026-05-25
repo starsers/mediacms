@@ -41,7 +41,7 @@
     display: inline;
   }
 
-  .items-list-hor .item-views {
+  .items-list-hor .item-author + .item-views {
     &:before {
       content: '•';
       content: '\2022';
@@ -92,7 +92,8 @@
       }
     }
 
-    .item-meta > .item-views + .item-date:before {
+    .item-meta > .item-views + .item-date:before,
+    .item-meta > .item-author + .item-date:before {
       content: '•';
       content: '\2022';
       margin: 0 4px;
@@ -105,7 +106,8 @@
 }
 
 @media (min-width: 600px) {
-  .items-list-hor .item-date:before {
+  .items-list-hor .item-meta > .item-views + .item-date:before,
+  .items-list-hor .item-meta > .item-author + .item-date:before {
     content: '•';
     content: '\2022';
     margin: 0 4px;

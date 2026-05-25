@@ -78,6 +78,7 @@ class MediaSerializer(serializers.ModelSerializer):
             "featured",
             "user_featured",
             "size",
+            "is_important",
             # "category",
         )
 
@@ -194,18 +195,27 @@ class SingleMediaSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
             "add_subtitle_url",
             "allow_download",
             "slideshow_items",
+            "is_important",
+            "approval_status",
         )
 
 
 class MediaSearchSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     api_url = serializers.SerializerMethodField()
+    subtitle_matches = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
 
     def get_api_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url(api=True))
+
+    def get_subtitle_matches(self, obj):
+        query = self.context.get("search_query", "")
+        if not query or len(query) < 2:
+            return []
+        return obj.find_subtitle_matches(query) if hasattr(obj, 'find_subtitle_matches') else []
 
     class Meta:
         model = Media
@@ -224,6 +234,7 @@ class MediaSearchSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
             "media_type",
             "preview_url",
             "categories_info",
+            "subtitle_matches",
         )
 
 

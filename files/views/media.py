@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -141,7 +142,9 @@ class MediaList(APIView):
             else:
                 ordering = "-"
 
-        if media_type not in ["video", "image", "audio", "pdf"]:
+        if media_type and "," in media_type:
+            media_types = [t.strip() for t in media_type.split(",") if t.strip() in ["video", "image", "audio", "pdf"]]
+        elif media_type not in ["video", "image", "audio", "pdf"]:
             media_type = None
 
         gte = None
@@ -234,7 +237,10 @@ class MediaList(APIView):
             media = media.filter(tags__title=tag)
 
         if media_type:
-            media = media.filter(media_type=media_type)
+            if isinstance(media_types, list) and media_types:
+                media = media.filter(media_type__in=media_types)
+            else:
+                media = media.filter(media_type=media_type)
 
         if upload_date and gte:
             media = media.filter(add_date__gte=gte)
@@ -964,16 +970,22 @@ class MediaDetail(APIView):
         if not (request.user.has_contributor_access_to_media(media) or is_mediacms_editor(request.user)):
             return Response({"detail": "not allowed"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Only editors can mark media as important
+        if not is_mediacms_editor(request.user) and 'is_important' in request.data:
+            request.data._mutable = True
+            request.data.pop('is_important')
+            request.data._mutable = False
+
         serializer = MediaSerializer(media, data=request.data, context={"request": request})
         if serializer.is_valid():
-            # if request.data.get('media_file'):
-            #     media_file = request.data["media_file"]
-            #     media.state = helpers.get_default_state(request.user)
-            #     media.listable = False
-            #     serializer.save(user=request.user, media_file=media_file)
-            # else:
-            #     serializer.save(user=request.user)
+            was_important_before = media.is_important
             serializer.save(user=request.user)
+
+            # If newly marked important, notify all users
+            if not was_important_before and media.is_important:
+                from ..methods import notify_users
+                notify_users(friendly_token=friendly_token, action='important_media')
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1154,7 +1166,9 @@ class MediaSearch(APIView):
             else:
                 ordering = "-"
 
-        if media_type not in ["video", "image", "audio", "pdf"]:
+        if media_type and "," in media_type:
+            media_types = [t.strip() for t in media_type.split(",") if t.strip() in ["video", "image", "audio", "pdf"]]
+        elif media_type not in ["video", "image", "audio", "pdf"]:
             media_type = None
 
         if not (query or category or tag):
@@ -1179,6 +1193,7 @@ class MediaSearch(APIView):
 
         if query:
             # move this processing to a prepare_query function
+            original_query_str = params.get('q', '').strip()  # save before conversion
             query = helpers.clean_query(query)
             q_parts = [q_part.rstrip("y") for q_part in query.split() if q_part not in STOP_WORDS]
             if q_parts:
@@ -1187,8 +1202,54 @@ class MediaSearch(APIView):
                     query &= SearchQuery(part + ":*", search_type="raw")
             else:
                 query = None
+        else:
+            original_query_str = ""
         if query:
             media = media.filter(search=query)
+            # 中文回退：PG simple 分词器不认中文，兜底用 icontains 搜多个字段
+            if not media.exists() and original_query_str and len(original_query_str) >= 2:
+                from django.db.models import Q as _Q
+                media_fallback = Media.objects.filter(basic_query).distinct()
+                media_fallback = media_fallback.filter(
+                    _Q(title__icontains=original_query_str) |
+                    _Q(description__icontains=original_query_str) |
+                    _Q(transcript_text__icontains=original_query_str) |
+                    _Q(ai_summary__icontains=original_query_str)
+                )
+                if category:
+                    media_fallback = media_fallback.filter(category__title__contains=category)
+                if tag:
+                    media_fallback = media_fallback.filter(tags__title=tag)
+                if media_type:
+                    media_fallback = media_fallback.filter(media_type=media_type)
+                if author:
+                    media_fallback = media_fallback.filter(user__username=author)
+                try:
+                    if upload_date:
+                        media_fallback = media_fallback.filter(add_date__gte=gte)
+                except NameError:
+                    pass
+                if media_fallback.exists():
+                    media = media_fallback
+
+        # Vector semantic search: compute query embedding and add similarity score
+        _vector_ordered = False
+        if query:
+            _vector_query = params.get("q", "").strip()
+            if _vector_query and len(_vector_query) >= 2:
+                try:
+                    from files.ai_analysis import generate_embedding
+                    from pgvector.django import CosineDistance
+
+                    query_embedding = generate_embedding(_vector_query)
+                    if query_embedding:
+                        media = media.annotate(
+                            _vector_score=1.0 - CosineDistance("embedding", query_embedding)
+                        ).filter(embedding__isnull=False)
+                        media = media.order_by("-_vector_score")
+                        _vector_ordered = True
+                except Exception as e:
+                    logger.warning(f"Vector search skipped: {e}")
 
         if tag:
             media = media.filter(tags__title=tag)
@@ -1197,7 +1258,10 @@ class MediaSearch(APIView):
             media = media.filter(category__title__contains=category)
 
         if media_type:
-            media = media.filter(media_type=media_type)
+            if isinstance(media_types, list) and media_types:
+                media = media.filter(media_type__in=media_types)
+            else:
+                media = media.filter(media_type=media_type)
 
         if author:
             media = media.filter(user__username=author)
@@ -1218,7 +1282,8 @@ class MediaSearch(APIView):
             if gte:
                 media = media.filter(add_date__gte=gte)
 
-        media = media.order_by(f"{ordering}{sort_by}")
+        if not _vector_ordered:
+            media = media.order_by(f"{ordering}{sort_by}")
 
         if self.request.query_params.get("show", "").strip() == "titles":
             media = media.values("title")[:40]
@@ -1233,7 +1298,7 @@ class MediaSearch(APIView):
                 pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
             paginator = pagination_class()
             page = paginator.paginate_queryset(media, request)
-            serializer = MediaSearchSerializer(page, many=True, context={"request": request})
+            serializer = MediaSearchSerializer(page, many=True, context={"request": request, "search_query": original_query_str})
             return paginator.get_paginated_response(serializer.data)
 
 

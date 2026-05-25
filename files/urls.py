@@ -6,6 +6,11 @@ from django.urls import path, re_path
 
 from . import management_views, tinymce_handlers, views
 from .feeds import IndexRSSFeed, SearchRSSFeed
+from .views import approval as approval_views
+from .views import permissions as perm_views
+from .views import share as share_views
+from cms.range_serve import range_serve
+from .views.watermark import watermark_download
 
 friendly_token = r"(?P<friendly_token>[\w\-_]*)"
 
@@ -18,6 +23,11 @@ urlpatterns = [
     re_path(r"^edit_subtitle", views.edit_subtitle, name="edit_subtitle"),
     re_path(r"^categories$", views.categories, name="categories"),
     re_path(r"^contact$", views.contact, name="contact"),
+    re_path(r"^notifications$", views.notifications, name="notifications"),
+    re_path(r"^approvals$", views.approvals, name="approvals"),
+    re_path(r"^permissions$", views.permissions_center, name="permissions_center"),
+    re_path(r"^clip/?$", views.clip, name="clip"),
+    re_path(r"^clip/editor/$", views.clip_editor, name="clip_editor"),
     re_path(r"^publish", views.publish_media, name="publish_media"),
     re_path(r"^edit_chapters", views.edit_chapters, name="edit_chapters"),
     re_path(r"^replace_media", views.replace_media, name="replace_media"),
@@ -50,6 +60,7 @@ urlpatterns = [
     re_path(r"^tags", views.tags, name="tags"),
     re_path(r"^tos$", views.tos, name="terms_of_service"),
     re_path(r"^view", views.view_media, name="get_media"),
+    re_path(r"^add/?$", views.upload_media, name="add_media"),
     re_path(r"^upload", views.upload_media, name="upload_media"),
     # API VIEWS
     re_path(r"^api/v1/media/user/bulk_actions$", views.MediaBulkUserActions.as_view()),
@@ -109,9 +120,36 @@ urlpatterns = [
     re_path(r"^manage/comments$", views.manage_comments, name="manage_comments"),
     re_path(r"^manage/media$", views.manage_media, name="manage_media"),
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
+    # ===== Approval API =====
+    re_path(r"^api/v1/approval/submit/$", approval_views.submit_for_approval, name="api_approval_submit"),
+    re_path(r"^api/v1/approval/approve/$", approval_views.approve_media, name="api_approval_approve"),
+    re_path(r"^api/v1/approval/reject/$", approval_views.reject_media, name="api_approval_reject"),
+    re_path(r"^api/v1/approval/pending/$", approval_views.pending_approvals, name="api_approval_pending"),
+    re_path(rf"^api/v1/media/{friendly_token}/archive/$", approval_views.toggle_archive, name="api_archive"),
+    re_path(rf"^api/v1/media/{friendly_token}/transcribe/$", approval_views.trigger_transcribe, name="api_transcribe"),
+    re_path(rf"^api/v1/media/{friendly_token}/denoise/$", approval_views.trigger_denoise, name="api_denoise"),
+    # ===== Notification API =====
+    re_path(r"^api/v1/notifications/count/$", approval_views.notification_count, name="api_notification_count"),
+    re_path(r"^api/v1/notifications/list/$", approval_views.notification_list, name="api_notification_list"),
+    re_path(r"^api/v1/notifications/read/$", approval_views.notification_mark_read, name="api_notification_read"),
+    # ===== Permissions API =====
+    re_path(r"^api/v1/perm/request/$", perm_views.request_access, name="api_perm_request"),
+    re_path(r"^api/v1/perm/approve/$", perm_views.approve_access, name="api_perm_approve"),
+    re_path(r"^api/v1/perm/grant/$", perm_views.grant_permission, name="api_perm_grant"),
+    re_path(r"^api/v1/perm/pending/$", perm_views.pending_requests, name="api_perm_pending"),
+    re_path(r"^api/v1/perm/check/$", perm_views.check_permission, name="api_perm_check"),
+    re_path(r"^api/v1/perm/my/$", perm_views.my_permissions, name="api_perm_my"),
+    re_path(r"^api/v1/perm/history/$", perm_views.my_history, name="api_perm_history"),
+    re_path(r"^api/v1/perm/request_upload/$", perm_views.request_upload_access, name="api_perm_request_upload"),
+    # ===== Share API =====
+    re_path(r"^s/(?P<token>[\w\-]+)/$", share_views.ShareAccess.as_view(), name="shared_media"),
     # Media uploads in ADMIN created pages
     re_path(r"^tinymce/upload/", tinymce_handlers.upload_image, name="tinymce_upload_image"),
     re_path(r"^(?P<slug>[\w.-]*)$", views.get_page, name="get_page"),  # noqa: W605
+    # ===== Watermark Download =====
+    re_path(r'^media/(?P<path>.+\.(jpg|jpeg|png|gif|webp|bmp|tiff|tif|pdf))$', watermark_download, name='watermark_download'),
+    # Range-aware media serving for video/audio seeking (before static fallback)
+    re_path(r'^media/(?P<path>.+\.(mp4|webm|ogg|mov|avi|mkv|flv|wmv|m4v|mp3|wav|flac|aac|wma))$', range_serve, name='range_media'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 40" width="240" height="40">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e40af"/>
+      <stop offset="100%" stop-color="#1a56db"/>
+    </linearGradient>
+  </defs>
+  <!-- 图标: AI 方块 -->
+  <rect x="4" y="4" width="32" height="32" rx="6" fill="url(#bg)"/>
+  <text x="20" y="27" text-anchor="middle" fill="white" font-family="Inter,sans-serif" font-size="18" font-weight="700">AI</text>
+
+  <!-- 文字: WAIC -->
+  <text x="44" y="23" fill="#1e40af" font-family="Inter,system-ui,sans-serif" font-size="16" font-weight="700">WAIC</text>
+  <text x="44" y="37" fill="#475569" font-family="Inter,system-ui,sans-serif" font-size="9" font-weight="400">素材平台</text>
+</svg>

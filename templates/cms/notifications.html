@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block headtitle %}消息通知 - {{PORTAL_NAME}}{% endblock %}
+
+{% block content %}
+<style>
+.notif-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+.notif-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.notif-hero h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--waic-text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.btn-mark-read {
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid var(--waic-border);
+  background: #fff;
+  color: var(--waic-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-mark-read:hover {
+  border-color: var(--waic-blue);
+  color: var(--waic-blue);
+  background: #eff6ff;
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--waic-elevated);
+  border: 1px solid var(--waic-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--waic-shadow-sm);
+  margin-bottom: 8px;
+}
+.notif-item:hover {
+  border-color: var(--waic-blue-light);
+  background: #f8faff;
+  box-shadow: var(--waic-shadow-md);
+}
+.notif-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--waic-blue);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.notif-content {
+  flex: 1;
+  min-width: 0;
+}
+.notif-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--waic-text-primary);
+  margin-bottom: 2px;
+}
+.notif-action {
+  font-size: 12px;
+  color: var(--waic-text-muted);
+  margin-bottom: 2px;
+}
+.notif-time {
+  font-size: 11px;
+  color: var(--waic-text-muted);
+}
+.notif-arrow {
+  color: var(--waic-text-muted);
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--waic-text-muted);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state p { font-size: 14px; margin: 0; }
+</style>
+
+<div class="notif-page">
+  <div class="notif-hero">
+    <h1>📬 消息通知</h1>
+    <button class="btn-mark-read" onclick="markAllRead()" id="btn-read">全部已读</button>
+  </div>
+
+  <div class="notif-list" id="notif-list">
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <p>加载中…</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block bottomimports %}
+<script>
+var ACTION_ICONS = {
+  'access_requested': '👤',
+  'access_approved': '✅',
+  'access_rejected': '❌',
+  'media_submitted_for_approval': '📤',
+  'media_approved': '✅',
+  'media_rejected': '❌',
+  'important_media': '⭐',
+};
+
+function loadNotifications() {
+  fetch('/api/v1/notifications/list/')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var el = document.getElementById('notif-list');
+      var results = d.results || [];
+
+      if (results.length === 0) {
+        el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无未读通知</p></div>';
+        document.getElementById('btn-read').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('btn-read').style.display = '';
+      var html = '';
+      results.forEach(function(n) {
+        var icon = ACTION_ICONS[n.action] || '📌';
+        var timeStr = n.created_at ? new Date(n.created_at).toLocaleString('zh-CN', {
+          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : '';
+        var link = n.link || '#';
+        html += '<a href="' + link + '" class="notif-item">' +
+          '<div class="notif-dot"></div>' +
+          '<div class="notif-content">' +
+            '<div class="notif-label">' + icon + ' ' + escHtml(n.label) + '</div>' +
+            '<div class="notif-time">' + timeStr + '</div>' +
+          '</div>' +
+          '<span class="notif-arrow">→</span>' +
+          '</a>';
+      });
+      el.innerHTML = html;
+    })
+    .catch(function() {
+      document.getElementById('notif-list').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p style="color:var(--waic-danger);">加载失败，请刷新重试</p></div>';
+    });
+}
+
+function markAllRead() {
+  var btn = document.getElementById('btn-read');
+  btn.textContent = '标记中…';
+  btn.disabled = true;
+  fetch('/api/v1/notifications/read/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': getCSRF()}
+  })
+    .then(function(r) { return r.json(); })
+    .then(function() {
+      document.getElementById('notif-list').innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无未读通知</p></div>';
+      btn.style.display = 'none';
+    })
+    .catch(function() {
+      btn.textContent = '全部已读';
+      btn.disabled = false;
+    });
+}
+
+function getCSRF() {
+  var c = document.cookie.split(';').map(function(s) { return s.trim(); });
+  var csrf = c.find(function(s) { return s.startsWith('csrftoken='); });
+  return csrf ? csrf.split('=')[1] : '';
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', loadNotifications);
+</script>
+{% endblock %}

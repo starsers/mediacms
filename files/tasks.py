@@ -50,9 +50,8 @@ from .models import (
     Media,
     Rating,
     Subtitle,
-    TranscriptionRequest,
-    VideoCaptionerRequest,
     Tag,
+    TranscriptionRequest,
     VideoTrimRequest,
 )
 
@@ -497,7 +496,7 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
         subtitle_name = f"{video_file_path}.vtt"
         output_name = f"{tmpdirname}/{subtitle_name}"
 
-        cmd = f"whisper /home/mediacms.io/mediacms/media_files/{media.media_file.name} --model {settings.WHISPER_MODEL} --output_dir {tmpdirname}"
+        cmd = f"{settings.WHISPER_BIN} {media.media_file.path} --model {settings.WHISPER_MODEL} --output_dir {tmpdirname}"
         if translate_to_english:
             cmd += " --task translate"
 
@@ -514,6 +513,26 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
             with open(output_name, 'rb') as f:
                 subtitle.subtitle_file.save(subtitle_name, File(f))
 
+            # 同步字幕纯文本到 Media.transcript_text（用于搜索命中）
+            with open(output_name, 'r', encoding='utf-8') as f:
+                lines = f.read().split('\n')
+            texts = []
+            for line in lines:
+                line = line.strip()
+                if not line or line == 'WEBVTT' or '-->' in line:
+                    continue
+                # 跳过 VTT 序号行（纯数字）
+                if line.isdigit():
+                    continue
+                texts.append(line)
+            subtitle_text = '\n'.join(texts)
+            media.transcript_text = subtitle_text
+            media.save(update_fields=['transcript_text'])
+            # 更新 Subtitle.subtitle_text 及 PG 全文索引
+            subtitle.subtitle_text = subtitle_text
+            subtitle.save(update_fields=['subtitle_text'])
+            media.update_search_vector()
+
             request.status = "success"
             request.logs = f"Transcription took {duration:.2f} seconds."  # noqa
             request.save(update_fields=["status", "logs"])
@@ -526,70 +545,108 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
         return False
 
 
-@task(name="video_captioner_transcribe", queue="long_tasks", soft_time_limit=60 * 60 * 2)
-def video_captioner_transcribe(request_id):
-    request = VideoCaptionerRequest.objects.select_related("media", "language").filter(id=request_id, status="pending").first()
-    if not request:
-        logger.info(f"No pending VideoCaptioner request {request_id}")
+@task(name="transcribe_media", queue="long_tasks", soft_time_limit=60 * 60 * 2)
+def transcribe_media(friendly_token):
+    """DashScope Paraformer speech-to-text transcription.
+    Called from trigger_transcribe API endpoint.
+    Creates subtitle tracks attached to the media."""
+    import time as _time
+    from files.models import Media, Subtitle, Language, TranscriptionRequest
+
+    _start = _time.time()
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except Media.DoesNotExist:
         return False
 
-    media = request.media
-    request.status = "running"
-    request.save(update_fields=["status"])
+    # Create or update transcription request
+    request, _ = TranscriptionRequest.objects.get_or_create(
+        media=media, defaults={'status': 'running'}
+    )
+    request.status = 'running'
+    request.save(update_fields=['status'])
 
-    with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as tmpdirname:
-        output_dir = os.path.join(tmpdirname, "out")
-        os.makedirs(output_dir, exist_ok=True)
+    try:
+        # Use the AI pipeline for transcription
+        from files.ai_pipeline import analyze_audio, analyze_video
 
-        cmd = [
-            getattr(settings, "VIDEOCAPTIONER_COMMAND", "videocaptioner"),
-            "transcribe",
-            media.media_file.path,
-            "--asr",
-            request.asr,
-            "--language",
-            request.source_language,
-            "-o",
-            output_dir,
-            "--format",
-            "srt",
-        ]
-
-        logger.info(f"VideoCaptioner transcribe: ready to run command {' '.join(cmd)}")
-        start_time = datetime.now()
-        try:
-            ret = run_command(cmd, cwd=os.path.dirname(os.path.realpath(media.media_file.path)))
-        except Exception as e:
-            request.status = "fail"
-            request.logs = f"VideoCaptioner command failed: {e}"
-            request.save(update_fields=["status", "logs"])
+        if media.media_type == 'video':
+            analyze_video(media)
+        elif media.media_type == 'audio':
+            analyze_audio(media)
+        else:
+            request.status = 'fail'
+            request.logs = 'Unsupported media type for transcription'
+            request.save(update_fields=['status', 'logs'])
             return False
-        end_time = datetime.now()
-        duration = (end_time - start_time).total_seconds()
 
-        subtitle_name = f"{get_file_name(media.media_file.name).rsplit('.', 1)[0]}.srt"
-        output_name = os.path.join(output_dir, subtitle_name)
+        duration = _time.time() - _start
+        request.status = 'success'
+        request.logs = f'Transcription completed in {duration:.1f}s'
+        request.save(update_fields=['status', 'logs'])
+        return True
 
-        if os.path.exists(output_name):
-            subtitle = Subtitle.objects.create(media=media, user=media.user, language=request.language)
-            try:
-                with open(output_name, "rb") as f:
-                    subtitle.subtitle_file.save(subtitle_name, File(f))
-                subtitle.convert_to_srt()
-            except Exception as e:
-                subtitle.delete()
-                request.status = "fail"
-                request.logs = f"VideoCaptioner produced a subtitle that could not be imported: {e}"
-                request.save(update_fields=["status", "logs"])
-                return False
-            request.status = "success"
-            request.logs = f"VideoCaptioner transcription took {duration:.2f} seconds."
-            request.save(update_fields=["status", "logs"])
-            return True
+    except Exception as e:
+        duration = _time.time() - _start
+        request.status = 'fail'
+        request.logs = f'Transcription failed: {e}'
+        request.save(update_fields=['status', 'logs'])
+        return False
 
-        request.status = "fail"
-        request.logs = f"VideoCaptioner transcription failed after {duration:.2f} seconds. Error: {ret.get('error') or ret.get('out')}"
-        request.save(update_fields=["status", "logs"])
+
+@task(name="denoise_media", queue="long_tasks", soft_time_limit=60 * 60 * 2)
+def denoise_media(friendly_token):
+    """FFmpeg afftdn audio denoising.
+    Called from trigger_denoise API endpoint.
+    Creates a denoised copy and replaces the original media file."""
+    import subprocess as _sp
+    import time as _time
+    from files.models import Media
+
+    _start = _time.time()
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except Media.DoesNotExist:
+        return False
+
+    if media.media_type not in ('video', 'audio'):
+        return False
+
+    original_path = media.media_file.path
+    base, ext = os.path.splitext(original_path)
+    denoised_path = f'{base}_denoised{ext}'
+
+    try:
+        # FFmpeg afftdn filter for noise reduction
+        cmd = [
+            'ffmpeg', '-y', '-i', original_path,
+            '-af', 'afftdn=nr=10:nf=-25:tn=1',
+            '-c:v', 'copy' if media.media_type == 'video' else None,
+            '-c:a', 'aac' if media.media_type == 'video' else None,
+            denoised_path
+        ]
+        cmd = [c for c in cmd if c is not None]
+
+        result = _sp.run(cmd, capture_output=True, text=True, timeout=7200)
+        if result.returncode != 0:
+            if os.path.exists(denoised_path):
+                os.remove(denoised_path)
+            return False
+
+        # Replace original with denoised
+        with open(denoised_path, 'rb') as f:
+            media.media_file.save(os.path.basename(original_path), File(f), save=False)
+        media.save()
+        os.remove(denoised_path)
+
+        duration = _time.time() - _start
+        return True
+
+    except Exception:
+        if os.path.exists(denoised_path):
+            os.remove(denoised_path)
         return False
 
 
@@ -1162,6 +1219,41 @@ def video_trim_task(self, trim_request_id):
         trim_request.save(update_fields=["status"])
 
     return True
+
+
+@task(name="ai_analyze_media", queue="long_tasks", soft_time_limit=60 * 60 * 2)
+def ai_analyze_media(friendly_token):
+    """AI-powered media analysis: document/image/audio/video.
+    Automatically triggered after media_init completes.
+    Routes to correct analyzer based on media_type.
+    """
+    from files.models import Media
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except Media.DoesNotExist:
+        logger.warning("ai_analyze_media: media not found %s", friendly_token)
+        return False
+
+    from files.ai_analysis import analyze_media
+    return analyze_media(media)
+
+
+@task(name="embed_media", queue="long_tasks", soft_time_limit=60 * 5)
+def embed_media(friendly_token):
+    """Generate text embedding for semantic vector search.
+    Called after ai_analyze_media completes successfully.
+    """
+    from files.models import Media
+    from files.ai_analysis import embed_media as do_embed
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except Media.DoesNotExist:
+        logger.warning("embed_media: media not found %s", friendly_token)
+        return False
+
+    return do_embed(media)
 
 
 # TODO LIST

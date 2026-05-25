@@ -298,7 +298,7 @@ export function SearchField(props) {
                 ref={searchInputRef}
                 type="text"
                 placeholder={translateString("Search")}
-                aria-label="Search"
+                aria-label={translateString("Search")}
                 name="q"
                 value={queryVal}
                 onChange={onQueryChange}
@@ -312,7 +312,7 @@ export function SearchField(props) {
                 </PopupMain>
               </PopupContent>
             </div>
-            <button type="submit" aria-label="Search">
+            <button type="submit" aria-label={translateString("Search")}>
               <MaterialIcon type="search" />
             </button>
           </div>

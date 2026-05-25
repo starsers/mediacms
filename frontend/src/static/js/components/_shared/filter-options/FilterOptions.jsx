@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { translateString } from '../../../utils/helpers/';
 import { MaterialIcon } from '../material-icon/MaterialIcon.jsx';
 
 export function FilterOptions(props) {
@@ -8,7 +9,7 @@ export function FilterOptions(props) {
     return (
       <div key={filter.id} className={filter.id === props.selected ? 'active' : ''}>
         <button onClick={props.onSelect} filter={props.id} value={filter.id}>
-          <span>{filter.title}</span>
+          <span>{translateString(filter.title)}</span>
           {filter.id === props.selected ? <MaterialIcon type="close" /> : null}
         </button>
       </div>

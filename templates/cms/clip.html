@@ -1,0 +1,396 @@
+{% extends "root.html" %}
+{% load static %}
+
+{% block headtitle %}WAIC 视频编辑器{% endblock %}
+
+{% block headermeta %}
+<meta property="og:title" content="WAIC 视频编辑器">
+<meta property="og:type" content="website">
+{% endblock %}
+
+{% block beforecontent %}{% endblock %}
+{% block aftercontent %}{% endblock %}
+
+{% block content %}
+<div id="clip-app" style="display:flex;height:calc(100vh - 40px);margin:0;background:#0f1117;">
+    <!-- 左侧素材库 -->
+    <div id="clip-sidebar" style="width:280px;min-width:280px;background:#1a1d27;border-right:1px solid #2a2d37;display:flex;flex-direction:column;overflow:hidden;position:relative;transition:width 0.2s ease,min-width 0.2s ease;">
+        <button type="button" id="clip-sidebar-toggle" aria-expanded="true" aria-label="收起素材库">‹</button>
+        <div class="clip-sidebar-panel" style="padding:16px 44px 16px 16px;border-bottom:1px solid #2a2d37;">
+            <h2 style="margin:0;font-size:16px;color:#e2e4e9;">📁 我的素材</h2>
+            <input type="text" id="clip-search" placeholder="搜索素材..."
+                style="width:100%;margin-top:10px;padding:6px 10px;background:#252836;border:1px solid #383c4a;border-radius:6px;color:#e2e4e9;font-size:13px;outline:none;box-sizing:border-box;">
+        </div>
+        <div id="clip-media-list" class="clip-sidebar-panel" style="flex:1;overflow-y:auto;padding:8px;">
+            <div style="text-align:center;color:#6b7280;padding:20px;font-size:13px;">加载中...</div>
+        </div>
+        <div class="clip-sidebar-panel" style="padding:12px;border-top:1px solid #2a2d37;">
+            <button id="clip-upload-btn" onclick="document.getElementById('clip-file-input').click()"
+                style="width:100%;padding:8px;background:#1a56db;border:none;border-radius:6px;color:#fff;font-size:13px;cursor:pointer;">
+                ⬆ 上传到素材库
+            </button>
+            <input type="file" id="clip-file-input" style="display:none;" multiple
+                accept="video/*,audio/*,image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.csv,.json">
+        </div>
+    </div>
+
+    <!-- 右侧编辑器 -->
+    <div style="flex:1;display:flex;flex-direction:column;">
+        <div style="padding:8px 16px;background:#1a1d27;border-bottom:1px solid #2a2d37;display:flex;align-items:center;justify-content:space-between;">
+            <span style="color:#e2e4e9;font-size:14px;">✂️ <strong>视频编辑器</strong></span>
+            <span style="color:#6b7280;font-size:12px;">素材拖入编辑器即可开始剪辑</span>
+        </div>
+        <iframe id="clip-editor" src="/clip/editor/" 
+            style="flex:1;width:100%;border:none;"
+            allow="autoplay;camera;microphone">
+        </iframe>
+    </div>
+</div>
+
+<!-- 上传进度 Toast -->
+<div id="clip-toast" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a56db;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>
+{% endblock %}
+
+{% block bottomimports %}
+<script>
+// ===== 素材库 API =====
+const API_BASE = '/api/v1';
+let mediaCache = [];
+
+function showToast(msg, duration=3000) {
+    const t = document.getElementById('clip-toast');
+    t.textContent = msg; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', duration);
+}
+
+async function loadMedia(search = '') {
+    const list = document.getElementById('clip-media-list');
+    list.innerHTML = '<div style="text-align:center;color:#6b7280;padding:20px;font-size:13px;">加载中...</div>';
+    try {
+        const url = search 
+            ? `${API_BASE}/search?q=${encodeURIComponent(search)}&limit=50`
+            : `${API_BASE}/media?limit=50&media_type=video,audio`;
+        const resp = await fetch(url, {credentials:'same-origin'});
+        const data = await resp.json();
+        mediaCache = (data.results || data || []).filter(m => 
+            m.media_type === 'video' || m.media_type === 'audio'
+        );
+        renderMediaList(mediaCache);
+    } catch(e) {
+        list.innerHTML = '<div style="text-align:center;color:#ef4444;padding:20px;font-size:13px;">加载失败</div>';
+    }
+}
+
+function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+}
+
+function safeMediaUrl(url) {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url, window.location.origin);
+        return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '';
+    } catch(e) {
+        return '';
+    }
+}
+
+function renderMediaList(items) {
+    const list = document.getElementById('clip-media-list');
+    if (!items.length) {
+        list.innerHTML = '<div style="text-align:center;color:#6b7280;padding:20px;font-size:13px;">暂无素材</div>';
+        return;
+    }
+    list.innerHTML = items.map(m => {
+        const title = m.title || m.friendly_token || '未命名';
+        const url = safeMediaUrl(m.media_file_url || m.url || '');
+        const typeIcon = {video:'🎬',audio:'🎵',image:'🖼️',pdf:'📄',document:'📝',text:'📃',spreadsheet:'📊',presentation:'📽️'}[m.media_type] || '📁';
+        return `
+        <div style="margin-bottom:8px;background:#252836;border-radius:8px;overflow:hidden;border:1px solid #2a2d37;">
+            <div style="padding:8px 10px;display:flex;align-items:center;gap:8px;">
+                <span style="font-size:18px;">${typeIcon}</span>
+                <div style="flex:1;min-width:0;">
+                    <div style="color:#e2e4e9;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(title)}">${escapeHtml(title)}</div>
+                    <div style="color:#6b7280;font-size:11px;">${escapeHtml(m.media_type || '')} ${escapeHtml(m.size || '')}</div>
+                </div>
+            </div>
+            <div style="display:flex;border-top:1px solid #2a2d37;">
+                <button type="button" data-clip-action="edit" data-url="${escapeHtml(url)}" data-title="${escapeHtml(title)}" data-type="${escapeHtml(m.media_type || '')}"
+                    style="flex:1;padding:5px;background:none;border:none;color:#f59e0b;font-size:12px;cursor:pointer;border-right:1px solid #2a2d37;">📤 编辑</button>
+                <button type="button" data-clip-action="preview" data-url="${escapeHtml(url)}"
+                    style="flex:1;padding:5px;background:none;border:none;color:#60a5fa;font-size:12px;cursor:pointer;border-right:1px solid #2a2d37;">👁 预览</button>
+                <button type="button" data-clip-action="download" data-url="${escapeHtml(url)}" data-title="${escapeHtml(title)}"
+                    style="flex:1;padding:5px;background:none;border:none;color:#34d399;font-size:12px;cursor:pointer;">⬇ 下载</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function previewMedia(url) {
+    const safeUrl = safeMediaUrl(url);
+    if (!safeUrl) return showToast('该素材暂不支持预览');
+    window.open(safeUrl, '_blank', 'noopener');
+}
+
+function downloadMedia(url, title) {
+    const safeUrl = safeMediaUrl(url);
+    if (!safeUrl) return showToast('无法下载');
+    const a = document.createElement('a');
+    a.href = safeUrl;
+    a.download = title || 'media';
+    a.rel = 'noreferrer';
+    a.click();
+    showToast('已开始下载，完成后拖入编辑器');
+}
+
+document.getElementById('clip-media-list').addEventListener('click', function(ev) {
+    const button = ev.target.closest('button[data-clip-action]');
+    if (!button) return;
+
+    if (button.dataset.clipAction === 'edit') {
+        sendToEditor(button.dataset.url, button.dataset.title, button.dataset.type);
+    } else if (button.dataset.clipAction === 'preview') {
+        previewMedia(button.dataset.url);
+    } else if (button.dataset.clipAction === 'download') {
+        downloadMedia(button.dataset.url, button.dataset.title);
+    }
+});
+
+// ===== 发送素材到编辑器 =====
+async function sendToEditor(url, title, type) {
+    const iframe = document.getElementById('clip-editor');
+    if (!iframe || !iframe.contentWindow) {
+        return showToast('编辑器未加载');
+    }
+
+    // Extract token from view URL or use api_url pattern
+    let apiUrl = url;
+    if (url.includes('/view?m=')) {
+        const token = url.split('view?m=')[1].split('&')[0];
+        apiUrl = API_BASE + '/media/' + token;
+    }
+
+    showToast('正在获取文件...');
+    try {
+        const resp = await fetch(apiUrl, {credentials:'same-origin'});
+        const data = await resp.json();
+        const fileUrl = data.original_media_url || '';
+        if (!fileUrl) return showToast('无法获取文件地址');
+
+        const win = iframe.contentWindow;
+        win.postMessage({
+            action: 'loadMedia',
+            url: fileUrl,
+            title: data.title || title,
+            type: type
+        }, '*');
+        showToast('已发送到编辑器');
+    } catch(e) {
+        showToast('获取文件失败');
+    }
+}
+
+// ===== 注入消息监听器到编辑器 iframe =====
+function injectEditorListener() {
+    const iframe = document.getElementById('clip-editor');
+    if (!iframe) return setTimeout(injectEditorListener, 200);
+
+    const script = `
+    (function() {
+        if (window.__mediaLoaderInjected) return;
+        window.__mediaLoaderInjected = true;
+
+        function dblclickEl(el) {
+            const rect = el.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const opts = { bubbles: true, cancelable: true, clientX: cx, clientY: cy };
+            el.dispatchEvent(new MouseEvent('mousedown', opts));
+            el.dispatchEvent(new MouseEvent('mouseup', opts));
+            el.dispatchEvent(new MouseEvent('click', opts));
+            el.dispatchEvent(new MouseEvent('mousedown', opts));
+            el.dispatchEvent(new MouseEvent('mouseup', opts));
+            el.dispatchEvent(new MouseEvent('click', opts));
+            el.dispatchEvent(new MouseEvent('dblclick', opts));
+        }
+
+        function hideLoading() {
+            document.querySelectorAll('h4').forEach(function(h) {
+                if (h.textContent.trim() === '加载中') h.style.display = 'none';
+            });
+        }
+
+        function waitForVideoThenHide() {
+            var attempts = 0;
+            var timer = setInterval(function() {
+                attempts++;
+                var video = document.querySelector('video');
+                if (video && video.readyState >= 2) {
+                    clearInterval(timer);
+                    hideLoading();
+                } else if (attempts > 30) {
+                    clearInterval(timer);
+                    hideLoading();
+                }
+            }, 200);
+        }
+
+        window.addEventListener('message', async function(ev) {
+            if (!ev.data || ev.data.action !== 'loadMedia' || !ev.data.url) return;
+            var title = ev.data.title || 'media';
+            try {
+                var resp = await fetch(ev.data.url);
+                var blob = await resp.blob();
+                var ext = title.split('.').pop() || 'mp4';
+                var mimeMap = {mp4:'video/mp4',webm:'video/webm',mp3:'audio/mpeg',wav:'audio/wav',jpg:'image/jpeg',png:'image/png',gif:'image/gif',pdf:'application/pdf'};
+                var mime = mimeMap[ext] || blob.type || 'application/octet-stream';
+                var file = new File([blob], title, {type: mime});
+
+                // 1. Drop into editor
+                var dt = new DataTransfer();
+                dt.items.add(file);
+                var dropEv = new DragEvent('drop', {dataTransfer: dt, bubbles: true, cancelable: true});
+                document.dispatchEvent(dropEv);
+                var zones = document.querySelectorAll('[class*="drop"],[class*="upload"],[class*="drag"],[class*="import"]');
+                zones.forEach(function(z) { z.dispatchEvent(dropEv); });
+
+                // 2. 等编辑器处理完导入
+                await new Promise(function(r) { setTimeout(r, 600); });
+
+                // 3. 找对应素材卡片并双击加载到播放器
+                var items = document.querySelectorAll('.import-media-item');
+                var found = false;
+                for (var i = 0; i < items.length; i++) {
+                    var t = items[i].querySelector('.import-media-item-title');
+                    if (t && t.textContent.trim() === title) {
+                        dblclickEl(items[i]);
+                        found = true;
+                        // 4. 等 video 就绪后隐藏"加载中"
+                        waitForVideoThenHide();
+                        break;
+                    }
+                }
+                // 兜底：不支持的文件格式，编辑器不会创建素材卡片，2秒后强制隐藏
+                if (!found) {
+                    setTimeout(hideLoading, 2000);
+                }
+            } catch(e) {
+                console.warn('MediaLoader: failed', ev.data.url, e);
+                // 出错也隐藏加载中
+                setTimeout(hideLoading, 2000);
+            }
+        });
+    })();
+    `;
+
+    try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        const s = doc.createElement('script');
+        s.textContent = script;
+        doc.head.appendChild(s);
+    } catch(e) {
+        // Retry on load
+        iframe.addEventListener('load', function() {
+            try {
+                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                const s = doc.createElement('script');
+                s.textContent = script;
+                doc.head.appendChild(s);
+            } catch(e2) {}
+        }, {once: true});
+    }
+}
+
+// 等 iframe 加载后注入
+document.getElementById('clip-editor').addEventListener('load', injectEditorListener, {once: true});
+// 备选：如果已经加载
+setTimeout(injectEditorListener, 1000);
+
+// ===== 上传素材到库 =====
+document.getElementById('clip-file-input').addEventListener('change', async function() {
+    const files = this.files;
+    if (!files.length) return;
+    showToast(`正在上传 ${files.length} 个文件...`, 0);
+
+    // Use FineUploader's endpoint
+    for (const file of files) {
+        const form = new FormData();
+        form.append('file', file);
+        form.append('title', file.name);
+        try {
+            await fetch('/fu/upload/raw/', {method:'POST',body:form,credentials:'same-origin'});
+        } catch(e) {}
+    }
+    showToast('上传完成!');
+    this.value = '';
+    setTimeout(loadMedia, 2000);
+});
+
+// ===== 搜索 =====
+let searchTimer;
+document.getElementById('clip-search').addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => loadMedia(this.value), 300);
+});
+
+// ===== 侧边栏折叠 =====
+const clipSidebar = document.getElementById('clip-sidebar');
+const clipSidebarToggle = document.getElementById('clip-sidebar-toggle');
+clipSidebarToggle.addEventListener('click', function() {
+    const isCollapsed = clipSidebar.classList.toggle('collapsed');
+    clipSidebarToggle.setAttribute('aria-expanded', String(!isCollapsed));
+    clipSidebarToggle.setAttribute('aria-label', isCollapsed ? '展开素材库' : '收起素材库');
+    clipSidebarToggle.textContent = isCollapsed ? '›' : '‹';
+});
+
+// ===== 初始化 =====
+loadMedia();
+</script>
+
+<style>
+/* 覆盖 base 样式使 clip 页面全屏 */
+body { margin: 0; padding: 0; overflow: hidden; }
+.page-main-wrap { margin: 0 !important; padding: 0 !important; }
+.page-main { margin: 0 !important; padding: 0 !important; }
+.page-main-inner { margin: 0 !important; padding: 0 !important; }
+
+/* 侧边栏折叠 */
+#clip-sidebar.collapsed {
+    width: 32px !important;
+    min-width: 32px !important;
+}
+#clip-sidebar-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 32px;
+    height: 100%;
+    border: 0;
+    border-left: 1px solid #2a2d37;
+    background: #1a1d27;
+    color: #e2e4e9;
+    cursor: pointer;
+    font-size: 20px;
+    z-index: 2;
+}
+#clip-sidebar-toggle:focus {
+    outline: 2px solid var(--waic-blue);
+    outline-offset: -2px;
+}
+#clip-sidebar.collapsed .clip-sidebar-panel {
+    display: none !important;
+}
+#clip-sidebar.collapsed #clip-sidebar-toggle {
+    border-left: 0;
+}
+
+/* 侧边栏滚动条 */
+#clip-media-list::-webkit-scrollbar { width: 4px; }
+#clip-media-list::-webkit-scrollbar-track { background: transparent; }
+#clip-media-list::-webkit-scrollbar-thumb { background: #383c4a; border-radius: 2px; }
+
+/* iframe 加载 */
+#clip-editor { background: #0f1117; }
+</style>
+
+{% endblock %}

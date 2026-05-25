@@ -12,7 +12,7 @@ import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags'
 import { ProfileMediaSharing } from '../components/search-filters/ProfileMediaSharing';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
 import { BulkActionsModals } from '../components/BulkActionsModals';
-import { inEmbeddedApp, inSelectMediaEmbedMode } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode, translateString } from '../utils/helpers';
 import { withBulkActions } from '../utils/hoc/withBulkActions';
 
 import { Page } from './_Page';
@@ -128,11 +128,11 @@ class ProfileSharedByMePage extends Page {
                     let title = '';
 
                     if (!count) {
-                        title = 'No results for "' + this.state.query + '"';
+                        title = translateString('No results for') + ' "' + this.state.query + '"';
                     } else if (1 === count) {
-                        title = '1 result for "' + this.state.query + '"';
+                        title = '1 ' + translateString('result for') + ' "' + this.state.query + '"';
                     } else {
-                        title = count + ' results for "' + this.state.query + '"';
+                        title = count + ' ' + translateString('results for') + ' "' + this.state.query + '"';
                     }
 
                     this.setState({

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { formatInnerLink, formatViewsNumber } from '../../utils/helpers/';
 import { MemberContext, PlaylistsContext, SiteContext } from '../../utils/contexts/';
-import { MediaLikeIcon, MediaDislikeIcon, OtherMediaDownloadLink, VideoMediaDownloadLink, MediaSaveButton, MediaShareButton, MediaMoreOptionsIcon } from '../media-actions/';
+import { MediaLikeIcon, MediaDislikeIcon, OtherMediaDownloadLink, VideoMediaDownloadLink, MediaSaveButton, MediaWaicActions, MediaShareButton, MediaMoreOptionsIcon } from '../media-actions/';
 
 function Tooltip(el) {
   const parent = document.body;
@@ -186,6 +186,8 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
                 MemberContext._currentValue.can.saveMedia ? (
                 <MediaSaveButton />
               ) : null}
+
+              {!MemberContext._currentValue.is.anonymous ? <MediaWaicActions /> : null}
 
               {!this.props.allowDownload || !MemberContext._currentValue.can.downloadMedia ? null : !this
                 .downloadLink ? (

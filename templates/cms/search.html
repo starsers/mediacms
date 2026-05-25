@@ -1,10 +1,61 @@
 {% extends "base.html" %}
 {% load static %}
+{% load i18n %}
+{% load custom_filters %}
 
 {% block content %}
-{% if user %}<div id="page-search"></div>{% endif %}
+{% get_current_language as LANGUAGE_CODE %}
+{% if user %}<div id="page-search"><div class="waic-search-loading">{{ "Loading search results..." | custom_translate:LANGUAGE_CODE }}</div></div>{% endif %}
 {% endblock %}
 
 {% block bottomimports %}
     <script src="{% static "js/search.js" %}?v={{ VERSION }}"></script>
+    <script>
+    (function() {
+      var _matches = {};
+      var _origFetch = window.fetch;
+      window.fetch = function(url, opts) {
+        return _origFetch.apply(this, arguments).then(function(resp) {
+          if (typeof url === 'string' && url.indexOf('/api/v1/search') !== -1) {
+            var clone = resp.clone();
+            clone.json().then(function(data) {
+              (data.results || []).forEach(function(r) {
+                if (r.subtitle_matches && r.subtitle_matches.length) {
+                  _matches[r.friendly_token] = r.subtitle_matches;
+                }
+              });
+              setTimeout(enhanceResults, 500);
+              setTimeout(enhanceResults, 1500);
+            });
+          }
+          return resp;
+        });
+      };
+
+      function enhanceResults() {
+        var links = document.querySelectorAll('a[href*="/view?m="]');
+        links.forEach(function(link) {
+          var m = new URL(link.href, location.origin).searchParams.get('m');
+          if (!m || !_matches[m]) return;
+          var card = link.closest('[class*="item"], [class*="result"], [class*="card"], li, div');
+          if (!card || card.querySelector('.waic-sub-hits')) return;
+
+          var wrap = document.createElement('div');
+          wrap.className = 'waic-sub-hits';
+          wrap.style.cssText = 'margin-top:4px;font-size:0.75rem;line-height:1.5;';
+          _matches[m].slice(0, 3).forEach(function(seg) {
+            var t = Math.floor(seg.start);
+            var mm = Math.floor(t / 60), ss = String(t % 60).padStart(2, '0');
+            var a = document.createElement('a');
+            a.href = '/view?m=' + m + '&t=' + t;
+            a.style.cssText = 'display:block;color:var(--waic-blue,#007bff);padding:1px 0;text-decoration:none;';
+            a.title = seg.text;
+            a.innerHTML = '⏱ ' + mm + ':' + ss + ' …' + seg.text.substring(0, 40) + (seg.text.length > 40 ? '…' : '');
+            wrap.appendChild(a);
+          });
+          card.appendChild(wrap);
+        });
+      }
+    })();
+    </script>
 {% endblock bottomimports %}

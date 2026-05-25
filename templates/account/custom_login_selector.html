@@ -1,5 +1,7 @@
 {% extends "base.html" %}
-{% block headtitle %} | Sign In{% endblock headtitle %}
+{% load i18n %}
+{% load custom_filters %}
+{% block headtitle %}{% get_current_language as LANGUAGE_CODE %} | {{ "Sign In" | custom_translate:LANGUAGE_CODE }}{% endblock headtitle %}
 
 {% block extra_head %}
 <style>
@@ -97,19 +99,20 @@
 {% endblock extra_head %}
 
 {% block innercontent %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="user-action-form-wrap">
   <div class="user-action-form-inner">
     <div class="login-container">
       <div class="login-header">
-        <h1>Sign In</h1>
-        <p>Please select your preferred login method</p>
+        <h1>{{ "Sign In" | custom_translate:LANGUAGE_CODE }}</h1>
+        <p>{{ "Please select your preferred login method" | custom_translate:LANGUAGE_CODE }}</p>
       </div>
 
       <form id="loginForm" method="post" action="">
         {% csrf_token %}
         <div class="login-select-container">
           <select id="loginOptionSelect" class="login-select" onchange="updateFormAction()">
-            <option value="" disabled selected>Select login method...</option>
+            <option value="" disabled selected>{{ "Select login method..." | custom_translate:LANGUAGE_CODE }}</option>
             {% for option in login_options %}
               <option value="{{ option.url }}">{{ option.title }}</option>
             {% endfor %}

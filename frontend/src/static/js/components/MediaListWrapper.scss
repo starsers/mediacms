@@ -65,6 +65,13 @@
 .media-list-header {
 }
 
+.waic-search-loading,
+.items-list-empty-message {
+  padding: 24px 0;
+  color: var(--body-secondary-text-color, var(--body-text-color));
+  font-size: 15px;
+}
+
 .media-list-row {
   position: relative;
   display: block;

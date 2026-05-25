@@ -117,10 +117,10 @@ SITE_ID = 1
 # PORTAL_LOGO_DARK_SVG = ""
 # PORTAL_LOGO_LIGHT_SVG = ""
 # place the files on static/images folder
-PORTAL_LOGO_DARK_SVG = "/static/images/logo_dark.svg"
-PORTAL_LOGO_DARK_PNG = "/static/images/logo_dark.png"
-PORTAL_LOGO_LIGHT_SVG = "/static/images/logo_light.svg"
-PORTAL_LOGO_LIGHT_PNG = "/static/images/logo_dark.png"
+PORTAL_LOGO_DARK_SVG = ""
+PORTAL_LOGO_DARK_PNG = "/static/images/waic-logo-original.png"
+PORTAL_LOGO_LIGHT_SVG = ""
+PORTAL_LOGO_LIGHT_PNG = "/static/images/waic-logo-original.png"
 
 # paths to extra css files to be included, eg "/static/css/custom.css"
 # place css inside static/css folder
@@ -581,26 +581,20 @@ NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 100
 FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
 
 # If 'all' is in the list, no check is performed
-ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf"]
+ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf", "document"]
 
 # transcription options
 # the mediacms-full docker image needs to be used in order to be able to use transcription
 # if you are using the mediacms-full image, change USE_WHISPER_TRANSCRIBE to True
-USE_WHISPER_TRANSCRIBE = False
+USE_WHISPER_TRANSCRIBE = True
 
 # by default all users can request a video to be transcribed. If you want to
 # allow only editors, set this to False
 USER_CAN_TRANSCRIBE_VIDEO = True
 
 # Whisper transcribe options - https://github.com/openai/whisper
-WHISPER_MODEL = "base"
-
-USE_VIDEOCAPTIONER_TRANSCRIBE = False
-VIDEOCAPTIONER_COMMAND = "videocaptioner"
-VIDEOCAPTIONER_ASR = "bijian"
-VIDEOCAPTIONER_LANGUAGE = "auto"
-VIDEOCAPTIONER_SUBTITLE_LANGUAGE_CODE = "zh-Hans"
-VIDEOCAPTIONER_SUBTITLE_LANGUAGE_TITLE = "简体中文"
+WHISPER_MODEL = "medium"
+WHISPER_BIN = os.path.join(BASE_DIR, "venv", "bin", "whisper")
 
 # show a custom text in the sidebar footer, otherwise the default will be shown if this is empty
 SIDEBAR_FOOTER_TEXT = ""

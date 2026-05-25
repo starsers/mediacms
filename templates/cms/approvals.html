@@ -1,0 +1,586 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}审批中心 - {{PORTAL_NAME}}{% endblock %}
+
+{% block content %}
+<style>
+/* ═══ WAIC 审批面板样式 ═══ */
+.appr-page {
+  max-width: none;
+  margin: 0 auto;
+  padding: 32px 40px 48px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.appr-hero {
+  margin-bottom: 28px;
+}
+.appr-hero h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--waic-text-primary);
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+.appr-hero p {
+  font-size: 14px;
+  color: var(--waic-text-secondary);
+  margin: 0;
+}
+
+/* ── 统计条 ── */
+.appr-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.appr-stat {
+  flex: 1;
+  background: var(--waic-elevated);
+  border: 1px solid var(--waic-border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  text-align: center;
+  box-shadow: var(--waic-shadow-sm);
+}
+.appr-stat .stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--waic-text-primary);
+  line-height: 1.2;
+}
+.appr-stat .stat-label {
+  font-size: 12px;
+  color: var(--waic-text-secondary);
+  margin-top: 4px;
+}
+.appr-stat.stat-pending .stat-num { color: #f59e0b; }
+.appr-stat.stat-approved .stat-num { color: #10b981; }
+.appr-stat.stat-rejected .stat-num { color: #ef4444; }
+
+/* ── 标签页切换 ── */
+.appr-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  background: var(--waic-surface);
+  border-radius: 12px;
+  padding: 4px;
+}
+.appr-tab {
+  flex: 1;
+  padding: 10px 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--waic-text-secondary);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+}
+.appr-tab:hover { color: var(--waic-text-primary); }
+.appr-tab.active {
+  background: #fff;
+  color: var(--waic-blue);
+  box-shadow: var(--waic-shadow-sm);
+}
+.appr-tab .tab-count {
+  font-size: 11px;
+  background: var(--waic-border);
+  color: var(--waic-text-secondary);
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+.appr-tab.active .tab-count {
+  background: var(--waic-blue-light);
+  color: var(--waic-blue);
+}
+
+/* ── 请求卡片 ── */
+.req-card {
+  background: var(--waic-elevated);
+  border: 1px solid var(--waic-border);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  box-shadow: var(--waic-shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.req-card:hover {
+  box-shadow: var(--waic-shadow-md);
+  border-color: var(--waic-border-hover);
+}
+
+.req-info {
+  flex: 1;
+  min-width: 0;
+}
+.req-user {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--waic-text-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.req-user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--waic-blue-light);
+  color: var(--waic-blue);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.req-detail {
+  font-size: 13px;
+  color: var(--waic-text-secondary);
+  line-height: 1.5;
+}
+.req-detail strong { color: var(--waic-text-primary); }
+.req-time {
+  font-size: 11px;
+  color: var(--waic-text-muted);
+  margin-top: 4px;
+}
+
+.req-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── 按钮 ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 9px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-approve {
+  background: #10b981;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(16,185,129,0.25), 0 2px 8px rgba(16,185,129,0.12);
+}
+.btn-approve:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(16,185,129,0.3), 0 4px 16px rgba(16,185,129,0.16);
+}
+.btn-reject {
+  background: #fff;
+  color: #ef4444;
+  border: 1.5px solid #fca5a5;
+}
+.btn-reject:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #ef4444;
+  transform: translateY(-1px);
+}
+.btn-reject-dlg {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* ── 驳回原因弹窗 ── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(15,23,42,0.4);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 420px;
+  max-width: 90vw;
+  box-shadow: var(--waic-shadow-lg);
+}
+.modal-box h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--waic-text-primary);
+  margin: 0 0 8px;
+}
+.modal-box p {
+  font-size: 13px;
+  color: var(--waic-text-secondary);
+  margin: 0 0 16px;
+}
+.modal-box textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--waic-border);
+  border-radius: 10px;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 60px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.modal-box textarea:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+}
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+/* ── 状态标签 ── */
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.tag-pending  { background: #fef3c7; color: #92400e; }
+.tag-approved { background: #d1fae5; color: #065f46; }
+.tag-rejected { background: #fee2e2; color: #991b1b; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1e293b;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: var(--waic-shadow-lg);
+  z-index: 10001;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.25s ease;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── 空状态 ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--waic-text-muted);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state p { font-size: 14px; margin: 0; }
+
+/* ── 通用 section 标题 ── */
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--waic-text-primary);
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+</style>
+
+<div class="appr-page">
+  <!-- Hero -->
+  <div class="appr-hero">
+    <h1>📋 审批中心</h1>
+    <p>管理权限申请和素材审批</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="appr-stats" id="appr-stats">
+    <div class="appr-stat stat-pending">
+      <div class="stat-num" id="stat-pending">-</div>
+      <div class="stat-label">待审批</div>
+    </div>
+    <div class="appr-stat stat-approved">
+      <div class="stat-num" id="stat-approved">-</div>
+      <div class="stat-label">已通过</div>
+    </div>
+    <div class="appr-stat stat-rejected">
+      <div class="stat-num" id="stat-rejected">-</div>
+      <div class="stat-label">已驳回</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="appr-tabs">
+    <button class="appr-tab active" onclick="switchTab('pending')">
+      待审批 <span class="tab-count" id="tab-pending">0</span>
+    </button>
+    <button class="appr-tab" onclick="switchTab('approved')">
+      已通过 <span class="tab-count" id="tab-approved">0</span>
+    </button>
+    <button class="appr-tab" onclick="switchTab('rejected')">
+      已驳回 <span class="tab-count" id="tab-rejected">0</span>
+    </button>
+  </div>
+
+  <!-- List -->
+  <div id="req-list">
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <p>加载中…</p>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal-box">
+    <h3>驳回申请</h3>
+    <p>请填写驳回原因（可选）：</p>
+    <textarea id="reject-reason" placeholder="例如：该素材暂不对外开放下载…"></textarea>
+    <div class="modal-actions">
+      <button class="btn" style="background:#f1f5f9;color:var(--waic-text-secondary);" onclick="closeReject()">取消</button>
+      <button class="btn btn-reject-dlg" onclick="confirmReject()">确认驳回</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+{% endblock %}
+
+{% block bottomimports %}
+<script>
+// ===== State =====
+var currentTab = 'pending';
+var allRequests = [];
+var rejectTargetId = null;
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', function() {
+  loadRequests();
+});
+
+// ===== API helpers =====
+function api(path, opts) {
+  opts = opts || {};
+  if (opts.body && typeof opts.body === 'object') {
+    opts.body = JSON.stringify(opts.body);
+    opts.headers = opts.headers || {};
+    opts.headers['Content-Type'] = 'application/json';
+  }
+  return fetch(path, opts).then(function(r) { return r.json(); });
+}
+
+function getCSRF() {
+  var c = document.cookie.split(';').map(function(s) { return s.trim(); });
+  var csrf = c.find(function(s) { return s.startsWith('csrftoken='); });
+  return csrf ? csrf.split('=')[1] : '';
+}
+
+// ===== Load =====
+function loadRequests() {
+  Promise.all([
+    api('/api/v1/perm/pending/').catch(function() { return {results:[]}; }),
+    // Also get history (last 30 items, any status)
+    fetch('/api/v1/perm/pending/').then(function(r){return r.json()}).catch(function(){return {results:[]};})
+  ]).then(function(results) {
+    var data = results[0];
+    allRequests = data.results || [];
+    // Count stats from all loaded
+    updateStats();
+    renderRequests();
+  });
+}
+
+function loadAllHistory() {
+  // For now, we load pending + render from allRequests
+  // In future: add dedicated history endpoint
+  api('/api/v1/perm/pending/').then(function(data) {
+    var pendingOnly = (data.results || []).filter(function(r) { return !r.status || r.status === 'pending'; });
+    allRequests = pendingOnly;
+    // Also try to get approved/rejected from same endpoint if available
+    updateStats();
+    renderRequests();
+  });
+}
+
+function updateStats() {
+  var pending = 0, approved = 0, rejected = 0;
+  allRequests.forEach(function(r) {
+    var s = r.status || 'pending';
+    if (s === 'pending') pending++;
+    else if (s === 'approved') approved++;
+    else rejected++;
+  });
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-approved').textContent = approved;
+  document.getElementById('stat-rejected').textContent = rejected;
+  document.getElementById('tab-pending').textContent = pending;
+  document.getElementById('tab-approved').textContent = approved;
+  document.getElementById('tab-rejected').textContent = rejected;
+}
+
+function renderRequests() {
+  var el = document.getElementById('req-list');
+  var filtered = allRequests.filter(function(r) {
+    var s = r.status || 'pending';
+    return s === currentTab;
+  });
+
+  if (filtered.length === 0) {
+    var msgs = {
+      pending: '暂无待审批的申请，做得不错 👍',
+      approved: '暂无已通过的申请',
+      rejected: '暂无已驳回的申请'
+    };
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">' +
+      (currentTab === 'pending' ? '✅' : currentTab === 'approved' ? '🎉' : '📭') +
+      '</div><p>' + (msgs[currentTab] || '暂无数据') + '</p></div>';
+    return;
+  }
+
+  var html = '';
+  filtered.forEach(function(r) {
+    var scopeDesc = '';
+    if (r.scope_type === 'media') scopeDesc = '素材: <strong>' + escHtml(r.media_title || '#' + r.media_id) + '</strong>';
+    else if (r.scope_type === 'category') scopeDesc = '分类: <strong>' + escHtml(r.category_name || '') + '</strong>';
+    else if (r.scope_type === 'tag') scopeDesc = '标签: <strong>' + escHtml(r.tag_name || '') + '</strong>';
+    else if (r.scope_type === 'upload') scopeDesc = '申请 <strong>上传权限</strong>（全局）';
+    else scopeDesc = '未知范围';
+
+    var userName = r.user || '未知用户';
+    var initial = userName.charAt(0).toUpperCase();
+    var timeStr = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN', {
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    }) : '';
+
+    var statusTag = '';
+    var s = r.status || 'pending';
+    if (s === 'pending') statusTag = '<span class="tag tag-pending">待审批</span>';
+    else if (s === 'approved') statusTag = '<span class="tag tag-approved">已通过</span>';
+    else statusTag = '<span class="tag tag-rejected">已驳回</span>';
+
+    var actionsHtml = '';
+    if (s === 'pending') {
+      actionsHtml = '<div class="req-actions">' +
+        '<button class="btn btn-approve" onclick="approveOne(' + r.id + ')">✓ 通过</button>' +
+        '<button class="btn btn-reject" onclick="openReject(' + r.id + ')">✗ 驳回</button>' +
+        '</div>';
+    }
+
+    html += '<div class="req-card">' +
+      '<div class="req-info">' +
+        '<div class="req-user">' +
+          '<div class="req-user-avatar">' + initial + '</div>' +
+          userName + ' ' + statusTag +
+        '</div>' +
+        '<div class="req-detail">' + scopeDesc + '</div>' +
+        '<div class="req-time">' + timeStr + '</div>' +
+      '</div>' +
+      actionsHtml +
+      '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.appr-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelector('.appr-tab[onclick*="' + tab + '"]').classList.add('active');
+  renderRequests();
+}
+
+// ===== Actions =====
+function approveOne(reqId) {
+  api('/api/v1/perm/approve/', {
+    method: 'POST',
+    body: { request_id: reqId, action: 'approve' },
+    headers: {'X-CSRFToken': getCSRF()}
+  }).then(function(data) {
+    if (data.ok) {
+      showToast('✅ 已通过');
+      // Optimistic update
+      allRequests.forEach(function(r) { if (r.id === reqId) r.status = 'approved'; });
+      updateStats();
+      renderRequests();
+    } else {
+      showToast('❌ 操作失败: ' + (data.error || ''));
+    }
+  }).catch(function() {
+    showToast('❌ 网络错误');
+  });
+}
+
+function openReject(reqId) {
+  rejectTargetId = reqId;
+  document.getElementById('reject-reason').value = '';
+  document.getElementById('reject-modal').classList.add('show');
+}
+
+function closeReject() {
+  rejectTargetId = null;
+  document.getElementById('reject-modal').classList.remove('show');
+}
+
+function confirmReject() {
+  if (!rejectTargetId) return;
+  var reason = document.getElementById('reject-reason').value.trim();
+  api('/api/v1/perm/approve/', {
+    method: 'POST',
+    body: { request_id: rejectTargetId, action: 'reject', reason: reason },
+    headers: {'X-CSRFToken': getCSRF()}
+  }).then(function(data) {
+    closeReject();
+    if (data.ok) {
+      showToast('已驳回 ✗');
+      allRequests.forEach(function(r) { if (r.id === rejectTargetId) r.status = 'rejected'; });
+      updateStats();
+      renderRequests();
+    } else {
+      showToast('❌ 操作失败: ' + (data.error || ''));
+    }
+  }).catch(function() {
+    closeReject();
+    showToast('❌ 网络错误');
+  });
+}
+
+// ===== Toast =====
+var toastTimer;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+{% endblock %}

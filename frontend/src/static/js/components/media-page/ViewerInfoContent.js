@@ -9,6 +9,89 @@ import CommentsList from '../comments/Comments';
 import { replaceString } from '../../utils/helpers/';
 import { translateString } from '../../utils/helpers/';
 
+function AiAnalyzingIndicator() {
+    const mediaData = MediaPageStore.get('media-data') || {};
+    const aiSummary = mediaData.ai_summary;
+
+    if (aiSummary) return null;
+
+    return React.createElement('div', { className: 'ai-analyzing-banner' },
+        React.createElement('span', { className: 'ai-analyzing-icon' }, '\u23F3'),
+        React.createElement('span', null, translateString('AI is analyzing, please wait...')),
+        React.createElement('button', {
+            type: 'button',
+            className: 'ai-analyzing-refresh',
+            onClick: function() { window.location.reload(); }
+        }, translateString('Refresh'))
+    );
+}
+
+function AiAnalysisPanel() {
+    const mediaData = MediaPageStore.get('media-data') || {};
+    const aiSummary = mediaData.ai_summary;
+    const aiMetadata = mediaData.ai_metadata || {};
+    const tagsInfo = mediaData.tags_info || [];
+    const mediaType = mediaData.media_type;
+
+    const [expanded, setExpanded] = useState(false);
+
+    if (!aiSummary) return null;
+
+    const aiTags = tagsInfo.filter(function(t) { return t.source === 'ai'; });
+
+    const fileMeta = aiMetadata.file_metadata;
+    const hasDocMeta = fileMeta && (fileMeta.page_count || fileMeta.author);
+    const imageObjects = aiMetadata.objects;
+    const hasImageMeta = imageObjects && imageObjects.length;
+    const dominantColors = aiMetadata.dominant_colors;
+
+    return React.createElement('div', { className: 'ai-analysis-panel' },
+        React.createElement('div', {
+            className: 'ai-analysis-header',
+            onClick: function() { setExpanded(!expanded); }
+        },
+            React.createElement('span', { className: 'ai-analysis-title' }, '\uD83E\uDD16 ' + translateString('AI Smart Analysis')),
+            React.createElement('span', { className: 'ai-analysis-toggle' }, expanded ? '\u25B2' : '\u25BC')
+        ),
+        expanded ? React.createElement('div', { className: 'ai-analysis-body' },
+            React.createElement('div', { className: 'ai-section' },
+                React.createElement('div', { className: 'ai-section-label' }, translateString('Summary')),
+                React.createElement('div', { className: 'ai-section-content' }, aiSummary)
+            ),
+            hasDocMeta ? React.createElement('div', { className: 'ai-section' },
+                React.createElement('div', { className: 'ai-section-label' }, '\uD83D\uDCC4 ' + translateString('Document Info')),
+                React.createElement('div', { className: 'ai-section-content' },
+                    fileMeta.page_count ? React.createElement('span', { className: 'ai-meta-item' }, translateString('Pages') + ': ' + fileMeta.page_count) : null,
+                    fileMeta.author ? React.createElement('span', { className: 'ai-meta-item' }, translateString('Author') + ': ' + fileMeta.author) : null
+                )
+            ) : null,
+            hasImageMeta ? React.createElement('div', { className: 'ai-section' },
+                React.createElement('div', { className: 'ai-section-label' }, '\uD83D\uDDBC\uFE0F ' + translateString('Image Info')),
+                React.createElement('div', { className: 'ai-section-content' },
+                    aiMetadata.scene_type ? React.createElement('span', { className: 'ai-meta-item' }, translateString('Scene') + ': ' + aiMetadata.scene_type) : null,
+                    hasImageMeta ? React.createElement('span', { className: 'ai-meta-item' }, translateString('Objects') + ': ' + imageObjects.join(', ')) : null,
+                    dominantColors && dominantColors.length ? React.createElement('span', { className: 'ai-meta-item' },
+                        translateString('Colors') + ': ',
+                        dominantColors.map(function(c, i) {
+                            return React.createElement('span', { key: i, className: 'ai-color-swatch', style: { backgroundColor: c } });
+                        })
+                    ) : null
+                )
+            ) : null,
+            aiTags.length ? React.createElement('div', { className: 'ai-section' },
+                React.createElement('div', { className: 'ai-section-label' }, '\uD83C\uDFF7\uFE0F ' + translateString('AI Tags')),
+                React.createElement('div', { className: 'ai-tags-list' },
+                    aiTags.map(function(tag, i) {
+                        return React.createElement('span', { key: i, className: 'tag-ai', title: translateString('Confidence') + ': ' + Math.round((tag.confidence || 0) * 100) + '%' },
+                            '\uD83E\uDD16 ' + tag.title + ' ' + React.createElement('small', null, Math.round((tag.confidence || 0) * 100) + '%')
+                        );
+                    })
+                )
+            ) : null
+        ) : null
+    );
+}
+
 function metafield(arr) {
     let i;
     let sep;
@@ -90,20 +173,6 @@ function EditMediaButton(props) {
     );
 }
 
-function EditCaptionsButton(props) {
-    let link = props.link;
-
-    if (link && inEmbeddedApp()) {
-        link += '&mode=lms_embed_mode';
-    }
-
-    return (
-        <a href={link} rel="nofollow" title={translateString('Captions')} className="edit-media-icon">
-            <i className="material-icons">closed_caption</i>
-        </a>
-    );
-}
-
 export default function ViewerInfoContent(props) {
     const { userCan } = useUser();
 
@@ -176,12 +245,34 @@ export default function ViewerInfoContent(props) {
         setIsContentVisible(!isContentVisible);
     }
 
+    function onTimestampClick(e) {
+        const target = e.target.closest('.video-timestamp');
+        if (!target) return;
+        e.preventDefault();
+        const seconds = parseFloat(target.getAttribute('data-timestamp'));
+        if (isNaN(seconds)) return;
+        // Try VideoJS player first, then native video element
+        const vjsEl = document.querySelector('.video-js');
+        if (vjsEl && vjsEl.player) {
+            vjsEl.player.currentTime(seconds);
+            vjsEl.player.play();
+        } else {
+            const video = document.querySelector('video');
+            if (video) {
+                video.currentTime = seconds;
+                video.play();
+            }
+        }
+    }
+
     useEffect(() => {
         MediaPageStore.on('media_delete', onMediaDelete);
         MediaPageStore.on('media_delete_fail', onMediaDeleteFail);
+        document.addEventListener('click', onTimestampClick);
         return () => {
             MediaPageStore.removeListener('media_delete', onMediaDelete);
             MediaPageStore.removeListener('media_delete_fail', onMediaDeleteFail);
+            document.removeEventListener('click', onTimestampClick);
         };
     }, []);
 
@@ -263,10 +354,6 @@ export default function ViewerInfoContent(props) {
                                 <EditMediaButton link={MediaPageStore.get('media-data').edit_url} />
                             ) : null}
 
-                            {userCan.editMedia && ['video', 'audio'].includes(MediaPageStore.get('media-type')) ? (
-                                <EditCaptionsButton link={MediaPageStore.get('media-edit-subtitle-url')} />
-                            ) : null}
-
                             {userCan.deleteMedia ? (
                                 <PopupTrigger contentRef={popupContentRef}>
                                     <button className="remove-media-icon" title={translateString('Delete media')}>
@@ -306,6 +393,9 @@ export default function ViewerInfoContent(props) {
                     ) : null}
                 </div>
             </div>
+
+            <AiAnalyzingIndicator />
+            <AiAnalysisPanel />
 
             <CommentsList />
         </div>

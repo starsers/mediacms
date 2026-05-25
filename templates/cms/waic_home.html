@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+/* ═══ WAIC Hero ═══ */
+.waic-hero {
+    background: linear-gradient(135deg, #0a1628 0%, #1a2744 40%, #007BFF 100%);
+    padding: 80px 0 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.waic-hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(0,123,255,0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 20%, rgba(0,200,255,0.1) 0%, transparent 40%);
+    animation: heroPulse 4s ease-in-out infinite alternate;
+}
+@keyframes heroPulse {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+.waic-hero h1 {
+    color: #fff;
+    font-size: 2.4rem;
+    font-weight: 700;
+    position: relative;
+    margin-bottom: 12px;
+}
+.waic-hero p {
+    color: rgba(255,255,255,0.75);
+    font-size: 1.1rem;
+    position: relative;
+    margin-bottom: 30px;
+}
+.waic-hero .hero-actions {
+    position: relative;
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+.waic-hero .btn-hero {
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.waic-hero .btn-hero-primary {
+    background: #007BFF;
+    color: #fff;
+}
+.waic-hero .btn-hero-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+.waic-hero .btn-hero-outline {
+    border: 2px solid rgba(255,255,255,0.4);
+    color: #fff;
+}
+.waic-hero .btn-hero-outline:hover {
+    border-color: #fff;
+    transform: translateY(-2px);
+}
+
+/* ═══ Stats Dashboard ═══ */
+.waic-stats {
+    max-width: 900px;
+    margin: -30px auto 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 0 20px;
+    position: relative;
+    z-index: 2;
+}
+.waic-stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px 20px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transition: transform 0.2s;
+}
+.waic-stat-card:hover { transform: translateY(-3px); }
+.waic-stat-card .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #007BFF;
+}
+.waic-stat-card .stat-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 4px;
+}
+
+/* ═══ Section Headers ═══ */
+.waic-section {
+    max-width: 1200px;
+    margin: 0 auto 40px;
+    padding: 0 24px;
+}
+.waic-section h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1a2744;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #007BFF;
+    display: inline-block;
+}
+
+/* ═══ Category Grid ═══ */
+.waic-categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+.waic-cat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    text-decoration: none;
+    color: #1a2744;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.waic-cat-card:hover {
+    border-color: #007BFF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,123,255,0.15);
+}
+.waic-cat-card .cat-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+.waic-cat-card .cat-title {
+    font-weight: 600;
+    font-size: 1rem;
+}
+.waic-cat-card .cat-count {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 4px;
+}
+
+/* ═══ Latest Media Grid ═══ */
+.waic-latest-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+.waic-media-card {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    transition: all 0.2s;
+    text-decoration: none;
+    color: inherit;
+}
+.waic-media-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,123,255,0.15);
+}
+.waic-media-card .media-thumb {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    background: #e9ecef;
+}
+.waic-media-card .media-info {
+    padding: 12px 14px;
+}
+.waic-media-card .media-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.waic-media-card .media-meta {
+    font-size: 0.75rem;
+    color: #999;
+}
+
+/* ═══ Tags Cloud ═══ */
+.waic-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.waic-tag {
+    background: #e8f0fe;
+    color: #007BFF;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.waic-tag:hover {
+    background: #007BFF;
+    color: #fff;
+}
+.waic-tag .tag-count {
+    opacity: 0.6;
+    font-size: 0.75rem;
+    margin-left: 4px;
+}
+
+/* ═══ Dark Theme ═══ */
+body.dark-theme .waic-hero { background: linear-gradient(135deg, #0a0a0a, #1a2744, #0056b3); }
+body.dark-theme .waic-stat-card,
+body.dark-theme .waic-cat-card,
+body.dark-theme .waic-media-card { background: #1e1e2e; color: #e0e0e0; }
+body.dark-theme .waic-tag { background: rgba(0,123,255,0.15); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ═══ Hero ═══ -->
+<section class="waic-hero">
+    <h1>{{ portal_name }}</h1>
+    <p>{{ portal_description }}</p>
+    <div class="hero-actions">
+        <a href="/add-media" class="btn-hero btn-hero-primary">📤 上传素材</a>
+        <a href="/search" class="btn-hero btn-hero-outline">🔍 浏览素材</a>
+    </div>
+</section>
+
+<!-- ═══ Stats ═══ -->
+<div class="waic-stats">
+    <div class="waic-stat-card">
+        <div class="stat-number">{{ total_media }}</div>
+        <div class="stat-label">📦 素材总数</div>
+    </div>
+    <div class="waic-stat-card">
+        <div class="stat-number">{{ today_media }}</div>
+        <div class="stat-label">🆕 今日新增</div>
+    </div>
+    <div class="waic-stat-card">
+        <div class="stat-number">{{ categories|length }}</div>
+        <div class="stat-label">📂 分类数量</div>
+    </div>
+</div>
+
+<!-- ═══ Categories ═══ -->
+<section class="waic-section">
+    <h2>📂 分类导航</h2>
+    <div class="waic-categories">
+        {% for cat in categories %}
+        <a href="/search?c={{ cat.title }}" class="waic-cat-card">
+            <div class="cat-icon">
+                {% if forloop.counter == 1 %}🎤{% elif forloop.counter == 2 %}👤
+                {% elif forloop.counter == 3 %}📢{% elif forloop.counter == 4 %}📄
+                {% else %}📋{% endif %}
+            </div>
+            <div class="cat-title">{{ cat.title }}</div>
+            <div class="cat-count">{{ cat.media_count }} 个素材</div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- ═══ Latest Uploads ═══ -->
+<section class="waic-section">
+    <h2>🆕 最新上传</h2>
+    <div class="waic-latest-grid">
+        {% for media in latest_media %}
+        <a href="/media/{{ media.friendly_token }}" class="waic-media-card">
+            {% if media.thumbnail_url %}
+            <img class="media-thumb" src="{{ media.thumbnail_url }}" alt="{{ media.title }}">
+            {% else %}
+            <div class="media-thumb" style="display:flex;align-items:center;justify-content:center;font-size:2rem;color:#ccc;">
+                {% if media.media_type == 'video' %}🎬{% elif media.media_type == 'image' %}🖼️
+                {% elif media.media_type == 'audio' %}🎵{% elif media.media_type == 'document' %}📄
+                {% elif media.media_type == 'pdf' %}📕{% else %}📁{% endif %}
+            </div>
+            {% endif %}
+            <div class="media-info">
+                <div class="media-title">{{ media.title }}</div>
+                <div class="media-meta">
+                    {{ media.user.username }} · {{ media.add_date|date:"m/d" }}
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div style="color:#999;grid-column:1/-1;text-align:center;padding:40px;">暂无素材，<a href="/add-media">上传第一个 →</a></div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- ═══ Popular Tags ═══ -->
+{% if popular_tags %}
+<section class="waic-section">
+    <h2>🏷️ 热门标签</h2>
+    <div class="waic-tags">
+        {% for tag in popular_tags %}
+        <a href="/search?t={{ tag.title }}" class="waic-tag">
+            {{ tag.title }}<span class="tag-count">{{ tag.media_count }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}

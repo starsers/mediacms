@@ -212,6 +212,67 @@ URL: %s
     for item in notify_items:
         email = EmailMessage(item["title"], item["msg"], settings.DEFAULT_FROM_EMAIL, item["to"])
         email.send(fail_silently=True)
+
+    # Create in-app Notification records for the bell badge
+    from users.models import Notification, User
+    if action == "important_media" and media:
+        # Notify ALL active users about important media
+        title = f"[{settings.PORTAL_NAME}] - 重要素材通知"
+        msg = f"""
+重要素材已发布：{media.title}
+发布者：{media.user.name or media.user.username}
+URL: {media_url}
+
+请登录平台查看。
+        """
+        for user in User.objects.filter(is_active=True):
+            Notification.objects.create(
+                user=user, action=action, notify=True, method="email"
+            )
+            try:
+                email = EmailMessage(title, msg, settings.DEFAULT_FROM_EMAIL, [user.email])
+                email.send(fail_silently=True)
+            except Exception:
+                pass
+
+    if action in ("media_submitted_for_approval", "media_approved", "media_rejected"):
+        # Determine recipients
+        if action == "media_submitted_for_approval":
+            # Notify all reviewers
+            reviewers = getattr(settings, 'APPROVAL_REVIEWER', 'admin')
+            reviewer_names = [reviewers] if isinstance(reviewers, str) else reviewers
+            for username in reviewer_names:
+                user = User.objects.filter(username=username).first()
+                if user:
+                    Notification.objects.create(user=user, action=action, notify=True, method="email")
+        else:
+            # Notify the media uploader (approval result)
+            if media and media.user:
+                Notification.objects.create(user=media.user, action=action, notify=True, method="email")
+
+    if action == "access_requested":
+        # extra = "username|scope_type|scope_desc"
+        # Notify all admins / configured reviewers
+        reviewers = getattr(settings, 'APPROVAL_REVIEWER', 'admin')
+        reviewer_names = [reviewers] if isinstance(reviewers, str) else reviewers
+        for username in reviewer_names:
+            user = User.objects.filter(username=username).first()
+            if user:
+                Notification.objects.create(
+                    user=user, action=action, notify=True, method="email",
+                    link="/approvals"
+                )
+
+    if action in ("access_approved", "access_rejected"):
+        # extra = "username" — the user who requested
+        if extra:
+            target_user = User.objects.filter(username=extra).first()
+            if target_user:
+                Notification.objects.create(
+                    user=target_user, action=action, notify=True, method="email",
+                    link="/permissions"
+                )
+
     return True
 
 
@@ -437,17 +498,6 @@ def user_allowed_to_upload(request):
 def can_transcribe_video(user):
     """Checks if a user can transcribe a video."""
     if not getattr(settings, 'USE_WHISPER_TRANSCRIBE', False):
-        return False
-
-    if is_mediacms_editor(user):
-        return True
-    if getattr(settings, 'USER_CAN_TRANSCRIBE_VIDEO', False):
-        return True
-    return False
-
-
-def can_use_videocaptioner(user):
-    if not getattr(settings, 'USE_VIDEOCAPTIONER_TRANSCRIBE', False):
         return False
 
     if is_mediacms_editor(user):

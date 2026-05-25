@@ -1,14 +1,15 @@
 {% load static %}
-		<link rel="apple-touch-icon" sizes="180x180" href="{% static "favicons/apple-touch-icon.png" %}">
-		<link rel="icon" type="image/png" sizes="32x32" href="{% static "favicons/favicon-32x32.png" %}">
-		<link rel="icon" type="image/png" sizes="16x16" href="{% static "favicons/favicon-16x16.png" %}">
-		<link rel="manifest" href="{% static "favicons/site.webmanifest" %}">
-		<link rel="mask-icon" href="{% static "favicons/safari-pinned-tab.svg" %}" color="#009933">
-		<link rel="shortcut icon" href="{% static "favicons/favicon.ico" %}">
+		<link rel="apple-touch-icon" sizes="180x180" href="{% static "favicons/apple-touch-icon.png" %}?v={{ VERSION }}">
+		<link rel="icon" type="image/png" sizes="32x32" href="{% static "favicons/favicon-32x32.png" %}?v={{ VERSION }}">
+		<link rel="icon" type="image/png" sizes="16x16" href="{% static "favicons/favicon-16x16.png" %}?v={{ VERSION }}">
+		<link rel="shortcut icon" href="{% static "favicons/favicon.ico" %}?v={{ VERSION }}">
+		<link rel="icon" type="image/svg+xml" href="{% static "favicons/waic-favicon.svg" %}?v={{ VERSION }}">
+		<link rel="manifest" href="{% static "favicons/site.webmanifest" %}?v={{ VERSION }}">
+		<link rel="mask-icon" href="{% static "favicons/safari-pinned-tab.svg" %}" color="#1a56db">
 		<link rel="alternate" type="application/rss+xml" title="RSS feeds" href="{{RSS_URL}}" />
-		<meta name="msapplication-TileColor" content="#ffffff">
+		<meta name="msapplication-TileColor" content="#1a56db">
 		<meta name="msapplication-config" content="{% static "favicons/browserconfig.xml" %}">
-		<meta name="theme-color" content="#ffffff">
+		<meta name="theme-color" content="#1a56db">
 
 		{% if LOAD_FROM_CDN %}
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="preload" as="style">

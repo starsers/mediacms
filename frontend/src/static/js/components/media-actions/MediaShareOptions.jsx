@@ -224,7 +224,15 @@ export function MediaShareOptions(props) {
         className="scrollable-content"
         style={null !== dimensions.maxFormContentHeight ? { maxHeight: dimensions.maxFormContentHeight + 'px' } : null}
       >
-        <div className="share-popup-title">Share media</div>
+        <div className="share-popup-title">
+          分享素材
+          <button className="share-close-btn" onClick={() => {
+            document.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 27, which: 27, bubbles: true}));
+          }} title="关闭">
+            <i className="material-icons">close</i>
+          </button>
+        </div>
+        <div className="share-hint">复制链接发送到微信或飞书</div>
         {shareOptions.length ? (
           <div className="share-options">
             {sliderButtonsVisible.prev ? <PreviousSlideButton onClick={prevSlide} /> : null}

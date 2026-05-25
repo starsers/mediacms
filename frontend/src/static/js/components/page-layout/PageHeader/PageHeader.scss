@@ -3,16 +3,8 @@
 
 .page-header {
   background-color: var(--header-bg-color);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 8px 24px rgba(31, 107, 255, 0.08);
 
   .circle-icon-button {
-    --txt-color: var(--header-circle-button-color);
-    --bg-color: transparent;
-    --bg-focus-color: rgba(31, 107, 255, 0.1);
-    --bg-active-color: rgba(31, 107, 255, 0.16);
-
     color: var(--header-circle-button-color);
   }
 
@@ -125,10 +117,17 @@ $__button-link-horizontal-padding: 16;
 
 .page-header-right {
   right: 0;
+  overflow: visible;
+
+  > *,
+  > * > * {
+    height: var(--header-height);
+  }
 
   > * > * {
     padding-right: 8px;
     padding-right: 6px;
+    vertical-align: middle;
 
     @media screen and (max-width: 368px) {
       padding-right: 0;
@@ -185,12 +184,18 @@ $__button-link-horizontal-padding: 16;
 
 .user-thumb {
   width: 48px;
+  height: var(--header-height);
+  text-align: center;
+  vertical-align: middle;
 
   @media screen and (min-width: 768px) {
     width: 60px;
   }
 
-  text-align: center;
+  .thumbnail {
+    display: inline-block;
+    vertical-align: middle;
+  }
 }
 
 .sign-in-wrap,
@@ -282,26 +287,41 @@ a.user-menu-top-link {
     }
   }
 
-  .logo-wrapper {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 14px 18px;
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    border-radius: 24px;
-    background: rgba(255, 255, 255, 0.14);
-    box-shadow: inset 0 1px rgba(255, 255, 255, 0.2);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-  }
-
-  .logo-image {
+  span {
     position: relative;
     display: block;
+    float: left;
+  }
+
+  span > img,
+  picture {
+    position: relative;
+    float: left;
     max-width: 100%;
-    max-height: 32px;
+    max-height: var(--logo-height, var(--default-logo-height));
+  }
+}
+
+@media screen and (max-width: 479px) {
+  .anonymous-user {
+    .page-header-left {
+      padding-right: 0;
+      max-width: calc(100% - 144px);
+    }
+
+    .page-header-right {
+      max-width: 144px;
+    }
+
+    .logo span > img,
+    .logo picture {
+      max-width: 144px;
+    }
+
+    .sign-in-wrap,
+    .register-wrap {
+      display: none;
+    }
   }
 }
 

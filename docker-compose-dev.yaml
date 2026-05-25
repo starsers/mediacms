@@ -14,7 +14,6 @@ services:
     command: "./deploy/docker/prestart.sh"
     environment:
       DEVELOPMENT_MODE: True
-      SKIP_CHOWN: 'yes'
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
       ENABLE_CELERY_SHORT: 'no'
@@ -33,9 +32,8 @@ services:
     image: node:20
     volumes:
       - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
-      - /home/mediacms.io/mediacms/frontend/node_modules
     working_dir: /home/mediacms.io/mediacms/frontend/
-    command: bash -c "test -d node_modules/.bin && npm run start || (npm install --package-lock=false && npm run start)"
+    command: bash -c "npm install && npm run start"
     env_file:
       - ${PWD}/frontend/.env
     ports:
@@ -47,7 +45,6 @@ services:
     command: "python manage.py runserver 0.0.0.0:80"
     environment:
       DEVELOPMENT_MODE: True
-      SKIP_CHOWN: 'yes'
     ports:
       - "8089:80"
     volumes:
@@ -84,7 +81,6 @@ services:
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
-      SKIP_CHOWN: 'yes'
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
       ENABLE_CELERY_BEAT: 'no'

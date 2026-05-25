@@ -1,14 +1,17 @@
 {% extends "base.html" %}
+{% load i18n %}
+{% load custom_filters %}
 
-{% block headtitle %} | Sign In{% endblock headtitle %}
+{% block headtitle %}{% get_current_language as LANGUAGE_CODE %} | {{ "Sign In" | custom_translate:LANGUAGE_CODE }}{% endblock headtitle %}
 
 {% block innercontent %}
+{% get_current_language as LANGUAGE_CODE %}
 <div class="user-action-form-wrap">
     <div class="user-action-form-inner">
 
-		<h1>Sign In</h1>
+		<h1>{{ "Sign In" | custom_translate:LANGUAGE_CODE }}</h1>
 
-		<p>If you have not created an account yet, then please <a href="{{ signup_url }}">sign up</a> first.</p>
+		<p>{{ "If you have not created an account yet, then please" | custom_translate:LANGUAGE_CODE }} <a href="{{ signup_url }}">{{ "sign up" | custom_translate:LANGUAGE_CODE }}</a> {{ "first." | custom_translate:LANGUAGE_CODE }}</p>
 
 		<form class="login" method="POST" action="{% url 'login_system' %}">
 		  {% csrf_token %}
@@ -16,7 +19,7 @@
 		  {% if redirect_field_value %}
 		  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
 		  {% endif %}
-		  <button class="primaryAction" type="submit">Sign In</button>
+		  <button class="primaryAction" type="submit">{{ "Sign In" | custom_translate:LANGUAGE_CODE }}</button>
 		</form>
 
     </div>

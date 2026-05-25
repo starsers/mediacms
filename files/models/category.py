@@ -129,6 +129,20 @@ class Tag(models.Model):
         db_index=True,
     )
 
+    source = models.CharField(
+        max_length=20,
+        choices=[('ai', 'AI Auto-generated'), ('human', 'Human Created'), ('imported', 'Imported')],
+        default='human',
+        db_index=True,
+        help_text='Whether tag was AI-generated, human-created, or imported',
+    )
+
+    confidence = models.FloatField(
+        null=True,
+        blank=True,
+        help_text='AI confidence score 0-1, only for AI-generated tags',
+    )
+
     def __str__(self):
         return self.title
 

@@ -1,0 +1,113 @@
+/* Image Cropper Modal — WAIC theme */
+.ic-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.ic-overlay.ic-visible {
+  opacity: 1;
+}
+
+.ic-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: rgba(0,0,0,0.25) 0px 20px 60px -12px, rgba(0,0,0,0.12) 0px 8px 24px -4px;
+  overflow: hidden;
+  max-width: 95vw;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ic-header {
+  padding: 20px 28px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.ic-title {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+.ic-subtitle {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 0.813rem;
+  color: #94a3b8;
+}
+
+.ic-body {
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  min-height: 200px;
+  overflow: auto;
+}
+
+.ic-canvas {
+  display: block;
+  border-radius: 8px;
+  cursor: move;
+  box-shadow: rgba(0,0,0,0.1) 0px 4px 12px;
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ic-canvas:active {
+  cursor: grabbing;
+}
+
+.ic-footer {
+  padding: 16px 28px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ic-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+.ic-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+.ic-btn-cancel:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+.ic-btn-confirm {
+  background: #1a56db;
+  color: #ffffff;
+  box-shadow: rgba(26,86,219,0.25) 0px 4px 14px -4px;
+}
+.ic-btn-confirm:hover {
+  background: #1e40af;
+  box-shadow: rgba(26,86,219,0.4) 0px 6px 20px -4px;
+}
+.ic-btn-confirm:active {
+  transform: scale(0.97);
+}

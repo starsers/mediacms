@@ -11,7 +11,7 @@ import { ProfileMediaFilters } from '../components/search-filters/ProfileMediaFi
 import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags';
 import { ProfileMediaSharing } from '../components/search-filters/ProfileMediaSharing';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
-import { inEmbeddedApp, inSelectMediaEmbedMode, isShareMediaDisabled } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode, isShareMediaDisabled, translateString } from '../utils/helpers';
 
 import { Page } from './_Page';
 
@@ -129,11 +129,11 @@ export class ProfileSharedWithMePage extends Page {
                     let title = '';
 
                     if (!count) {
-                        title = 'No results for "' + this.state.query + '"';
+                        title = translateString('No results for') + ' "' + this.state.query + '"';
                     } else if (1 === count) {
-                        title = '1 result for "' + this.state.query + '"';
+                        title = '1 ' + translateString('result for') + ' "' + this.state.query + '"';
                     } else {
-                        title = count + ' results for "' + this.state.query + '"';
+                        title = count + ' ' + translateString('results for') + ' "' + this.state.query + '"';
                     }
 
                     this.setState({

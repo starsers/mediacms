@@ -110,13 +110,4 @@ COPY requirements-full.txt ./
 RUN mkdir -p /root/.cache/ && \
     chmod go+rwx /root/ && \
     chmod go+rwx /root/.cache/
-RUN uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
-    uv pip install -r requirements-full.txt
-RUN apt-get update -y && \
-    apt-get install --no-install-recommends -y python3.11 python3.11-venv && \
-    python3.11 -m venv /opt/videocaptioner && \
-    /opt/videocaptioner/bin/pip install --no-cache-dir --upgrade pip && \
-    /opt/videocaptioner/bin/pip install --no-cache-dir videocaptioner && \
-    ln -sf /opt/videocaptioner/bin/videocaptioner /usr/local/bin/videocaptioner && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN uv pip install -r requirements-full.txt

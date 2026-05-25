@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}权限中心 - {{PORTAL_NAME}}{% endblock %}
+
+{% block content %}
+<style>
+/* ═══ WAIC 权限中心 — 独立页面样式 ═══ */
+.perm-page {
+  max-width: none;
+  margin: 0 auto;
+  padding: 32px 40px 48px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ── 页面标题 ── */
+.perm-hero {
+  margin-bottom: 32px;
+}
+.perm-hero h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--waic-text-primary);
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+.perm-hero p {
+  font-size: 14px;
+  color: var(--waic-text-secondary);
+  margin: 0;
+}
+
+/* ── 通用卡片 ── */
+.perm-card {
+  background: var(--waic-elevated);
+  border: 1px solid var(--waic-border);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--waic-shadow-sm);
+  transition: box-shadow 0.2s;
+}
+.perm-card:hover {
+  box-shadow: var(--waic-shadow-md);
+}
+.perm-card h2 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--waic-text-primary);
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── 我的权限列表 ── */
+.perm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.perm-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--waic-surface);
+  border-radius: 10px;
+  padding: 14px 18px;
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+.perm-item:hover {
+  border-color: var(--waic-border);
+}
+.perm-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.perm-item-scope {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--waic-text-primary);
+  margin-bottom: 2px;
+}
+.perm-item-detail {
+  font-size: 12px;
+  color: var(--waic-text-secondary);
+}
+.perm-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── 标签 (badge) ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.badge-download { background: #dbeafe; color: #1e40af; }
+.badge-upload   { background: #dcfce7; color: #166534; }
+.badge-both      { background: #ede9fe; color: #5b21b6; }
+
+/* ── 按钮 ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-primary {
+  background: var(--waic-blue);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(26,86,219,0.25), 0 2px 8px rgba(26,86,219,0.12);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--waic-blue-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(26,86,219,0.3), 0 4px 16px rgba(26,86,219,0.16);
+}
+.btn-primary:active:not(:disabled) { transform: translateY(0); }
+.btn-outline {
+  background: #fff;
+  color: var(--waic-blue);
+  border: 1.5px solid var(--waic-blue);
+}
+.btn-outline:hover:not(:disabled) {
+  background: #eff6ff;
+  transform: translateY(-1px);
+}
+.btn-danger {
+  background: var(--waic-danger);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+/* ── 表单控件 ── */
+.form-select, .form-input {
+  padding: 9px 14px;
+  border: 1.5px solid var(--waic-border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--waic-text-primary);
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.form-select:focus, .form-input:focus {
+  border-color: var(--waic-blue);
+  box-shadow: 0 0 0 3px var(--waic-blue-ring);
+}
+.form-select { min-width: 160px; }
+.form-input { width: 140px; }
+
+/* ── 申请表单行 ── */
+.apply-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.apply-row .field-group { display: flex; flex-direction: column; gap: 4px; }
+.apply-row .field-label { font-size: 12px; font-weight: 600; color: var(--waic-text-secondary); }
+
+/* ── 消息提示 ── */
+.msg { display: inline-block; margin-left: 12px; font-size: 13px; }
+.msg-success { color: var(--waic-success); }
+.msg-error   { color: var(--waic-danger); }
+.msg-info    { color: var(--waic-text-secondary); }
+
+/* ── 申请记录表格 ── */
+.perm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.perm-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: var(--waic-text-secondary);
+  border-bottom: 2px solid var(--waic-border);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.perm-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--waic-surface-hover);
+  color: var(--waic-text-primary);
+}
+.perm-table tr:hover td { background: var(--waic-surface); }
+
+/* ── 状态指示 ── */
+.status-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.status-pending  .status-dot { background: #f59e0b; }
+.status-approved .status-dot { background: #10b981; }
+.status-rejected .status-dot { background: #ef4444; }
+
+/* ── 空状态 ── */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--waic-text-muted);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state p { font-size: 14px; margin: 0; }
+
+/* ── 分隔线 ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--waic-border);
+  margin: 20px 0;
+}
+</style>
+
+<div class="perm-page">
+  <!-- Hero -->
+  <div class="perm-hero">
+    <h1>🔑 权限中心</h1>
+    <p>查看我的访问权限，申请新的素材或功能权限</p>
+  </div>
+
+  <!-- Section 1: My Permissions -->
+  <div class="perm-card">
+    <h2>✅ 我的权限</h2>
+    <div id="my-perms">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>加载中…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Apply -->
+  <div class="perm-card">
+    <h2>📝 申请权限</h2>
+
+    <!-- Upload -->
+    <div style="margin-bottom:24px;">
+      <h3 style="font-size:15px;font-weight:600;color:var(--waic-text-primary);margin:0 0 8px;">申请上传权限</h3>
+      <p style="font-size:13px;color:var(--waic-text-secondary);margin:0 0 14px;">获得后可以在平台上传素材</p>
+      <button id="btn-apply-upload" onclick="applyUpload()" class="btn btn-primary">
+        申请上传权限
+      </button>
+      <span id="upload-msg" class="msg msg-info"></span>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Download / Clip -->
+    <h3 style="font-size:15px;font-weight:600;color:var(--waic-text-primary);margin:0 0 14px;">申请下载 / 剪辑权限</h3>
+    <div class="apply-row">
+      <div class="field-group">
+        <span class="field-label">范围类型</span>
+        <select id="scope-type" class="form-select" onchange="onScopeChange()">
+          <option value="category">按分类</option>
+          <option value="tag">按标签</option>
+          <option value="media">指定素材ID</option>
+        </select>
+      </div>
+      <div class="field-group" id="scope-field">
+        <span class="field-label">分类</span>
+        <select id="category-select" class="form-select">
+          <option value="">加载中…</option>
+        </select>
+      </div>
+      <div class="field-group" id="media-field" style="display:none;">
+        <span class="field-label">素材ID</span>
+        <input id="media-id-input" type="number" class="form-input" placeholder="如 42">
+      </div>
+      <div class="field-group">
+        <span class="field-label">权限类型</span>
+        <select id="perm-type" class="form-select">
+          <option value="download">仅下载</option>
+          <option value="both">下载 + 剪辑</option>
+        </select>
+      </div>
+      <div class="field-group" style="align-self:flex-end;">
+        <button onclick="applyScope()" class="btn btn-primary">提交申请</button>
+      </div>
+    </div>
+    <span id="scope-msg" class="msg msg-info" style="margin-left:0;margin-top:12px;"></span>
+  </div>
+
+  <!-- Section 3: History -->
+  <div class="perm-card">
+    <h2>📋 申请记录</h2>
+    <div id="my-history">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>加载中…</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block bottomimports %}
+{% load static %}
+<script src="{% static "js/base.js" %}?v={{ VERSION }}"></script>
+<script>
+// ===== 页面初始化 =====
+document.addEventListener('DOMContentLoaded', function() {
+  loadMyPermissions();
+  loadCategories();
+  loadHistory();
+});
+
+// ===== API helpers =====
+function api(path, opts) {
+  opts = opts || {};
+  if (opts.body && typeof opts.body === 'object') {
+    opts.body = JSON.stringify(opts.body);
+    opts.headers = opts.headers || {};
+    opts.headers['Content-Type'] = 'application/json';
+  }
+  return fetch(path, opts).then(function(r) { return r.json(); });
+}
+
+function getCSRF() {
+  var c = document.cookie.split(';').map(function(s) { return s.trim(); });
+  var csrf = c.find(function(s) { return s.startsWith('csrftoken='); });
+  return csrf ? csrf.split('=')[1] : '';
+}
+
+// ===== My Permissions =====
+function loadMyPermissions() {
+  api('/api/v1/perm/my/').then(function(data) {
+    var el = document.getElementById('my-perms');
+    if (!data.results || data.results.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无已授权的权限</p><p style="font-size:12px;margin-top:4px;">提交申请后，管理员审批通过即可获得权限</p></div>';
+      return;
+    }
+    var html = '<div class="perm-list">';
+    data.results.forEach(function(p) {
+      var scopes = [];
+      p.media.forEach(function(m) { scopes.push('<strong>素材:</strong> ' + escHtml(m.title)); });
+      p.categories.forEach(function(c) { scopes.push('<strong>分类:</strong> ' + escHtml(c.title)); });
+      p.tags.forEach(function(t) { scopes.push('<strong>标签:</strong> ' + escHtml(t)); });
+      var scopeText = scopes.length ? scopes.join(' &nbsp;·&nbsp; ') : '全局权限';
+      var badges = '';
+      if (p.can_download) badges += '<span class="badge badge-download">下载</span> ';
+      if (p.can_upload) badges += '<span class="badge badge-upload">上传</span> ';
+      html += '<div class="perm-item">' +
+        '<div class="perm-item-info">' +
+          '<div class="perm-item-scope">' + scopeText + '</div>' +
+        '</div>' +
+        '<div class="perm-item-actions">' + badges + '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+  }).catch(function() {
+    document.getElementById('my-perms').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p style="color:var(--waic-danger);">加载失败，请刷新重试</p></div>';
+  });
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ===== Categories / Tags =====
+var allCategories = [];
+function loadCategories() {
+  api('/api/v1/categories/contributor').then(function(data) {
+    allCategories = data.results || data || [];
+    populateSelect(allCategories, 'category-select', '选择分类');
+  });
+}
+
+var allTags = [];
+function loadTags() {
+  api('/api/v1/tags').then(function(data) {
+    allTags = data.results || data || [];
+    populateSelect(allTags, 'category-select', '选择标签');
+  });
+}
+
+function populateSelect(items, selId, placeholder) {
+  var sel = document.getElementById(selId);
+  sel.innerHTML = '<option value="">' + placeholder + '</option>';
+  items.forEach(function(item) {
+    sel.innerHTML += '<option value="' + item.id + '">' + escHtml(item.title) + '</option>';
+  });
+}
+
+function onScopeChange() {
+  var type = document.getElementById('scope-type').value;
+  var scopeField = document.getElementById('scope-field');
+  var mediaField = document.getElementById('media-field');
+  var label = scopeField.querySelector('.field-label');
+  if (type === 'media') {
+    scopeField.style.display = 'none';
+    mediaField.style.display = '';
+  } else {
+    scopeField.style.display = '';
+    mediaField.style.display = 'none';
+    if (type === 'category') {
+      label.textContent = '分类';
+      loadCategories();
+    } else {
+      label.textContent = '标签';
+      loadTags();
+    }
+  }
+}
+
+// ===== Apply Upload =====
+function applyUpload() {
+  var btn = document.getElementById('btn-apply-upload');
+  var msg = document.getElementById('upload-msg');
+  btn.disabled = true;
+  btn.textContent = '提交中…';
+  msg.textContent = '';
+  api('/api/v1/perm/request_upload/', {
+    method: 'POST',
+    body: {},
+    headers: {'X-CSRFToken': getCSRF()}
+  }).then(function(data) {
+    if (data.ok) {
+      msg.textContent = '✅ ' + (data.message || '已提交，等待管理员审批');
+      msg.className = 'msg msg-success';
+      btn.textContent = '已申请';
+    } else {
+      msg.textContent = '❌ 提交失败: ' + (data.error || '');
+      msg.className = 'msg msg-error';
+      btn.disabled = false;
+      btn.textContent = '申请上传权限';
+    }
+  }).catch(function() {
+    msg.textContent = '❌ 网络错误';
+    msg.className = 'msg msg-error';
+    btn.disabled = false;
+    btn.textContent = '申请上传权限';
+  });
+  setTimeout(function() { loadHistory(); }, 800);
+}
+
+// ===== Apply Scope =====
+function applyScope() {
+  var scopeType = document.getElementById('scope-type').value;
+  var scopeId = document.getElementById('category-select').value;
+  var permType = document.getElementById('perm-type').value;
+  var msg = document.getElementById('scope-msg');
+  
+  if (scopeType !== 'media' && !scopeId) {
+    msg.textContent = '请选择分类或标签';
+    msg.className = 'msg msg-error';
+    return;
+  }
+  if (scopeType === 'media') {
+    scopeId = document.getElementById('media-id-input').value;
+    if (!scopeId) {
+      msg.textContent = '请输入素材ID';
+      msg.className = 'msg msg-error';
+      return;
+    }
+  }
+
+  var body = { scope_type: scopeType };
+  if (scopeType === 'category') body.category_id = parseInt(scopeId);
+  else if (scopeType === 'tag') body.tag_id = parseInt(scopeId);
+  else body.media_id = parseInt(scopeId);
+
+  msg.textContent = '提交中…';
+  msg.className = 'msg msg-info';
+
+  api('/api/v1/perm/request/', {
+    method: 'POST',
+    body: body,
+    headers: {'X-CSRFToken': getCSRF()}
+  }).then(function(data) {
+    if (data.ok) {
+      msg.textContent = '✅ 已提交，等待管理员审批';
+      msg.className = 'msg msg-success';
+    } else {
+      msg.textContent = '❌ 提交失败: ' + (data.error || '');
+      msg.className = 'msg msg-error';
+    }
+  }).catch(function() {
+    msg.textContent = '❌ 网络错误';
+    msg.className = 'msg msg-error';
+  });
+  setTimeout(function() { loadHistory(); }, 800);
+}
+
+// ===== Load History =====
+function loadHistory() {
+  api('/api/v1/perm/history/').then(function(data) {
+    var el = document.getElementById('my-history');
+    if (!data.results || data.results.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>暂无申请记录</p></div>';
+      return;
+    }
+    var html = '<table class="perm-table"><thead><tr>' +
+      '<th>范围</th><th>类型</th><th>状态</th><th>时间</th>' +
+      '</tr></thead><tbody>';
+    data.results.forEach(function(r) {
+      var scopeName = r.media_title || r.category_name || r.tag_name || '上传权限';
+      var scopeType = r.scope_type === 'upload' ? '上传' :
+        r.scope_type === 'category' ? '分类' :
+        r.scope_type === 'tag' ? '标签' : '素材';
+      var statusClass = 'status-' + r.status;
+      var statusIcon = r.status === 'pending' ? '⏳' : r.status === 'approved' ? '✅' : '❌';
+      var statusText = r.status === 'pending' ? '待审批' : r.status === 'approved' ? '已通过' : '已驳回';
+      var timeStr = new Date(r.created_at).toLocaleString('zh-CN', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+      html += '<tr class="' + statusClass + '">' +
+        '<td>' + escHtml(scopeName) + '</td>' +
+        '<td style="color:var(--waic-text-secondary);">' + scopeType + '</td>' +
+        '<td><span class="status-dot"></span>' + statusIcon + ' ' + statusText + '</td>' +
+        '<td style="color:var(--waic-text-muted);">' + timeStr + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }).catch(function() {
+    document.getElementById('my-history').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p style="color:var(--waic-danger);">加载失败</p></div>';
+  });
+}
+</script>
+{% endblock %}

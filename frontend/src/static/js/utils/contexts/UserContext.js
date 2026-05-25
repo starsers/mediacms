@@ -11,6 +11,7 @@ export const UserProvider = ({ children }) => {
     username: member.username,
     thumbnail: member.thumbnail,
     userCan: member.can,
+    is: member.is,
     pages: member.pages,
   };
 

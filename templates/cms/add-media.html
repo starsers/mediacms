@@ -85,16 +85,37 @@
                 <div class="media-uploader-bottom-wrap qq-uploader-selector">
                     <div class="media-uploader-bottom-left-wrap">
                         <div class="media-drag-drop-wrap">
-                            <div class="media-drag-drop-inner" qq-drop-area-text="Drop files here">
+                            <div class="media-drag-drop-inner waic-drag-drop-zone" qq-drop-area-text="Drop files here">
                                 <div class="media-drag-drop-content">
                                     <div class="media-drag-drop-content-inner">
-                                        <span><i class="material-icons">cloud_upload</i></span>
-                                        <span>{{ "Drag and drop files" | custom_translate:LANGUAGE_CODE}}</span>
-                                        <span>{{ "or" | custom_translate:LANGUAGE_CODE}}</span>
-                                        <span class="browse-files-btn-wrap">
-                                            <span class="qq-upload-button-selector">{{ "Browse your files" | custom_translate:LANGUAGE_CODE}}</span>
-                                        </span>
-
+                                        <div class="waic-upload-icon-wrap">
+                                            <i class="material-icons">cloud_upload</i>
+                                        </div>
+                                        <div class="waic-upload-title-text">{{ "Drag and drop files" | custom_translate:LANGUAGE_CODE}}</div>
+                                        <div class="waic-upload-divider"><span>{{ "or" | custom_translate:LANGUAGE_CODE}}</span></div>
+                                        <div class="waic-upload-buttons">
+                                            <span class="qq-upload-button-selector waic-upload-btn waic-upload-btn-file">
+                                                <i class="material-icons">insert_drive_file</i>
+                                                <span>{{ "Browse your files" | custom_translate:LANGUAGE_CODE}}</span>
+                                            </span>
+                                            <button type="button" class="waic-upload-btn waic-upload-btn-folder" id="waic-folder-btn" onclick="return false;">
+                                                <i class="material-icons">create_new_folder</i>
+                                                <span>{{ "Upload folder" | custom_translate:LANGUAGE_CODE}}</span>
+                                            </button>
+                                        </div>
+                                        <div class="waic-upload-formats">
+                                            <span class="waic-format-pill">MP4</span>
+                                            <span class="waic-format-pill">AVI</span>
+                                            <span class="waic-format-pill">MOV</span>
+                                            <span class="waic-format-pill">MP3</span>
+                                            <span class="waic-format-pill">PDF</span>
+                                            <span class="waic-format-pill">DOCX</span>
+                                            <span class="waic-format-pill">PPTX</span>
+                                            <span class="waic-format-pill">XLSX</span>
+                                            <span class="waic-format-pill">JPG</span>
+                                            <span class="waic-format-pill">PNG</span>
+                                            <span class="waic-format-pill">TXT</span>
+                                        </div>
                                         <div class="qq-upload-drop-area-selector media-dropzone" qq-hide-dropzone>
                                             <span class="qq-upload-drop-area-text-selector"></span>
                                         </div>
@@ -298,6 +319,37 @@
                 },
             },
         });
+
+        // Expose uploader for folder upload
+        window.waicUploader = default_concurrent_chunked_uploader;
+
+        // ═══ 文件夹上传 ═══
+        var folderBtn = document.getElementById('waic-folder-btn');
+        if (folderBtn) {
+            // Create hidden folder input
+            var folderInput = document.createElement('input');
+            folderInput.type = 'file';
+            folderInput.webkitdirectory = true;
+            folderInput.multiple = true;
+            folderInput.style.display = 'none';
+            folderInput.id = 'waic-folder-input';
+            document.body.appendChild(folderInput);
+
+            folderBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                folderInput.value = '';
+                folderInput.click();
+            });
+
+            folderInput.addEventListener('change', function() {
+                var files = folderInput.files;
+                if (files && files.length > 0) {
+                    console.log('Folder selected: ' + files.length + ' files');
+                    window.waicUploader.addFiles(files);
+                }
+            });
+        }
     });
 </script>
 {% endblock bottomimports %}
