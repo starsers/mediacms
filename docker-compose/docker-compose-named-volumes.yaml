@@ -2,8 +2,9 @@ version: "3"
 
 services:
   migrations:
-    image: mediacms/mediacms:latest
+    image: mediacms/mediacms:waic-full
     volumes:
+      - static_store:/home/mediacms.io/mediacms/static/
       - ./deploy/docker/local_settings.py:/home/mediacms.io/mediacms/deploy/docker/local_settings.py
     environment:
       ENABLE_UWSGI: 'no'
@@ -22,7 +23,7 @@ services:
       db:
         condition: service_healthy
   web:
-    image: mediacms/mediacms:latest
+    image: mediacms/mediacms:waic-full
     deploy:
       replicas: 1
     ports:
@@ -39,7 +40,7 @@ services:
     depends_on:
       - migrations
   celery_beat:
-    image: mediacms/mediacms:latest
+    image: mediacms/mediacms:waic-full
     volumes:
       - ./deploy/docker/local_settings.py:/home/mediacms.io/mediacms/deploy/docker/local_settings.py
     environment:
@@ -51,7 +52,7 @@ services:
     depends_on:
       - redis
   celery_worker:
-    image: mediacms/mediacms:latest
+    image: mediacms/mediacms:waic-full
     deploy:
       replicas: 1
     volumes:
@@ -66,7 +67,7 @@ services:
     depends_on:
       - migrations
   db:
-    image: postgres:17.2-alpine
+    image: pgvector/pgvector:pg17
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     restart: always

@@ -1,3 +1,7 @@
 {% load static %}
 
-		<script src="{% static "js/_commons.js" %}?v={{ VERSION }}"></script>
+			{% if DEVELOPMENT_MODE %}
+			<script src="{{ WEBPACK_DEV_SERVER_URL }}/_commons.js"></script>
+			{% else %}
+			<script src="{% static "js/_commons.js" %}?v={{ VERSION }}"></script>
+			{% endif %}

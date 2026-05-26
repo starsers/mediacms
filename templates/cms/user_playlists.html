@@ -29,5 +29,9 @@ No such user
 {% endblock %}
 
 {% block bottomimports %}
+    {% if DEVELOPMENT_MODE %}
+    {% include "common/dev-entry-assets.html" with entry_name="profile-playlists" %}
+    {% else %}
     <script src="{% static "js/profile-playlists.js" %}?v={{ VERSION }}"></script>
+    {% endif %}
 {% endblock bottomimports %}

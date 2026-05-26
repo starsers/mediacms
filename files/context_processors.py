@@ -20,6 +20,8 @@ def stuff(request):
     ret["EXTRA_CSS_PATHS"] = getattr(settings, 'EXTRA_CSS_PATHS', [])
     ret["PORTAL_DESCRIPTION"] = settings.PORTAL_DESCRIPTION
     ret["LOAD_FROM_CDN"] = settings.LOAD_FROM_CDN
+    ret["DEVELOPMENT_MODE"] = bool(getattr(settings, 'DEVELOPMENT_MODE', False))
+    ret["WEBPACK_DEV_SERVER_URL"] = getattr(settings, 'WEBPACK_DEV_SERVER_URL', 'http://localhost:8088').rstrip('/')
     ret["CAN_LOGIN"] = settings.LOGIN_ALLOWED
     ret["CAN_REGISTER"] = settings.REGISTER_ALLOWED
     ret["CAN_UPLOAD_MEDIA"] = (

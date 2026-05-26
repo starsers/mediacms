@@ -74,7 +74,11 @@
 {% endblock content %}
 
 {% block bottomimports %}
+    {% if DEVELOPMENT_MODE %}
+    {% include "common/dev-entry-assets.html" with entry_name="media" %}
+    {% else %}
     <script src="{% static "js/media.js" %}?v={{ VERSION }}"></script>
+    {% endif %}
     <script>
     // Subtitle timestamp seek: jump to ?t=SECONDS
     (function() {

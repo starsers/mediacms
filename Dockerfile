@@ -1,6 +1,6 @@
+# syntax=docker/dockerfile:1.7
 FROM python:3.13.5-slim-bookworm AS build-image
 
-# Install system dependencies needed for downloading and extracting
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends wget xz-utils unzip && \
     rm -rf /var/lib/apt/lists/* && \
@@ -14,7 +14,6 @@ RUN mkdir -p ffmpeg-tmp && \
     cp -v ffmpeg-tmp/ffmpeg ffmpeg-tmp/ffprobe ffmpeg-tmp/qt-faststart /usr/local/bin && \
     rm -rf ffmpeg-tmp ffmpeg-release-amd64-static.tar.xz
 
-# Install Bento4 in the specified location
 RUN mkdir -p /home/mediacms.io/bento4 && \
     wget -q --tries=5 --waitretry=10 --timeout=30 https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip && \
     unzip Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip -d /home/mediacms.io/bento4 && \
@@ -23,8 +22,20 @@ RUN mkdir -p /home/mediacms.io/bento4 && \
     rm -rf /home/mediacms.io/bento4/docs && \
     rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 
-############ BASE RUNTIME IMAGE ############
-FROM python:3.13.5-slim-bookworm AS base
+FROM node:20-bookworm-slim AS frontend-build
+
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/yarn.lock ./
+COPY frontend/packages/scripts/ ./packages/scripts/
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --legacy-peer-deps --cache /root/.npm && \
+    cd packages/scripts && \
+    npm install --legacy-peer-deps --cache /root/.npm && \
+    npm run build
+COPY frontend/ ./
+RUN npm run dist
+
+FROM python:3.13.5-slim-bookworm AS runtime-deps
 
 SHELL ["/bin/bash", "-c"]
 
@@ -34,7 +45,6 @@ ENV CELERY_APP='cms'
 ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Install system dependencies first
 RUN apt-get update -y && \
     apt-get -y upgrade && \
     apt-get install --no-install-recommends -y \
@@ -53,18 +63,18 @@ RUN apt-get update -y && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up virtualenv first
 RUN mkdir -p /home/mediacms.io/mediacms/{logs} && \
     cd /home/mediacms.io && \
     python3 -m venv $VIRTUAL_ENV
 
-# Copy requirements files
 COPY requirements.txt requirements-dev.txt ./
 
-# Install Python dependencies using pip (within virtualenv)
 ARG DEVELOPMENT_MODE=False
-RUN pip install --no-cache-dir uv && \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=cache,target=/root/.cache/uv \
+    pip install uv && \
     uv pip install --no-binary lxml --no-binary xmlsec -r requirements.txt && \
+    uv pip check && \
     if [ "$DEVELOPMENT_MODE" = "True" ]; then \
         echo "Installing development dependencies..." && \
         uv pip install -r requirements-dev.txt; \
@@ -76,20 +86,12 @@ RUN pip install --no-cache-dir uv && \
         libxmlsec1-dev \
         libpq-dev
 
-# Copy ffmpeg and Bento4 from build image
 COPY --from=build-image /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=build-image /usr/local/bin/ffprobe /usr/local/bin/ffprobe
 COPY --from=build-image /usr/local/bin/qt-faststart /usr/local/bin/qt-faststart
 COPY --from=build-image /home/mediacms.io/bento4 /home/mediacms.io/bento4
-
-# Copy application files
-COPY . /home/mediacms.io/mediacms
-WORKDIR /home/mediacms.io/mediacms
-
-# required for sprite thumbnail generation for large video files
 COPY deploy/docker/policy.xml /etc/ImageMagick-6/policy.xml
 
-# Set process control environment variables
 ENV ENABLE_UWSGI='yes' \
     ENABLE_NGINX='yes' \
     ENABLE_CELERY_BEAT='yes' \
@@ -99,15 +101,37 @@ ENV ENABLE_UWSGI='yes' \
 
 EXPOSE 9000 80
 
-RUN chmod +x ./deploy/docker/entrypoint.sh
+FROM runtime-deps AS base
 
+COPY . /home/mediacms.io/mediacms
+COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/static/
+COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/frontend/dist/static/
+RUN mkdir -p /home/mediacms.io/mediacms/static_image && \
+    cp -a /home/mediacms.io/mediacms/static/. /home/mediacms.io/mediacms/static_image/
+WORKDIR /home/mediacms.io/mediacms
+RUN chmod +x ./deploy/docker/entrypoint.sh
 ENTRYPOINT ["./deploy/docker/entrypoint.sh"]
 CMD ["./deploy/docker/start.sh"]
 
-############ FULL IMAGE ############
-FROM base AS full
+FROM runtime-deps AS full-deps
+
 COPY requirements-full.txt ./
 RUN mkdir -p /root/.cache/ && \
     chmod go+rwx /root/ && \
     chmod go+rwx /root/.cache/
-RUN uv pip install -r requirements-full.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=cache,target=/root/.cache/uv \
+    uv pip install -r requirements-full.txt && \
+    uv pip install dashscope PyMuPDF python-docx python-pptx openpyxl
+
+FROM full-deps AS full
+
+COPY . /home/mediacms.io/mediacms
+COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/static/
+COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/frontend/dist/static/
+RUN mkdir -p /home/mediacms.io/mediacms/static_image && \
+    cp -a /home/mediacms.io/mediacms/static/. /home/mediacms.io/mediacms/static_image/
+WORKDIR /home/mediacms.io/mediacms
+RUN chmod +x ./deploy/docker/entrypoint.sh
+ENTRYPOINT ["./deploy/docker/entrypoint.sh"]
+CMD ["./deploy/docker/start.sh"]

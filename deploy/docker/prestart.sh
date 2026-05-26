@@ -23,9 +23,24 @@ if [ X"$ENABLE_MIGRATIONS" = X"yes" ]; then
         echo "Created admin user with password: $ADMIN_PASSWORD"
 
     fi
-    echo "RUNNING COLLECTSTATIC"
-
-    python manage.py collectstatic --noinput
+    if [ X"$ENABLE_COLLECTSTATIC" != X"no" ]; then
+        if [ -d static_image ]; then
+            echo "Syncing image static snapshot into static"
+            mkdir -p static
+            cp -a static_image/. static/
+        fi
+        if [ -d frontend/dist/static ]; then
+            echo "Syncing frontend/dist/static into static"
+            mkdir -p static
+            cp -a frontend/dist/static/. static/
+        else
+            echo "Skipping frontend static sync because frontend/dist/static does not exist"
+        fi
+        echo "RUNNING COLLECTSTATIC"
+        python manage.py collectstatic --noinput
+    else
+        echo "Skipping collectstatic because ENABLE_COLLECTSTATIC=no"
+    fi
 
     # echo "Updating hostname ..."
     # TODO: Get the FRONTEND_HOST from cms/local_settings.py

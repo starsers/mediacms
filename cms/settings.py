@@ -31,6 +31,7 @@ DEFAULT_THEME = "light"
 # this is only for the static files, as fonts/css/js files loaded from CDNs
 # not for user uploaded media!
 LOAD_FROM_CDN = False
+WEBPACK_DEV_SERVER_URL = os.environ.get("WEBPACK_DEV_SERVER_URL", "http://localhost:8088")
 LOGIN_ALLOWED = True  # whether the login button appears
 REGISTER_ALLOWED = True  # whether the register button appears
 UPLOAD_MEDIA_ALLOWED = True  # whether the upload media button appears

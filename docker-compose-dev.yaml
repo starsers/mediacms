@@ -5,12 +5,14 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-      target: base
+      target: full
       args:
         - DEVELOPMENT_MODE=True
-    image: mediacms/mediacms-dev:latest
+    image: mediacms/mediacms-dev:full
     volumes:
       - ./:/home/mediacms.io/mediacms/
+      - backend_pip_cache:/root/.cache/pip
+      - backend_uv_cache:/root/.cache/uv
     command: "./deploy/docker/prestart.sh"
     environment:
       DEVELOPMENT_MODE: True
@@ -19,6 +21,8 @@ services:
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_CELERY_BEAT: 'no'
+      ENABLE_COLLECTSTATIC: 'no'
+      ENABLE_REQUIREMENTS_SYNC: 'yes'
       ADMIN_USER: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
       ADMIN_PASSWORD: 'admin'
@@ -28,12 +32,25 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+      db_init:
+        condition: service_completed_successfully
   frontend:
     image: node:20
     volumes:
       - ${PWD}/frontend:/home/mediacms.io/mediacms/frontend/
+      - frontend_node_modules:/home/mediacms.io/mediacms/frontend/node_modules
+      - scripts_node_modules:/home/mediacms.io/mediacms/frontend/packages/scripts/node_modules
+      - npm_cache:/root/.npm
     working_dir: /home/mediacms.io/mediacms/frontend/
-    command: bash -c "npm install && npm run start"
+    command: >
+      bash -c "
+      npm install --legacy-peer-deps --cache /root/.npm &&
+      cd packages/scripts &&
+      npm install --legacy-peer-deps --cache /root/.npm &&
+      npm run build &&
+      cd ../.. &&
+      npm run start
+      "
     env_file:
       - ${PWD}/frontend/.env
     ports:
@@ -41,18 +58,34 @@ services:
     depends_on:
       - web
   web:
-    image: mediacms/mediacms-dev:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: full
+      args:
+        - DEVELOPMENT_MODE=True
+    image: mediacms/mediacms-dev:full
     command: "python manage.py runserver 0.0.0.0:80"
     environment:
       DEVELOPMENT_MODE: True
+      ENABLE_REQUIREMENTS_SYNC: 'yes'
+      WEBPACK_DEV_SERVER_URL: ${WEBPACK_DEV_SERVER_URL:-http://localhost:8088}
+      USE_WHISPER_TRANSCRIBE: 'True'
+      WHISPER_MODEL: 'medium'
+      WHISPER_BIN: '/home/mediacms.io/bin/whisper'
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      APPROVAL_REVIEWER: ${APPROVAL_REVIEWER:-admin}
+      IP_WHITELIST: ${IP_WHITELIST:-}
     ports:
       - "8089:80"
     volumes:
       - ./:/home/mediacms.io/mediacms/
+      - backend_pip_cache:/root/.cache/pip
+      - backend_uv_cache:/root/.cache/uv
     depends_on:
       - migrations
   db:
-    image: postgres:17.2-alpine
+    image: pgvector/pgvector:pg17
     volumes:
       - ../postgres_data:/var/lib/postgresql/data/
     restart: always
@@ -62,10 +95,19 @@ services:
       POSTGRES_DB: mediacms
       TZ: Europe/London
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}", "--host=db", "--dbname=$POSTGRES_DB", "--username=$POSTGRES_USER"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+  db_init:
+    image: pgvector/pgvector:pg17
+    command: sh -c "until pg_isready -h db -U mediacms -d mediacms; do sleep 1; done; psql -h db -U mediacms -d mediacms -c 'CREATE EXTENSION IF NOT EXISTS vector;'"
+    environment:
+      PGPASSWORD: mediacms
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
   redis:
     image: "redis:alpine"
     restart: always
@@ -75,15 +117,37 @@ services:
       timeout: 10s
       retries: 3
   celery_worker:
-    image: mediacms/mediacms-dev:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: full
+      args:
+        - DEVELOPMENT_MODE=True
+    image: mediacms/mediacms-dev:full
     deploy:
       replicas: 1
     volumes:
       - ./:/home/mediacms.io/mediacms/
+      - backend_pip_cache:/root/.cache/pip
+      - backend_uv_cache:/root/.cache/uv
     environment:
       ENABLE_UWSGI: 'no'
       ENABLE_NGINX: 'no'
       ENABLE_CELERY_BEAT: 'no'
       ENABLE_MIGRATIONS: 'no'
+      ENABLE_REQUIREMENTS_SYNC: 'yes'
+      USE_WHISPER_TRANSCRIBE: 'True'
+      WHISPER_MODEL: 'medium'
+      WHISPER_BIN: '/home/mediacms.io/bin/whisper'
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      APPROVAL_REVIEWER: ${APPROVAL_REVIEWER:-admin}
+      IP_WHITELIST: ${IP_WHITELIST:-}
     depends_on:
       - web
+
+volumes:
+  backend_pip_cache:
+  backend_uv_cache:
+  frontend_node_modules:
+  scripts_node_modules:
+  npm_cache:

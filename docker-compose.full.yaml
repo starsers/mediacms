@@ -1,5 +1,22 @@
 version: "3"
 
 services:
+  frontend-build:
+    image: node:20
+
+  migrations:
+    build:
+      target: full
+    image: mediacms/mediacms:waic-full
+
+  web:
+    image: mediacms/mediacms:waic-full
+
+  celery_beat:
+    image: mediacms/mediacms:waic-full
+
   celery_worker:
-    image: mediacms/mediacms:full
+    image: mediacms/mediacms:waic-full
+
+  db:
+    image: pgvector/pgvector:pg17

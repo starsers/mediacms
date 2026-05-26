@@ -245,9 +245,13 @@ header img[src*="logo"],
    侧边栏（亮暗公用渐变，暗色加深）
    ═══════════════════════════════════════════════════════════ */
 .page-sidebar {
+  --sidebar-bg-color: #1e3a5f;
+  --sidebar-nav-item-text-color: #f1f5f9;
+  --sidebar-nav-item-icon-color: rgba(241,245,249,0.85);
+  --sidebar-nav-border-color: rgba(255,255,255,0.08);
   top: 80px !important;
   width: var(--sidebar-width, 240px) !important;
-  background: var(--sidebar-bg-color, #1e3a5f) !important;
+  background: #1e3a5f !important;
   color: #f1f5f9 !important;
   border-right: 1px solid var(--waic-border, rgba(255,255,255,0.08)) !important;
   box-shadow: none !important;
@@ -255,7 +259,8 @@ header img[src*="logo"],
   z-index: 10 !important;
 }
 body.dark_theme .page-sidebar {
-  background: var(--sidebar-bg-color, #08090a) !important;
+  --sidebar-bg-color: #08090a;
+  background: #08090a !important;
   border-right: 1px solid var(--waic-border, rgba(255,255,255,0.08)) !important;
 }
 
@@ -327,6 +332,54 @@ body.dark_theme .page-sidebar {
 body.dark_theme .page-sidebar-bottom a,
 body.dark_theme .page-sidebar-bottom button {
   color: var(--waic-text-secondary) !important;
+}
+
+.page-sidebar .page-sidebar-inner {
+  min-height: calc(100vh - var(--header-height, 80px)) !important;
+  display: block !important;
+  max-height: none !important;
+  background: inherit !important;
+  color: inherit !important;
+}
+
+.page-sidebar .page-sidebar-inner::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+body.light_theme .page-sidebar,
+body.light_theme .page-sidebar .page-sidebar-inner {
+  background: #1e3a5f !important;
+  color: #f1f5f9 !important;
+}
+
+body.light_theme .page-sidebar .nav-menu a,
+body.light_theme .page-sidebar .nav-menu button,
+body.light_theme .page-sidebar .nav-menu li > * {
+  color: rgba(241, 245, 249, 0.76) !important;
+}
+
+body.light_theme .page-sidebar .nav-menu .active > *,
+body.light_theme .page-sidebar .nav-menu .link-item.active > *,
+body.light_theme .page-sidebar .nav-menu li.active > *,
+body.light_theme .page-sidebar .nav-menu a:hover,
+body.light_theme .page-sidebar .nav-menu button:hover {
+  color: #ffffff !important;
+}
+
+body.light_theme .page-sidebar .nav-menu .menu-item-icon,
+body.light_theme .sidebar-theme-switcher,
+body.light_theme .sidebar-theme-switcher * {
+  color: rgba(241, 245, 249, 0.86) !important;
+}
+
+body.light_theme .sidebar-theme-switcher {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.light_theme .page-sidebar-bottom {
+  border-top-color: rgba(255, 255, 255, 0.14) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2198,6 +2251,36 @@ a[href*="/tags/"].item .item-thumb img {
   margin: 2px 12px !important;
   padding: 4px 10px !important;
   max-height: 32px !important;
+}
+
+/* ═══ WAIC: 侧边栏 light theme 对比度兜底 ═══ */
+body:not(.dark_theme) .page-sidebar,
+body:not(.dark_theme) .page-sidebar .page-sidebar-inner {
+  --sidebar-bg-color: #1e3a5f;
+  --sidebar-nav-item-text-color: #f1f5f9;
+  --sidebar-nav-item-icon-color: rgba(241,245,249,0.85);
+  --sidebar-nav-border-color: rgba(255,255,255,0.08);
+  background-color: #1e3a5f !important;
+  background-image: none !important;
+  background: #1e3a5f !important;
+  color: #f1f5f9 !important;
+}
+body:not(.dark_theme) .page-sidebar .nav-menu a,
+body:not(.dark_theme) .page-sidebar .nav-menu button,
+body:not(.dark_theme) .page-sidebar .nav-menu li > * {
+  color: rgba(241,245,249,0.76) !important;
+}
+body:not(.dark_theme) .page-sidebar .nav-menu .active > *,
+body:not(.dark_theme) .page-sidebar .nav-menu .link-item.active > *,
+body:not(.dark_theme) .page-sidebar .nav-menu li.active > *,
+body:not(.dark_theme) .page-sidebar .nav-menu a:hover,
+body:not(.dark_theme) .page-sidebar .nav-menu button:hover {
+  color: #ffffff !important;
+}
+body:not(.dark_theme) .page-sidebar .nav-menu .menu-item-icon,
+body:not(.dark_theme) .sidebar-theme-switcher,
+body:not(.dark_theme) .sidebar-theme-switcher * {
+  color: rgba(241,245,249,0.86) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════

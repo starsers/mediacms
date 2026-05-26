@@ -28,12 +28,38 @@ else
     usermod -a -G $GROUP www-data
 fi
 
-# We should do this only for folders that have a different owner, since it is an expensive operation
-# Also ignoring .git folder to fix this issue https://github.com/mediacms-io/mediacms/issues/934
-# Exclude package-lock.json files that may not exist or be removed during frontend setup
-find /home/mediacms.io/mediacms ! \( -path "*.git*" -o -name "package-lock.json" \) -exec chown www-data:$TARGET_GID {} + 2>/dev/null || true
+CHOWN_PATHS=${CHOWN_PATHS:-"/home/mediacms.io/mediacms/logs /home/mediacms.io/mediacms/media_files /var/run/mediacms"}
+if [ "${CHOWN_PROJECT_TREE:-no}" = "yes" ]; then
+    find /home/mediacms.io/mediacms ! \( -path "*.git*" -o -name "package-lock.json" \) -exec chown www-data:$TARGET_GID {} + 2>/dev/null || true
+else
+    for path in $CHOWN_PATHS; do
+        [ -e "$path" ] && chown -R www-data:$TARGET_GID "$path" 2>/dev/null || true
+    done
+fi
 
 chmod +x /home/mediacms.io/mediacms/deploy/docker/start.sh /home/mediacms.io/mediacms/deploy/docker/prestart.sh
+
+if [ "${ENABLE_REQUIREMENTS_SYNC:-no}" = "yes" ]; then
+    cd /home/mediacms.io/mediacms
+    REQUIREMENTS_SYNC_FILES=${REQUIREMENTS_SYNC_FILES:-"requirements.txt"}
+    REQUIREMENTS_SYNC_MARKER=${REQUIREMENTS_SYNC_MARKER:-"/home/mediacms.io/.requirements-sync.sha256"}
+    CURRENT_REQUIREMENTS_HASH=$(sha256sum $REQUIREMENTS_SYNC_FILES 2>/dev/null | sha256sum | awk '{print $1}')
+    PREVIOUS_REQUIREMENTS_HASH=""
+    [ -s "$REQUIREMENTS_SYNC_MARKER" ] && PREVIOUS_REQUIREMENTS_HASH=$(cat "$REQUIREMENTS_SYNC_MARKER")
+    if [ -n "$CURRENT_REQUIREMENTS_HASH" ] && [ "$CURRENT_REQUIREMENTS_HASH" != "$PREVIOUS_REQUIREMENTS_HASH" ]; then
+        echo "entrypoint.sh: syncing Python packages from $REQUIREMENTS_SYNC_FILES"
+        if command -v uv >/dev/null 2>&1; then
+            uv pip install --no-binary lxml --no-binary xmlsec $(for file in $REQUIREMENTS_SYNC_FILES; do printf ' -r %s' "$file"; done)
+            uv pip check
+        else
+            python -m pip install $(for file in $REQUIREMENTS_SYNC_FILES; do printf ' -r %s' "$file"; done)
+            python -m pip check
+        fi
+        echo "$CURRENT_REQUIREMENTS_HASH" > "$REQUIREMENTS_SYNC_MARKER"
+    else
+        echo "entrypoint.sh: Python packages already match $REQUIREMENTS_SYNC_FILES"
+    fi
+fi
 
 # Generate or read SECRET_KEY once, shared across all containers via the
 # host-mounted project volume. Atomic create-or-read so parallel container

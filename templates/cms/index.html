@@ -183,7 +183,11 @@
 {% endblock %}
 
 {% block bottomimports %}
+	{% if DEVELOPMENT_MODE %}
+	{% include "common/dev-entry-assets.html" with entry_name="index" %}
+	{% else %}
 	<script src="{% static "js/index.js" %}?v={{ VERSION }}"></script>
+	{% endif %}
 <script>
 (function(){
   document.body.classList.add('waic-home-dashboard');

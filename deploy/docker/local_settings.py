@@ -33,3 +33,10 @@ CELERY_RESULT_BACKEND = BROKER_URL
 MP4HLS_COMMAND = "/home/mediacms.io/bento4/bin/mp4hls"
 
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+USE_WHISPER_TRANSCRIBE = os.getenv('USE_WHISPER_TRANSCRIBE', 'True') == 'True'
+WHISPER_MODEL = os.getenv('WHISPER_MODEL', 'medium')
+WHISPER_BIN = os.getenv('WHISPER_BIN', '/home/mediacms.io/bin/whisper')
+DASHSCOPE_API_KEY = os.getenv('DASHSCOPE_API_KEY', '')
+APPROVAL_REVIEWER = os.getenv('APPROVAL_REVIEWER', 'admin')
+IP_WHITELIST = [ip.strip() for ip in os.getenv('IP_WHITELIST', '').split(',') if ip.strip()]

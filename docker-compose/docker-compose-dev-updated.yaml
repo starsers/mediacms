@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
       args:
         - DEVELOPMENT_MODE=True
-    image: mediacms/mediacms:latest
+    image: mediacms/mediacms:waic-full
     volumes:
       - ../:/home/mediacms.io/mediacms/
     command: "/home/mediacms.io/mediacms/deploy/docker/prestart.sh"
@@ -18,6 +18,7 @@ services:
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_CELERY_BEAT: 'no'
+      ENABLE_COLLECTSTATIC: 'no'
       ADMIN_USER: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
       ADMIN_PASSWORD: 'admin'
@@ -69,7 +70,7 @@ services:
     restart: unless-stopped
   web:
     platform: linux/amd64
-    image: mediacms/mediacms:latest
+    image: mediacms/mediacms:waic-full
     command: "python manage.py runserver 0.0.0.0:80"
     environment:
       DEVELOPMENT_MODE: True
@@ -80,7 +81,7 @@ services:
     depends_on:
       - migrations
   db:
-    image: postgres:17.2-alpine
+    image: pgvector/pgvector:pg17
     volumes:
       - ../postgres_data:/var/lib/postgresql/data/
     restart: always
@@ -104,7 +105,7 @@ services:
       retries: 3
   celery_worker:
     platform: linux/amd64
-    image: mediacms/mediacms:latest
+    image: mediacms/mediacms:waic-full
     deploy:
       replicas: 1
     volumes:

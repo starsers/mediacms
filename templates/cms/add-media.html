@@ -200,7 +200,11 @@
 {% endblock innercontent %}
 
 {% block bottomimports %}
+{% if DEVELOPMENT_MODE %}
+{% include "common/dev-entry-assets.html" with entry_name="add-media" %}
+{% else %}
 <script src="{% static "js/add-media.js" %}?v={{ VERSION }}"></script>
+{% endif %}
 <script>
     document.addEventListener("DOMContentLoaded", function(event) {
 

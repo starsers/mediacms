@@ -1,0 +1,4 @@
+{% if DEVELOPMENT_MODE %}
+<link href="{{ WEBPACK_DEV_SERVER_URL }}/css/{{ entry_name }}.css" rel="stylesheet">
+<script src="{{ WEBPACK_DEV_SERVER_URL }}/{{ entry_name }}.js"></script>
+{% endif %}

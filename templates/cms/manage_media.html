@@ -19,6 +19,10 @@ window.CATEGORIES = {{ categories|safe }};
 {% endblock %}
 
 {% block bottomimports %}
+    {% if DEVELOPMENT_MODE %}
+    {% include "common/dev-entry-assets.html" with entry_name="manage-media" %}
+    {% else %}
     <script src="{% static "js/manage-media.js" %}?v={{ VERSION }}"></script>
+    {% endif %}
 {% endblock bottomimports %}
 

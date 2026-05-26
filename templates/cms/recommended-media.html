@@ -43,5 +43,9 @@
 {% endblock %}
 
 {% block bottomimports %}
+    {% if DEVELOPMENT_MODE %}
+    {% include "common/dev-entry-assets.html" with entry_name="recommended" %}
+    {% else %}
     <script src="{% static "js/recommended.js" %}?v={{ VERSION }}"></script>
+    {% endif %}
 {% endblock bottomimports %}
