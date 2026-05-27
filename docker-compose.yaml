@@ -142,7 +142,7 @@ services:
       retries: 5
   db_init:
     image: pgvector/pgvector:pg17
-    command: sh -c "until pg_isready -h db -U mediacms -d mediacms; do sleep 1; done; psql -h db -U mediacms -d mediacms -c 'CREATE EXTENSION IF NOT EXISTS vector;'"
+    command: sh -c "until pg_isready -h db -U mediacms -d mediacms; do sleep 1; done; psql -h db -U mediacms -d mediacms -c 'CREATE EXTENSION IF NOT EXISTS vector; CREATE EXTENSION IF NOT EXISTS pg_trgm;'"
     environment:
       PGPASSWORD: mediacms
     depends_on:
