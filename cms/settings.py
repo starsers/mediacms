@@ -202,6 +202,15 @@ THUMBNAIL_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/thumbnails/"
 SUBTITLES_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/subtitles/"
 HLS_DIR = os.path.join(MEDIA_ROOT, "hls/")
 
+# Protect media files via nginx auth_request
+# When True, nginx delegates authorization for /media/<protected>/... to a
+# Django endpoint that checks the Media's state and the user's access.
+USE_X_ACCEL_REDIRECT = True
+# Subdirectories of MEDIA_ROOT that should be gated. "chunks" is intentionally
+# omitted (upload state, not playback).
+X_ACCEL_PROTECTED_PATHS = ["encoded", "hls", "original"]
+X_ACCEL_AUTH_CACHE_SECONDS = 300
+
 FFMPEG_COMMAND = "ffmpeg"  # this is the path
 FFPROBE_COMMAND = "ffprobe"  # this is the path
 MP4HLS = "mp4hls"
@@ -398,7 +407,25 @@ LOGGING = {
     },
 }
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": "mediacms", "HOST": "127.0.0.1", "PORT": "5432", "USER": "mediacms", "PASSWORD": "mediacms", "OPTIONS": {'pool': True}}}
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "mediacms",
+        "HOST": "127.0.0.1",
+        "PORT": "5432",
+        "USER": "mediacms",
+        "PASSWORD": "mediacms",
+        "OPTIONS": {
+            "pool": {
+                "min_size": 2,
+                "max_size": 8,
+                "timeout": 10,
+                "max_lifetime": 30 * 60,
+                "max_idle": 10 * 60,
+            }
+        },
+    }
+}
 
 
 REDIS_LOCATION = "redis://127.0.0.1:6379/1"
