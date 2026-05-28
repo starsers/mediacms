@@ -58,6 +58,12 @@ FRONTEND_HOST = "http://localhost"
 # there's a conversion to https with the SSL_FRONTEND_HOST env
 INTERNAL_IPS = "127.0.0.1"
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8089",   # docker-compose-dev.yaml web
+    "http://127.0.0.1:8089",
+    "http://localhost:8088",   # frontend dev server
+    "http://127.0.0.1:8088",
+]
 # settings that are related with UX/appearance
 # whether a featured item appears enlarged with player on index page
 VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE = False
@@ -343,6 +349,7 @@ TEMPLATES = [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
+                "django.template.context_processors.i18n",
                 "django.template.context_processors.media",
                 "django.contrib.messages.context_processors.messages",
                 "files.context_processors.stuff",
