@@ -23,27 +23,15 @@
 		<link href="{% static "lib/gfonts/gfonts.css" %}" rel="stylesheet">
 		{% endif %}
 
-		{% if DEVELOPMENT_MODE %}
-		<link href="{{ WEBPACK_DEV_SERVER_URL }}/css/_commons.css" rel="preload" as="style">
-		<link href="{{ WEBPACK_DEV_SERVER_URL }}/css/_commons.css" rel="stylesheet">
-		{% else %}
 		<link href="{% static "css/_commons.css" %}?v={{ VERSION }}" rel="preload" as="style">
 		<link href="{% static "css/_commons.css" %}?v={{ VERSION }}" rel="stylesheet">
-		{% endif %}
 
 		<link href="{% static "css/_extra.css" %}?v={{ VERSION }}" rel="preload" as="style">
 		<link href="{% static "css/_extra.css" %}?v={{ VERSION }}" rel="stylesheet">
-
-		<link href="{% static "css/waic-theme.css" %}?v={{ VERSION }}" rel="preload" as="style">
-		<link href="{% static "css/waic-theme.css" %}?v={{ VERSION }}" rel="stylesheet">
 
 		{% for css_path in EXTRA_CSS_PATHS %}
 		<link href="{{ css_path }}?v={{ VERSION }}" rel="preload" as="style">
 		<link href="{{ css_path }}?v={{ VERSION }}" rel="stylesheet">
 		{% endfor %}
 
-		{% if DEVELOPMENT_MODE %}
-		<link href="{{ WEBPACK_DEV_SERVER_URL }}/_commons.js" rel="preload" as="script">
-		{% else %}
 		<link href="{% static "js/_commons.js" %}?v={{ VERSION }}" rel="preload" as="script">
-		{% endif %}

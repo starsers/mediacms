@@ -26,3 +26,12 @@ django-jazzmin==3.0.1
 pysubs2==1.8.0
 sentry-sdk[django]==2.23.1
 django-tinymce==4.1.0
+dashscope
+PyMuPDF
+openpyxl
+python-docx
+python-pptx
+more-itertools
+tiktoken
+numba
+triton==3.7.0 ; (platform_machine == 'x86_64' and sys_platform == 'linux') or sys_platform == 'linux2'

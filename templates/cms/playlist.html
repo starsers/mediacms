@@ -13,9 +13,5 @@
 {% endblock %}
 
 {% block bottomimports %}
-    {% if DEVELOPMENT_MODE %}
-    {% include "common/dev-entry-assets.html" with entry_name="playlist" %}
-    {% else %}
     <script src="{% static "js/playlist.js" %}?v={{ VERSION }}"></script>
-    {% endif %}
 {% endblock bottomimports %}

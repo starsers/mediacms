@@ -4,9 +4,5 @@
 {% block content %}<div id="page-embed"></div>{% endblock content %}
 
 {% block bottomimports %}
-    {% if DEVELOPMENT_MODE %}
-    {% include "common/dev-entry-assets.html" with entry_name="embed" %}
-    {% else %}
     <script src="{% static "js/embed.js" %}?v={{ VERSION }}"></script>
-    {% endif %}
 {% endblock bottomimports %}

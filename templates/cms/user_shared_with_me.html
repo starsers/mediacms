@@ -29,9 +29,5 @@ No such user
 {% endblock %}
 
 {% block bottomimports %}
-    {% if DEVELOPMENT_MODE %}
-    {% include "common/dev-entry-assets.html" with entry_name="profile-shared-with-me" %}
-    {% else %}
     <script src="{% static "js/profile-shared-with-me.js" %}?v={{ VERSION }}"></script>
-    {% endif %}
 {% endblock bottomimports %}

@@ -9,11 +9,7 @@
 {% endblock %}
 
 {% block bottomimports %}
-    {% if DEVELOPMENT_MODE %}
-    {% include "common/dev-entry-assets.html" with entry_name="search" %}
-    {% else %}
     <script src="{% static "js/search.js" %}?v={{ VERSION }}"></script>
-    {% endif %}
     <script>
     (function() {
       var _matches = {};

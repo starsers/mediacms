@@ -24,13 +24,16 @@ RUN mkdir -p /home/mediacms.io/bento4 && \
 
 FROM node:20-bookworm-slim AS frontend-build
 
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+
 WORKDIR /app/frontend
-COPY frontend/package.json frontend/yarn.lock ./
+COPY frontend/package.json frontend/package-lock.json frontend/yarn.lock ./
 COPY frontend/packages/scripts/ ./packages/scripts/
 RUN --mount=type=cache,target=/root/.npm \
-    npm install --legacy-peer-deps --cache /root/.npm && \
+    npm config set registry "$NPM_REGISTRY" && \
+    npm ci --legacy-peer-deps --cache /root/.npm && \
     cd packages/scripts && \
-    npm install --legacy-peer-deps --cache /root/.npm && \
+    npm ci --legacy-peer-deps --cache /root/.npm && \
     npm run build
 COPY frontend/ ./
 RUN npm run dist
@@ -39,11 +42,16 @@ FROM python:3.13.5-slim-bookworm AS runtime-deps
 
 SHELL ["/bin/bash", "-c"]
 
+ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV CELERY_APP='cms'
 ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PIP_INDEX_URL=$PIP_INDEX_URL
+ENV UV_INDEX_URL=$UV_INDEX_URL
 
 RUN apt-get update -y && \
     apt-get -y upgrade && \
@@ -121,8 +129,11 @@ RUN mkdir -p /root/.cache/ && \
     chmod go+rwx /root/.cache/
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=cache,target=/root/.cache/uv \
-    uv pip install -r requirements-full.txt && \
-    uv pip install dashscope PyMuPDF python-docx python-pptx openpyxl
+    uv pip install --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.tuna.tsinghua.edu.cn/simple torch && \
+    uv pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple --no-deps triton==3.7.0 && \
+    uv pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple setuptools-rust more-itertools numba tiktoken tqdm && \
+    uv pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple --no-deps openai-whisper==20250625 && \
+    uv pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple dashscope PyMuPDF python-docx python-pptx openpyxl
 
 FROM full-deps AS full
 

@@ -125,7 +125,7 @@ PORTAL_LOGO_LIGHT_PNG = "/static/images/waic-logo-original.png"
 
 # paths to extra css files to be included, eg "/static/css/custom.css"
 # place css inside static/css folder
-EXTRA_CSS_PATHS = []
+EXTRA_CSS_PATHS = ["/static/css/waic-theme.css"]
 # protection agains anonymous users
 # per ip address limit, for actions as like/dislike/report
 TIME_TO_ACTION_ANONYMOUS = 10 * 60

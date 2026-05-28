@@ -9,7 +9,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - ./deploy/docker/reverse_proxy/client_max_body_size.conf:/etc/nginx/conf.d/client_max_body_size.conf:ro
   migrations:
-    image: mediacms/mediacms:waic-full
+    image: mediacms/mediacms:latest
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
@@ -29,7 +29,7 @@ services:
       db:
         condition: service_healthy
   web:
-    image: mediacms/mediacms:waic-full
+    image: mediacms/mediacms:latest
     deploy:
       replicas: 1
     volumes:
@@ -43,7 +43,7 @@ services:
     depends_on:
       - migrations
   celery_beat:
-    image: mediacms/mediacms:waic-full
+    image: mediacms/mediacms:latest
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
@@ -55,7 +55,7 @@ services:
     depends_on:
       - redis
   celery_worker:
-    image: mediacms/mediacms:waic-full
+    image: mediacms/mediacms:latest
     deploy:
       replicas: 1
     volumes:
@@ -68,7 +68,7 @@ services:
     depends_on:
       - migrations
   db:
-    image: pgvector/pgvector:pg17
+    image: postgres:17.2-alpine
     volumes:
       - ../postgres_data/:/var/lib/postgresql/data/
     restart: always
@@ -83,7 +83,7 @@ services:
       timeout: 5s
       retries: 5
   redis:
-    image: "redis:alpine"
+    image: "redis:7.2-bookworm"
     restart: always
     healthcheck:
       test: ["CMD", "redis-cli","ping"]

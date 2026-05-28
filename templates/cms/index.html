@@ -3,9 +3,8 @@
 
 {% block headermeta %}
 
-<script>document.documentElement.classList.add('waic-home-dashboard-root');</script>
 <link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 
 <meta name="description" content="{{PORTAL_DESCRIPTION}}">
 
@@ -38,200 +37,127 @@
 		"position": 1,
         "name": "{{PORTAL_NAME}}",
         "item": {
-          "@type": "WebPage",
-          "@id": "{{FRONTEND_HOST}}"
-        }
+        	"@type": "WebPage",
+        	"@id": "{{FRONTEND_HOST}}"
+    	}
     }]
 }
 </script>
 
 {% endblock headermeta %}
 
-{% block beforecontent %}{% endblock beforecontent %}
-{% block aftercontent %}{% endblock aftercontent %}
-
-{% block content %}
-<div class="waic-dashboard-page">
-  <aside class="waic-dashboard-sidebar" data-purpose="main-sidebar" id="waic-dashboard-sidebar">
-    <a class="waic-dashboard-brand" href="/" aria-label="WAIC 首页">
-      <span class="waic-dashboard-brand-mark">WAIC</span>
-      <span class="waic-dashboard-brand-text">
-        <span>WORLD ARTIFICIAL</span>
-        <span>INTELLIGENCE</span>
-        <span>CONFERENCE</span>
-        <small>世界人工智能大会</small>
-      </span>
-    </a>
-
-    <nav class="waic-dashboard-nav" aria-label="主导航">
-      <a class="waic-dashboard-nav-item is-active" href="/"><span class="material-icons">home</span><span>首页</span></a>
-      <a class="waic-dashboard-nav-item" href="/featured"><span class="material-icons">star</span><span>精选</span></a>
-      <a class="waic-dashboard-nav-item" href="/recommended"><span class="material-icons">done</span><span>推荐</span></a>
-      <a class="waic-dashboard-nav-item" href="/latest"><span class="material-icons">bolt</span><span>最新</span></a>
-      <a class="waic-dashboard-nav-item" href="/tags"><span class="material-icons">sell</span><span>标签</span></a>
-      <a class="waic-dashboard-nav-item" href="/categories"><span class="material-icons">folder</span><span>分类</span></a>
-
-      <span class="waic-dashboard-nav-label">工具</span>
-      <a class="waic-dashboard-nav-item" href="/clip/editor/"><span class="material-icons">content_cut</span><span>视频编辑器</span></a>
-      {% if user.is_authenticated %}
-      <a class="waic-dashboard-nav-item waic-dashboard-nav-upload" href="/upload"><span class="material-icons">upload</span><span>上传</span></a>
-      <a class="waic-dashboard-nav-item" href="/user/{{request.user.username}}"><span class="material-icons">perm_media</span><span>我的媒体</span></a>
-      <a class="waic-dashboard-nav-item" href="/user/{{request.user.username}}/playlists"><span class="material-icons">movie</span><span>我的播放列表</span></a>
-      {% else %}
-      <a class="waic-dashboard-nav-item waic-dashboard-nav-upload" href="/accounts/login/"><span class="material-icons">upload</span><span>上传</span></a>
-      <a class="waic-dashboard-nav-item" href="/accounts/login/"><span class="material-icons">perm_media</span><span>我的媒体</span></a>
-      <a class="waic-dashboard-nav-item" href="/accounts/login/"><span class="material-icons">movie</span><span>我的播放列表</span></a>
-      {% endif %}
-    </nav>
-
-    <div class="waic-dashboard-theme" aria-label="主题切换">
-      <button type="button" class="waic-dashboard-theme-button" data-waic-theme="light" aria-label="切换到白天模式"><span class="material-icons">light_mode</span></button>
-      <button type="button" class="waic-dashboard-theme-button is-active" data-waic-theme="dark" aria-label="切换到黑夜模式"><span class="material-icons">dark_mode</span></button>
-    </div>
-  </aside>
-
-  <div class="waic-dashboard-backdrop" data-waic-sidebar-close aria-hidden="true"></div>
-
-  <main class="waic-dashboard-main">
-    <header class="waic-dashboard-topbar" data-purpose="top-header">
-      <button type="button" class="waic-dashboard-menu-button" aria-label="打开导航" aria-controls="waic-dashboard-sidebar"><span class="material-icons">menu</span></button>
-      <form class="waic-dashboard-search" action="/search" method="get" role="search">
-        <input name="q" type="text" placeholder="搜索素材、分类、标签..." autocomplete="off">
-        <button type="submit" aria-label="搜索"><span class="material-icons">search</span></button>
-      </form>
-      <div class="waic-dashboard-topbar-actions page-header-right">
-        <div>
-          <a class="waic-dashboard-icon notification-bell" href="/notifications" title="消息" aria-label="消息通知"><span class="material-icons">notifications</span></a>
+{% block innercontent %}
+<div class="waic-stitch-home">
+  <div class="waic-home-page">
+    <section class="waic-home-hero">
+      <div class="waic-home-hero-glow" aria-hidden="true"></div>
+      <div class="waic-home-hero-circuit" aria-hidden="true"></div>
+      <div class="waic-home-hero-content">
+        <div class="waic-home-terminal-row">
+          <span class="waic-home-eyebrow">WAIC MEDIA OPERATIONS</span>
+          <span class="waic-home-status">STATUS: NOMINAL</span>
+          <span class="waic-home-status waic-status-uptime">UPTIME 24/7</span>
+          <span class="waic-home-status waic-status-ver">VER {{ VERSION }}</span>
+        </div>
+        <h1 class="waic-home-title">{{PORTAL_NAME}}</h1>
+        <p class="waic-home-subtitle">世界人工智能大会内部素材分享平台，集中管理活动视频、图片、宣传与合作媒体素材。</p>
+        <div class="waic-home-actions">
           {% if user.is_authenticated %}
-          <a class="waic-dashboard-avatar user-options" href="/user/{{request.user.username}}" title="{{request.user.username}}">
-            {% if request.user.thumbnail_url %}
-            <img src="{{request.user.thumbnail_url}}" alt="{{request.user.username}}">
-            {% else %}
-            <span class="material-icons">person</span>
-            {% endif %}
-          </a>
+          <a href="/upload" class="waic-btn-primary waic-btn-sweep"><span class="material-icons">add</span> 上传素材</a>
           {% else %}
-          <a class="waic-dashboard-avatar user-options" href="/accounts/login/" title="登录"><span class="material-icons">person</span></a>
+          <a href="/accounts/login/" class="waic-btn-primary waic-btn-sweep"><span class="material-icons">login</span> 登录使用</a>
           {% endif %}
+          <a href="/latest" class="waic-btn-secondary"><span class="material-icons">visibility</span> 浏览素材</a>
         </div>
       </div>
-    </header>
+      <div class="waic-hero-terminal" aria-hidden="true">
+        <span class="waic-terminal-line"><span class="waic-terminal-code">OPERATOR_01</span> / HOME</span>
+        <span class="waic-terminal-line">LATENCY <span class="waic-terminal-latency">&lt; 40MS</span></span>
+        <span class="waic-terminal-cursor"></span>
+      </div>
+    </section>
 
-    <div class="waic-dashboard-content">
-      <section class="waic-dashboard-hero" data-purpose="hero-section">
-        <div class="waic-dashboard-hero-bg" aria-hidden="true"></div>
-        <div class="waic-dashboard-hero-content">
-          <h1>{{PORTAL_NAME}}</h1>
-          <p>世界人工智能大会 内部素材分享平台</p>
-          <div class="waic-dashboard-hero-actions">
-            {% if user.is_authenticated %}
-            <a href="/upload" class="waic-dashboard-primary-button"><span class="material-icons">add</span> 上传素材</a>
-            {% else %}
-            <a href="/accounts/login/" class="waic-dashboard-primary-button"><span class="material-icons">login</span> 登录使用</a>
-            {% endif %}
-            <a href="/latest" class="waic-dashboard-secondary-button"><span class="material-icons">visibility</span> 浏览素材</a>
-          </div>
-        </div>
-      </section>
+    <section class="waic-home-stats" data-purpose="statistics-overview">
+      <div class="waic-stat-card waic-card-scanline">
+        <span class="waic-stat-icon material-icons">folder</span>
+        <span class="waic-stat-info">
+          <strong class="waic-stat-num">{{total_media}}</strong>
+          <span class="waic-stat-label">素材总数</span>
+          <span class="waic-stat-caption">Media assets in archive</span>
+        </span>
+        <span class="waic-stat-code">#ST-001</span>
+      </div>
+      <div class="waic-stat-card waic-card-scanline">
+        <span class="waic-stat-icon material-icons">today</span>
+        <span class="waic-stat-info">
+          <strong class="waic-stat-num">{{today_media}}</strong>
+          <span class="waic-stat-label">今日新增</span>
+          <span class="waic-stat-caption">Fresh uploads in 24h</span>
+        </span>
+        <span class="waic-stat-code">#ST-002</span>
+      </div>
+      <div class="waic-stat-card waic-card-scanline">
+        <span class="waic-stat-icon material-icons">groups</span>
+        <span class="waic-stat-info">
+          <strong class="waic-stat-num">{{category_count}}</strong>
+          <span class="waic-stat-label">分类数量</span>
+          <span class="waic-stat-caption">Structured collections</span>
+        </span>
+        <span class="waic-stat-code">#ST-003</span>
+      </div>
+    </section>
 
-      <section class="waic-dashboard-stats" data-purpose="statistics-overview">
-        <div class="waic-dashboard-stat-card">
-          <span class="waic-dashboard-stat-icon material-icons">folder</span>
-          <span class="waic-dashboard-stat-body"><strong>{{total_media}}</strong><small>素材总数</small></span>
-        </div>
-        <div class="waic-dashboard-stat-card">
-          <span class="waic-dashboard-stat-icon material-icons">today</span>
-          <span class="waic-dashboard-stat-body"><strong>{{today_media}}</strong><small>今日新增</small></span>
-        </div>
-        <div class="waic-dashboard-stat-card">
-          <span class="waic-dashboard-stat-icon material-icons">groups</span>
-          <span class="waic-dashboard-stat-body"><strong>{{category_count}}</strong><small>分类数量</small></span>
-        </div>
-      </section>
+    {% if categories %}
+    <section class="waic-home-categories" data-purpose="category-navigation">
+      <div class="waic-section-heading">
+        <span class="waic-section-kicker">TAXONOMY</span>
+        <h2 class="waic-section-title"><span class="material-icons">folder_open</span> 分类导航</h2>
+      </div>
+      <div class="waic-category-grid">
+        {% for cat in categories %}
+        <a href="/search?q=&c={{cat.title|urlencode}}" class="waic-category-card{% if '文档' in cat.title %} waic-cat-kind-doc{% elif '嘉宾' in cat.title %} waic-cat-kind-person{% elif '活动' in cat.title %} waic-cat-kind-event{% elif '宣传' in cat.title %} waic-cat-kind-campaign{% elif '技术' in cat.title %} waic-cat-kind-code{% else %} waic-cat-kind-default{% endif %}{% if cat.count == 0 %} waic-category-empty{% endif %}">
+          <span class="waic-cat-code">#CAT-{{ forloop.counter|stringformat:"02d" }}</span>
+          <span class="waic-cat-icon material-icons">{% if '文档' in cat.title %}description{% elif '嘉宾' in cat.title %}person{% elif '活动' in cat.title %}event{% elif '图片' in cat.title %}image{% elif '音乐' in cat.title %}music_note{% elif '视频' in cat.title %}movie{% elif '宣传' in cat.title %}campaign{% elif '技术' in cat.title %}settings{% else %}folder{% endif %}</span>
+          <span class="waic-cat-name">{{cat.title}}</span>
+          <span class="waic-cat-count">{{cat.count}} 个素材</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
 
-      {% if categories %}
-      <section class="waic-dashboard-categories" data-purpose="category-navigation">
-        <h2 class="waic-dashboard-section-title"><span class="material-icons">folder_open</span> 分类导航</h2>
-        <div class="waic-dashboard-category-grid">
-          {% for cat in categories %}
-          <a href="/search?q=&c={{cat.title|urlencode}}" class="waic-dashboard-category-card{% if '文档' in cat.title %} waic-cat-kind-doc{% elif '嘉宾' in cat.title %} waic-cat-kind-person{% elif '活动' in cat.title %} waic-cat-kind-event{% elif '宣传' in cat.title %} waic-cat-kind-campaign{% elif '技术' in cat.title %} waic-cat-kind-code{% else %} waic-cat-kind-default{% endif %}{% if cat.count == 0 %} waic-category-empty{% endif %}">
-            <span class="waic-dashboard-cat-icon material-icons">{% if '文档' in cat.title %}description{% elif '嘉宾' in cat.title %}person{% elif '活动' in cat.title %}event{% elif '图片' in cat.title %}image{% elif '音乐' in cat.title %}music_note{% elif '视频' in cat.title %}movie{% elif '宣传' in cat.title %}campaign{% elif '技术' in cat.title %}settings{% else %}folder{% endif %}</span>
-            <span class="waic-dashboard-cat-name">{{cat.title}}</span>
-            <span class="waic-dashboard-cat-count">{{cat.count}} 个素材</span>
-          </a>
-          {% endfor %}
-        </div>
-      </section>
-      {% endif %}
+    <section class="waic-media-partners" data-purpose="partners-filter">
+      <div class="waic-section-heading">
+        <span class="waic-section-kicker">PARTNERS</span>
+        <h2 class="waic-section-title"><span class="material-icons">hub</span> 合作媒体</h2>
+      </div>
+      <div class="waic-partner-pills" aria-label="合作媒体筛选">
+        <a href="/search?q=新华社" class="waic-partner-pill is-active">新华社</a>
+        <a href="/search?q=人民日报" class="waic-partner-pill">人民日报</a>
+        <a href="/search?q=CCTV" class="waic-partner-pill">CCTV</a>
+        <a href="/search?q=澎湃新闻" class="waic-partner-pill">澎湃新闻</a>
+        <a href="/search?q=第一财经" class="waic-partner-pill">第一财经</a>
+        <a href="/search?q=凤凰网" class="waic-partner-pill">凤凰网</a>
+        <a href="/search?q=新民晚报" class="waic-partner-pill">新民晚报</a>
+      </div>
+      <div class="waic-partners-row">
+        <img src="{% static 'images/media-logos/media-partners.svg' %}" alt="合作媒体">
+      </div>
+    </section>
 
-      <section class="waic-dashboard-partners" data-purpose="partners-filter">
-        <div class="waic-dashboard-partner-pills" aria-label="合作媒体筛选">
-          <a href="/search?q=新华社" class="waic-dashboard-partner-pill is-active">新华社</a>
-          <a href="/search?q=人民日报" class="waic-dashboard-partner-pill">人民日报</a>
-          <a href="/search?q=CCTV" class="waic-dashboard-partner-pill">CCTV</a>
-          <a href="/search?q=澎湃新闻" class="waic-dashboard-partner-pill">澎湃新闻</a>
-          <a href="/search?q=第一财经" class="waic-dashboard-partner-pill">第一财经</a>
-          <a href="/search?q=凤凰网" class="waic-dashboard-partner-pill">凤凰网</a>
-          <a href="/search?q=新民晚报" class="waic-dashboard-partner-pill">新民晚报</a>
-        </div>
-      </section>
-
-      <div id="page-home" class="waic-dashboard-react-home"></div>
+    <div class="waic-home-latest-header">
+      <div class="waic-section-heading">
+        <span class="waic-section-kicker">LIVE FEED</span>
+        <h2 class="waic-section-title"><span class="material-icons">new_releases</span> 最新上传</h2>
+      </div>
+      <span class="waic-new-badge waic-badge-pulse">LIVE</span>
     </div>
-  </main>
+  </div>
+
+  <div id="page-home"></div>
 </div>
 {% endblock %}
 
 {% block bottomimports %}
-	{% if DEVELOPMENT_MODE %}
-	{% include "common/dev-entry-assets.html" with entry_name="index" %}
-	{% else %}
 	<script src="{% static "js/index.js" %}?v={{ VERSION }}"></script>
-	{% endif %}
-<script>
-(function(){
-  document.body.classList.add('waic-home-dashboard');
-  var siteId = window.MediaCMS && window.MediaCMS.site && window.MediaCMS.site.id ? window.MediaCMS.site.id : 'mediacms';
-  var themeKey = 'MediaCMS[' + siteId + '][theme][mode]';
-  var sidebar = document.getElementById('waic-dashboard-sidebar');
-  var menuButton = document.querySelector('.waic-dashboard-menu-button');
-  var closeTargets = document.querySelectorAll('[data-waic-sidebar-close]');
-  function readTheme(){
-    try {
-      var stored = JSON.parse(localStorage.getItem(themeKey) || 'null');
-      return stored && stored.value === 'light' ? 'light' : stored && stored.value === 'dark' ? 'dark' : 'dark';
-    } catch (e) {
-      return 'dark';
-    }
-  }
-  function writeTheme(mode){
-    document.body.classList.toggle('dark_theme', mode === 'dark');
-    document.body.classList.toggle('light_theme', mode === 'light');
-    document.querySelectorAll('[data-waic-theme]').forEach(function(button){
-      button.classList.toggle('is-active', button.getAttribute('data-waic-theme') === mode);
-    });
-    try {
-      localStorage.setItem(themeKey, JSON.stringify({ value: mode, expire: new Date().getTime() + 86400 * 1000 }));
-    } catch (e) {}
-  }
-  function closeSidebar(){ document.body.classList.remove('waic-dashboard-sidebar-open'); }
-  writeTheme(readTheme());
-  document.querySelectorAll('[data-waic-theme]').forEach(function(button){
-    button.addEventListener('click', function(){ writeTheme(button.getAttribute('data-waic-theme') || 'dark'); });
-  });
-  if (menuButton && sidebar) {
-    menuButton.addEventListener('click', function(){ document.body.classList.toggle('waic-dashboard-sidebar-open'); });
-  }
-  closeTargets.forEach(function(target){ target.addEventListener('click', closeSidebar); });
-  document.addEventListener('keydown', function(event){ if (event.key === 'Escape') closeSidebar(); });
-  var toggleBtn = document.querySelector('.toggle-sidebar');
-  if (toggleBtn) {
-    toggleBtn.style.display = 'flex';
-    toggleBtn.querySelector('button')?.addEventListener('click', function() {
-      var legacySidebar = document.querySelector('.page-sidebar');
-      if (legacySidebar) legacySidebar.classList.toggle('waic-collapsed');
-    });
-  }
-})();
-</script>
 {% endblock bottomimports %}

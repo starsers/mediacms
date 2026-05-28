@@ -245,13 +245,9 @@ header img[src*="logo"],
    侧边栏（亮暗公用渐变，暗色加深）
    ═══════════════════════════════════════════════════════════ */
 .page-sidebar {
-  --sidebar-bg-color: #1e3a5f;
-  --sidebar-nav-item-text-color: #f1f5f9;
-  --sidebar-nav-item-icon-color: rgba(241,245,249,0.85);
-  --sidebar-nav-border-color: rgba(255,255,255,0.08);
   top: 80px !important;
   width: var(--sidebar-width, 240px) !important;
-  background: #1e3a5f !important;
+  background: var(--sidebar-bg-color, #1e3a5f) !important;
   color: #f1f5f9 !important;
   border-right: 1px solid var(--waic-border, rgba(255,255,255,0.08)) !important;
   box-shadow: none !important;
@@ -259,8 +255,7 @@ header img[src*="logo"],
   z-index: 10 !important;
 }
 body.dark_theme .page-sidebar {
-  --sidebar-bg-color: #08090a;
-  background: #08090a !important;
+  background: var(--sidebar-bg-color, #08090a) !important;
   border-right: 1px solid var(--waic-border, rgba(255,255,255,0.08)) !important;
 }
 
@@ -332,54 +327,6 @@ body.dark_theme .page-sidebar {
 body.dark_theme .page-sidebar-bottom a,
 body.dark_theme .page-sidebar-bottom button {
   color: var(--waic-text-secondary) !important;
-}
-
-.page-sidebar .page-sidebar-inner {
-  min-height: calc(100vh - var(--header-height, 80px)) !important;
-  display: block !important;
-  max-height: none !important;
-  background: inherit !important;
-  color: inherit !important;
-}
-
-.page-sidebar .page-sidebar-inner::after {
-  content: "";
-  display: block;
-  clear: both;
-}
-
-body.light_theme .page-sidebar,
-body.light_theme .page-sidebar .page-sidebar-inner {
-  background: #1e3a5f !important;
-  color: #f1f5f9 !important;
-}
-
-body.light_theme .page-sidebar .nav-menu a,
-body.light_theme .page-sidebar .nav-menu button,
-body.light_theme .page-sidebar .nav-menu li > * {
-  color: rgba(241, 245, 249, 0.76) !important;
-}
-
-body.light_theme .page-sidebar .nav-menu .active > *,
-body.light_theme .page-sidebar .nav-menu .link-item.active > *,
-body.light_theme .page-sidebar .nav-menu li.active > *,
-body.light_theme .page-sidebar .nav-menu a:hover,
-body.light_theme .page-sidebar .nav-menu button:hover {
-  color: #ffffff !important;
-}
-
-body.light_theme .page-sidebar .nav-menu .menu-item-icon,
-body.light_theme .sidebar-theme-switcher,
-body.light_theme .sidebar-theme-switcher * {
-  color: rgba(241, 245, 249, 0.86) !important;
-}
-
-body.light_theme .sidebar-theme-switcher {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-body.light_theme .page-sidebar-bottom {
-  border-top-color: rgba(255, 255, 255, 0.14) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -2251,36 +2198,6 @@ a[href*="/tags/"].item .item-thumb img {
   margin: 2px 12px !important;
   padding: 4px 10px !important;
   max-height: 32px !important;
-}
-
-/* ═══ WAIC: 侧边栏 light theme 对比度兜底 ═══ */
-body:not(.dark_theme) .page-sidebar,
-body:not(.dark_theme) .page-sidebar .page-sidebar-inner {
-  --sidebar-bg-color: #1e3a5f;
-  --sidebar-nav-item-text-color: #f1f5f9;
-  --sidebar-nav-item-icon-color: rgba(241,245,249,0.85);
-  --sidebar-nav-border-color: rgba(255,255,255,0.08);
-  background-color: #1e3a5f !important;
-  background-image: none !important;
-  background: #1e3a5f !important;
-  color: #f1f5f9 !important;
-}
-body:not(.dark_theme) .page-sidebar .nav-menu a,
-body:not(.dark_theme) .page-sidebar .nav-menu button,
-body:not(.dark_theme) .page-sidebar .nav-menu li > * {
-  color: rgba(241,245,249,0.76) !important;
-}
-body:not(.dark_theme) .page-sidebar .nav-menu .active > *,
-body:not(.dark_theme) .page-sidebar .nav-menu .link-item.active > *,
-body:not(.dark_theme) .page-sidebar .nav-menu li.active > *,
-body:not(.dark_theme) .page-sidebar .nav-menu a:hover,
-body:not(.dark_theme) .page-sidebar .nav-menu button:hover {
-  color: #ffffff !important;
-}
-body:not(.dark_theme) .page-sidebar .nav-menu .menu-item-icon,
-body:not(.dark_theme) .sidebar-theme-switcher,
-body:not(.dark_theme) .sidebar-theme-switcher * {
-  color: rgba(241,245,249,0.86) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -4179,6 +4096,365 @@ body.waic-home-dashboard .waic-dashboard-nav-upload {
   background: rgba(255, 255, 255, 0.055);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   Homepage shell refinement using the real /recommended shell
+   Scope: templates/cms/index.html via .waic-home-shell-refined
+   ═══════════════════════════════════════════════════════════ */
+html:has(.waic-stitch-home) body {
+  background:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+    radial-gradient(circle at 14% 10%, rgba(59,130,246,0.16), transparent 24%),
+    radial-gradient(circle at 82% 18%, rgba(139,92,246,0.14), transparent 26%),
+    #050614 !important;
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, auto !important;
+  color: #e2e8f0 !important;
+}
+
+html:has(.waic-stitch-home) .page-main-wrap {
+  background: transparent !important;
+}
+
+html:has(.waic-stitch-home) .page-main,
+html:has(.waic-stitch-home) .page-main-inner {
+  background: transparent !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home {
+  padding: 28px 0 40px !important;
+  background: transparent !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home::before {
+  display: none !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-page,
+html:has(.waic-stitch-home) .waic-stitch-home #page-home {
+  width: min(100% - 48px, 1480px) !important;
+  max-width: 1480px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-hero {
+  min-height: 288px !important;
+  margin: 0 0 32px !important;
+  padding: 64px 48px !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: linear-gradient(90deg, #2563eb 0%, #2563eb 42%, #312e81 100%) !important;
+  box-shadow: none !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-hero::before {
+  inset: 0 !important;
+  opacity: 0.18 !important;
+  background:
+    radial-gradient(circle at 72% 52%, rgba(255,255,255,0.14), transparent 22%),
+    linear-gradient(115deg, transparent 0 48%, rgba(255,255,255,0.12) 50%, transparent 62%) !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-hero::after {
+  right: -108px !important;
+  bottom: -156px !important;
+  width: 420px !important;
+  height: 300px !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  border-radius: 50% !important;
+  background: rgba(255,255,255,0.06) !important;
+  transform: rotate(-14deg) !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-terminal-row {
+  gap: 10px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-title {
+  font-size: clamp(38px, 5vw, 54px) !important;
+  line-height: 1.12 !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-subtitle {
+  max-width: 720px !important;
+  margin-top: 18px !important;
+  font-size: 18px !important;
+  line-height: 1.6 !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-actions {
+  gap: 16px !important;
+  margin-top: 36px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-btn-primary,
+html:has(.waic-stitch-home) .waic-stitch-home .waic-btn-secondary {
+  min-height: 44px !important;
+  padding: 0 24px !important;
+  border-radius: 999px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-btn-primary {
+  background: #3b82f6 !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-btn-secondary {
+  background: rgba(255,255,255,0.18) !important;
+  color: #fff !important;
+  border: 0 !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-stats {
+  gap: 24px !important;
+  margin: 0 0 32px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-stat-card {
+  min-height: 106px !important;
+  padding: 24px !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,0.03) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-stat-icon {
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  border-radius: 12px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-stat-card:nth-child(1) .waic-stat-icon {
+  background: rgba(139,92,246,0.22) !important;
+  color: #a78bfa !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-stat-card:nth-child(2) .waic-stat-icon {
+  background: rgba(59,130,246,0.18) !important;
+  color: #60a5fa !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-stat-card:nth-child(3) .waic-stat-icon {
+  background: rgba(79,70,229,0.2) !important;
+  color: #a5b4fc !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-stat-num {
+  font-size: 32px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-stat-label {
+  margin-top: 4px !important;
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-stat-caption {
+  color: #64748b !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-categories,
+html:has(.waic-stitch-home) .waic-stitch-home .waic-media-partners {
+  margin: 0 0 24px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-section-heading {
+  margin-bottom: 18px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-section-title {
+  margin: 0 !important;
+  color: #ffffff !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-section-title .material-icons {
+  color: #60a5fa !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-category-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+  gap: 16px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-category-card {
+  min-height: 116px !important;
+  padding: 18px 14px !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,0.03) !important;
+  box-shadow: none !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-category-card:hover {
+  border-color: rgba(139,92,246,0.65) !important;
+  box-shadow: 0 0 16px rgba(139,92,246,0.28) !important;
+  transform: scale(1.03) !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-category-card:nth-child(1),
+html:has(.waic-stitch-home) .waic-stitch-home .waic-category-card:nth-child(4) {
+  border-color: rgba(59,130,246,0.58) !important;
+  box-shadow: 0 0 16px rgba(59,130,246,0.24) !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-category-card:nth-child(1) {
+  border-color: rgba(139,92,246,0.72) !important;
+  box-shadow: 0 0 16px rgba(139,92,246,0.32) !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-cat-icon {
+  background: transparent !important;
+  color: #94a3b8 !important;
+  font-size: 28px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-cat-kind-doc .waic-cat-icon { color: #e9d5ff !important; }
+html:has(.waic-stitch-home) .waic-stitch-home .waic-cat-kind-person .waic-cat-icon { color: #a78bfa !important; }
+html:has(.waic-stitch-home) .waic-stitch-home .waic-cat-kind-event .waic-cat-icon { color: #60a5fa !important; }
+html:has(.waic-stitch-home) .waic-stitch-home .waic-cat-kind-campaign .waic-cat-icon { color: #60a5fa !important; }
+html:has(.waic-stitch-home) .waic-stitch-home .waic-cat-kind-code .waic-cat-icon { color: #a5b4fc !important; }
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-cat-name {
+  color: #f8fafc !important;
+  font-size: 13px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-cat-count {
+  color: #64748b !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-partner-pills {
+  gap: 14px !important;
+  margin: 6px 0 34px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-partner-pill {
+  min-height: 28px !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  background: rgba(255,255,255,0.05) !important;
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-partner-pill.is-active,
+html:has(.waic-stitch-home) .waic-stitch-home .waic-partner-pill:hover {
+  background: #2563eb !important;
+  color: #fff !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-partners-row {
+  padding: 16px 18px !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,0.03) !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-home-latest-header {
+  margin: 0 0 24px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home .waic-new-badge {
+  background: rgba(59,130,246,0.18) !important;
+  border: 1px solid rgba(96,165,250,0.42) !important;
+  color: #93c5fd !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home #page-home .media-list-row {
+  margin: 0 0 34px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home #page-home .media-list-header,
+html:has(.waic-stitch-home) .waic-stitch-home #page-home .media-list-row-header {
+  margin-bottom: 18px !important;
+  color: #fff !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home #page-home .item-thumb {
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,0.03) !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home #page-home .item-thumb:hover {
+  border-color: rgba(139,92,246,0.7) !important;
+  box-shadow: 0 0 18px rgba(139,92,246,0.3) !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home #page-home .item-title,
+html:has(.waic-stitch-home) .waic-stitch-home #page-home .item-content-link h3 {
+  color: #fff !important;
+  font-size: 13px !important;
+}
+
+html:has(.waic-stitch-home) .waic-stitch-home #page-home .item-meta {
+  color: #64748b !important;
+  font-size: 11px !important;
+}
+
+@media (max-width: 900px) {
+  html:has(.waic-stitch-home) .waic-stitch-home .waic-home-page,
+  html:has(.waic-stitch-home) .waic-stitch-home #page-home {
+    width: min(100% - 32px, 1480px) !important;
+  }
+
+  html:has(.waic-stitch-home) .waic-stitch-home .waic-home-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  html:has(.waic-stitch-home) .waic-stitch-home .waic-category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  html:has(.waic-stitch-home) .waic-stitch-home {
+    padding: 16px 0 28px !important;
+  }
+
+  html:has(.waic-stitch-home) .waic-stitch-home .waic-home-page,
+  html:has(.waic-stitch-home) .waic-stitch-home #page-home {
+    width: min(100% - 24px, 1480px) !important;
+  }
+
+  html:has(.waic-stitch-home) .waic-stitch-home .waic-home-hero {
+    min-height: 250px !important;
+    padding: 40px 22px !important;
+  }
+
+  html:has(.waic-stitch-home) .waic-stitch-home .waic-home-title {
+    font-size: 34px !important;
+  }
+
+  html:has(.waic-stitch-home) .waic-stitch-home .waic-home-actions {
+    flex-direction: column !important;
+  }
+
+  html:has(.waic-stitch-home) .waic-stitch-home .waic-btn-primary,
+  html:has(.waic-stitch-home) .waic-stitch-home .waic-btn-secondary {
+    width: 100% !important;
+  }
+}
+
 body.waic-home-dashboard .waic-dashboard-nav-item.is-active {
   background: linear-gradient(90deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.02));
 }
@@ -4919,4 +5195,202 @@ body.waic-home-dashboard .waic-dashboard-backdrop {
     grid-template-columns: 1fr !important;
     gap: 20px !important;
   }
+}
+
+/* Homepage topbar exact-match adjustments */
+body.waic-home-dashboard .waic-dashboard-topbar {
+  justify-content: space-between !important;
+  min-height: 64px !important;
+  height: 64px !important;
+  padding: 0 32px !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-search {
+  flex: 0 1 520px !important;
+  width: 520px !important;
+  margin: 0 !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-search input {
+  height: 38px !important;
+  padding-left: 18px !important;
+  padding-right: 46px !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-search button {
+  top: 3px !important;
+  right: 3px !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-topbar-actions.page-header-right {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-topbar-actions.page-header-right > div {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 14px !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-topbar-actions .waic-dashboard-avatar,
+body.waic-home-dashboard .waic-dashboard-topbar-actions .waic-dashboard-icon,
+body.waic-home-dashboard .waic-dashboard-topbar-actions .notification-bell,
+body.waic-home-dashboard .waic-dashboard-topbar-actions .user-options {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 32px !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-topbar-actions .waic-dashboard-avatar img,
+body.waic-home-dashboard .waic-dashboard-topbar-actions .user-options img,
+body.waic-home-dashboard .waic-dashboard-topbar-actions .thumbnail img {
+  display: block !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  border-radius: 999px !important;
+  object-fit: cover !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-topbar-actions .material-icons {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 18px !important;
+  line-height: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-topbar-actions .waic-notify-bell {
+  display: none !important;
+}
+
+@media (max-width: 980px) {
+  body.waic-home-dashboard .waic-dashboard-search {
+    flex: 1 1 auto !important;
+    width: auto !important;
+  }
+}
+
+/* Runtime homepage correction: keep the dashboard matching the dark reference even when React restores light_theme. */
+body.waic-home-dashboard.light_theme,
+body.waic-home-dashboard.light_theme .page-main-wrap,
+body.waic-home-dashboard.light_theme .waic-dashboard-page,
+body.waic-home-dashboard.dark_theme,
+body.waic-home-dashboard.dark_theme .page-main-wrap,
+body.waic-home-dashboard.dark_theme .waic-dashboard-page {
+  --waic-dash-bg: #050614 !important;
+  --waic-dash-sidebar: #0a0b1e !important;
+  --waic-dash-surface: rgba(255, 255, 255, 0.03) !important;
+  --waic-dash-border: rgba(255, 255, 255, 0.085) !important;
+  --waic-dash-text: #e2e8f0 !important;
+  --waic-dash-muted: #94a3b8 !important;
+  --waic-dash-dim: #64748b !important;
+  background-color: #050614 !important;
+  color: #e2e8f0 !important;
+}
+
+body.waic-home-dashboard.light_theme .waic-dashboard-page,
+body.waic-home-dashboard.dark_theme .waic-dashboard-page {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    radial-gradient(circle at 12% 8%, rgba(37, 99, 235, 0.16), transparent 24%),
+    radial-gradient(circle at 82% 18%, rgba(124, 58, 237, 0.13), transparent 26%),
+    #050614 !important;
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, auto !important;
+}
+
+body.waic-home-dashboard.light_theme .waic-dashboard-sidebar,
+body.waic-home-dashboard.dark_theme .waic-dashboard-sidebar {
+  background: #0a0b1e !important;
+  box-shadow: none !important;
+}
+
+body.waic-home-dashboard.light_theme .waic-dashboard-topbar,
+body.waic-home-dashboard.dark_theme .waic-dashboard-topbar {
+  width: 100% !important;
+  background: rgba(5, 6, 20, 0.88) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.085) !important;
+  box-shadow: none !important;
+}
+
+body.waic-home-dashboard.light_theme .waic-dashboard-stat-card,
+body.waic-home-dashboard.light_theme .waic-dashboard-category-card,
+body.waic-home-dashboard.dark_theme .waic-dashboard-stat-card,
+body.waic-home-dashboard.dark_theme .waic-dashboard-category-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.085) !important;
+  box-shadow: none !important;
+}
+
+body.waic-home-dashboard.light_theme .waic-dashboard-stat-body strong,
+body.waic-home-dashboard.light_theme .waic-dashboard-section-title,
+body.waic-home-dashboard.light_theme .waic-dashboard-cat-name,
+body.waic-home-dashboard.light_theme .waic-dashboard-react-home .media-list-header h2,
+body.waic-home-dashboard.light_theme .waic-dashboard-react-home .item-main h3,
+body.waic-home-dashboard.dark_theme .waic-dashboard-stat-body strong,
+body.waic-home-dashboard.dark_theme .waic-dashboard-section-title,
+body.waic-home-dashboard.dark_theme .waic-dashboard-cat-name,
+body.waic-home-dashboard.dark_theme .waic-dashboard-react-home .media-list-header h2,
+body.waic-home-dashboard.dark_theme .waic-dashboard-react-home .item-main h3 {
+  color: #e2e8f0 !important;
+}
+
+body.waic-home-dashboard.light_theme .waic-dashboard-stat-body small,
+body.waic-home-dashboard.light_theme .waic-dashboard-cat-count,
+body.waic-home-dashboard.light_theme .waic-dashboard-partner-pill,
+body.waic-home-dashboard.light_theme .waic-dashboard-react-home .item-meta,
+body.waic-home-dashboard.dark_theme .waic-dashboard-stat-body small,
+body.waic-home-dashboard.dark_theme .waic-dashboard-cat-count,
+body.waic-home-dashboard.dark_theme .waic-dashboard-partner-pill,
+body.waic-home-dashboard.dark_theme .waic-dashboard-react-home .item-meta {
+  color: #64748b !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-topbar-actions .waic-dashboard-avatar,
+body.waic-home-dashboard .waic-dashboard-topbar-actions .user-options {
+  order: 1 !important;
+}
+
+body.waic-home-dashboard .waic-dashboard-topbar-actions .waic-dashboard-icon.notification-bell,
+body.waic-home-dashboard .waic-dashboard-topbar-actions .notification-bell {
+  order: 2 !important;
 }

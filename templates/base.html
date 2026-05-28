@@ -19,4 +19,4 @@
 {% include "components/footer.html" %}
 {% endblock %}
 
-{% block bottomimports %}{% if DEVELOPMENT_MODE %}{% include "common/dev-entry-assets.html" with entry_name="base" %}{% else %}<script src="{% static "js/base.js" %}?v={{ VERSION }}"></script>{% endif %}{% endblock bottomimports %}
+{% block bottomimports %}<script src="{% static "js/base.js" %}?v={{ VERSION }}"></script>{% endblock bottomimports %}

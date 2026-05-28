@@ -41,9 +41,5 @@
 {% block content %}<div id="page-categories"></div>{% endblock %}
 
 {% block bottomimports %}
-{% if DEVELOPMENT_MODE %}
-{% include "common/dev-entry-assets.html" with entry_name="categories" %}
-{% else %}
 <script src="{% static "js/categories.js" %}?v={{ VERSION }}"></script>
-{% endif %}
 {% endblock bottomimports %}

@@ -41,9 +41,5 @@
 {% block content %}<div id="page-tags"></div>{% endblock %}
 
 {% block bottomimports %}
-    {% if DEVELOPMENT_MODE %}
-    {% include "common/dev-entry-assets.html" with entry_name="tags" %}
-    {% else %}
     <script src="{% static "js/tags.js" %}?v={{ VERSION }}"></script>
-    {% endif %}
 {% endblock bottomimports %}
