@@ -220,17 +220,33 @@ def clip(request):
 
 @login_required
 def clip_editor(request):
-    """Jianshen video editor iframe"""
-    import os
-    from django.conf import settings
-    from django.http import HttpResponse, Http404
-    path = os.path.join(settings.BASE_DIR, 'static', 'jianshen', 'index.html')
+    """OpenReel video editor iframe"""
+    path = os.path.join(settings.BASE_DIR, "static", "openreel", "index.html")
     if not os.path.exists(path):
-        raise Http404("jianshen index.html not found")
-    with open(path) as f:
-        html = f.read()
-    # Inject <base> tag so relative URLs (./assets/...) resolve to /static/jianshen/
-    html = html.replace('<head>', '<head><base href="/static/jianshen/">')
+        return HttpResponse(
+            "<html><body style='font-family:sans-serif;padding:24px;background:#0f1117;color:#fff;'>"
+            "<h2>OpenReel 静态资源未生成</h2>"
+            "<p>请先在 <code>frontend-tools/openreel-editor</code> 中安装依赖并构建到 <code>static/openreel/</code>。</p>"
+            "</body></html>",
+            status=503,
+        )
+
+    with open(path, encoding="utf-8") as ff:
+        html = ff.read()
+
+    host_config_script = """
+<script>
+window.OPENREEL_HOST_CONFIG = {
+    parentSource: 'mediacms-clip',
+    childSource: 'openreel-bridge',
+    initialHash: '#/editor'
+};
+</script>
+"""
+
+    if "<head>" in html and "OPENREEL_HOST_CONFIG" not in html:
+        html = html.replace("<head>", f"<head>{host_config_script}", 1)
+
     return HttpResponse(html)
 
 
