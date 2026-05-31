@@ -1,2 +1,12 @@
+-r requirements.txt
+
+dashscope
+PyMuPDF
+openpyxl
+python-docx
+python-pptx
+more-itertools
+tiktoken
+numba
 openai-whisper==20250625
 setuptools-rust

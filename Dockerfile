@@ -1,11 +1,25 @@
 # syntax=docker/dockerfile:1.7
-FROM python:3.13.5-slim-bookworm AS build-image
+ARG APT_DEBIAN_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/debian
+ARG APT_SECURITY_MIRROR=https://mirrors.tuna.tsinghua.edu.cn/debian-security
 
-RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends wget xz-utils unzip && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt-get purge --auto-remove && \
-    apt-get clean
+FROM python:3.13-slim-bookworm AS build-image
+
+ARG APT_DEBIAN_MIRROR
+ARG APT_SECURITY_MIRROR
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i "s|http://deb.debian.org/debian|$APT_DEBIAN_MIRROR|g; s|http://deb.debian.org/debian-security|$APT_SECURITY_MIRROR|g; s|http://security.debian.org/debian-security|$APT_SECURITY_MIRROR|g" /etc/apt/sources.list.d/debian.sources; \
+    fi && \
+    if [ -f /etc/apt/sources.list ]; then \
+        sed -i "s|http://deb.debian.org/debian|$APT_DEBIAN_MIRROR|g; s|http://deb.debian.org/debian-security|$APT_SECURITY_MIRROR|g; s|http://security.debian.org/debian-security|$APT_SECURITY_MIRROR|g" /etc/apt/sources.list; \
+    fi && \
+    apt-get update -y && \
+    apt-get install -y --no-install-recommends wget xz-utils unzip
 
 RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
 
@@ -38,10 +52,12 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY frontend/ ./
 RUN npm run dist
 
-FROM python:3.13.5-slim-bookworm AS runtime-deps
+FROM python:3.13-slim-bookworm AS runtime-deps
 
 SHELL ["/bin/bash", "-c"]
 
+ARG APT_DEBIAN_MIRROR
+ARG APT_SECURITY_MIRROR
 ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 ARG UV_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 
@@ -53,8 +69,18 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PIP_INDEX_URL=$PIP_INDEX_URL
 ENV UV_INDEX_URL=$UV_INDEX_URL
 
-RUN apt-get update -y && \
-    apt-get -y upgrade && \
+RUN rm -f /etc/apt/apt.conf.d/docker-clean && \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i "s|http://deb.debian.org/debian|$APT_DEBIAN_MIRROR|g; s|http://deb.debian.org/debian-security|$APT_SECURITY_MIRROR|g; s|http://security.debian.org/debian-security|$APT_SECURITY_MIRROR|g" /etc/apt/sources.list.d/debian.sources; \
+    fi && \
+    if [ -f /etc/apt/sources.list ]; then \
+        sed -i "s|http://deb.debian.org/debian|$APT_DEBIAN_MIRROR|g; s|http://deb.debian.org/debian-security|$APT_SECURITY_MIRROR|g; s|http://security.debian.org/debian-security|$APT_SECURITY_MIRROR|g" /etc/apt/sources.list; \
+    fi && \
+    apt-get update -y && \
     apt-get install --no-install-recommends -y \
         supervisor \
         nginx \
@@ -67,9 +93,7 @@ RUN apt-get update -y && \
         libxml2-dev \
         libxmlsec1-dev \
         libxmlsec1-openssl \
-        libpq-dev \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+        libpq-dev
 
 RUN mkdir -p /home/mediacms.io/mediacms/{logs} && \
     cd /home/mediacms.io && \
@@ -130,10 +154,8 @@ RUN mkdir -p /root/.cache/ && \
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=cache,target=/root/.cache/uv \
     uv pip install --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.tuna.tsinghua.edu.cn/simple torch && \
-    uv pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple --no-deps triton==3.7.0 && \
-    uv pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple setuptools-rust more-itertools numba tiktoken tqdm && \
-    uv pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple --no-deps openai-whisper==20250625 && \
-    uv pip install --index-url https://pypi.tuna.tsinghua.edu.cn/simple dashscope PyMuPDF python-docx python-pptx openpyxl
+    uv pip install -r requirements-full.txt && \
+    uv pip check
 
 FROM full-deps AS full
 

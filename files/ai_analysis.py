@@ -141,7 +141,10 @@ def _extract_file_metadata(media) -> dict:
 
 def _get_api_key():
     """Get DashScope API key from settings or env."""
-    return getattr(settings, 'DASHSCOPE_API_KEY', os.environ.get('DASHSCOPE_API_KEY', ''))
+    key = getattr(settings, 'DASHSCOPE_API_KEY', os.environ.get('DASHSCOPE_API_KEY', ''))
+    if not key:
+        logger.warning("[AI] DASHSCOPE_API_KEY 未配置，视频解析/自动打标签功能可能不生效")
+    return key
 
 
 def _call_qwen_text(prompt: str, max_tokens: int = 500) -> Optional[str]:
@@ -340,28 +343,38 @@ def analyze_image(media) -> bool:
 def analyze_media_file(media) -> bool:
     """
     Analyze audio/video media.
-    For now: generate a content-aware summary based on filename + metadata.
-    Full transcription (Paraformer) to be added in Phase 1.5.
+    Match existing tags first, then create new tags when needed.
     """
-    # Use filename + media_info for basic analysis
     title = media.title or os.path.basename(media.media_file.name)
-    
-    prompt = f"""Analyze this media file based on its filename and suggest content metadata.
-Filename: {title}
-Media type: {media.media_type}
-Duration: {media.duration}s (0 means unknown)
+    tags_text, cats_text, tag_name_set, category_map = _get_existing_context()
 
-Return a JSON object with:
-- summary: A 1-2 sentence guess about the content (use "likely contains" language)
-- language: Most probable language (zh/en/ja)
-- tags: Array of 3-5 keyword tags
+    prompt = f"""你是一个中文内容分类助手。请基于媒体文件信息推测内容，并分配标签。
 
-Return ONLY valid JSON, no other text."""
+文件名: {title}
+媒体类型: {media.media_type}
+时长: {media.duration}s (0 表示未知)
 
-    result = _call_qwen_text(prompt, max_tokens=300)
+== 系统中已有的标签 ==
+{tags_text}
+
+返回一个 JSON 对象（只返回 JSON，不要其他文字）：
+{{
+  "summary": "1-2 句话的内容推测（中文）",
+  "language": "内容语言代码（zh/en/ja等）",
+  "tags_to_apply": ["标签1", "标签2"],
+  "tags_to_create": ["新标签名"],
+  "tags_to_skip": ["模糊标签"]
+}}
+
+规则：
+1. tags_to_apply 必须来自已有标签，名称完全一致，建议 2-5 个
+2. tags_to_create 仅在确实需要且不存在时给出，建议 1-3 个
+3. 所有标签使用中文"""
+
+    result = _call_qwen_text(prompt, max_tokens=400)
     if not result:
         return False
-    
+
     try:
         result = result.strip()
         if result.startswith('```'):
@@ -372,15 +385,20 @@ Return ONLY valid JSON, no other text."""
     except json.JSONDecodeError:
         logger.error(f"Failed to parse media analysis: {result[:200]}")
         return False
-    
+
     media.ai_summary = data.get('summary', '')[:500]
     media.language = data.get('language', '')[:10]
-    
-    ai_meta = {'ai_tags': data.get('tags', []), 'duration': media.duration}
+
+    ai_meta = {
+        'duration': media.duration,
+        'tags_to_apply': data.get('tags_to_apply', []),
+        'tags_to_create': data.get('tags_to_create', []),
+        'tags_to_skip': data.get('tags_to_skip', []),
+    }
     media.ai_metadata = ai_meta
-    
-    _auto_tag(media, data.get('tags', []))
-    
+
+    _auto_tag(media, data)
+
     media.save(update_fields=['ai_summary', 'language', 'ai_metadata'])
     return True
 

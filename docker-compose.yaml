@@ -38,6 +38,7 @@ services:
       ENABLE_CELERY_BEAT: 'no'
       ENABLE_COLLECTSTATIC: ${ENABLE_COLLECTSTATIC:-yes}
       ENABLE_REQUIREMENTS_SYNC: 'yes'
+      REQUIREMENTS_SYNC_FILES: 'requirements.txt'
       ADMIN_USER: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
       # ADMIN_PASSWORD: 'uncomment_and_set_password_here'
@@ -72,6 +73,7 @@ services:
       ENABLE_CELERY_LONG: 'no'
       ENABLE_MIGRATIONS: 'no'
       ENABLE_REQUIREMENTS_SYNC: 'yes'
+      REQUIREMENTS_SYNC_FILES: 'requirements.txt'
       USE_WHISPER_TRANSCRIBE: 'True'
       WHISPER_MODEL: 'medium'
       WHISPER_BIN: '/home/mediacms.io/bin/whisper'
@@ -97,6 +99,7 @@ services:
       ENABLE_CELERY_LONG: 'no'
       ENABLE_MIGRATIONS: 'no'
       ENABLE_REQUIREMENTS_SYNC: 'yes'
+      REQUIREMENTS_SYNC_FILES: 'requirements.txt'
     depends_on:
       - redis
   celery_worker:
@@ -117,6 +120,7 @@ services:
       ENABLE_CELERY_BEAT: 'no'
       ENABLE_MIGRATIONS: 'no'
       ENABLE_REQUIREMENTS_SYNC: 'yes'
+      REQUIREMENTS_SYNC_FILES: 'requirements.txt'
       USE_WHISPER_TRANSCRIBE: 'True'
       WHISPER_MODEL: 'medium'
       WHISPER_BIN: '/home/mediacms.io/bin/whisper'

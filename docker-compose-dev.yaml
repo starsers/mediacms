@@ -23,6 +23,7 @@ services:
       ENABLE_CELERY_BEAT: 'no'
       ENABLE_COLLECTSTATIC: 'no'
       ENABLE_REQUIREMENTS_SYNC: 'yes'
+      REQUIREMENTS_SYNC_FILES: 'requirements.txt'
       ADMIN_USER: 'admin'
       ADMIN_EMAIL: 'admin@localhost'
       ADMIN_PASSWORD: 'admin'
@@ -69,6 +70,7 @@ services:
     environment:
       DEVELOPMENT_MODE: True
       ENABLE_REQUIREMENTS_SYNC: 'yes'
+      REQUIREMENTS_SYNC_FILES: 'requirements.txt'
       WEBPACK_DEV_SERVER_URL: ${WEBPACK_DEV_SERVER_URL:-http://localhost:8088}
       USE_WHISPER_TRANSCRIBE: 'True'
       WHISPER_MODEL: 'medium'
@@ -137,6 +139,7 @@ services:
       ENABLE_CELERY_BEAT: 'no'
       ENABLE_MIGRATIONS: 'no'
       ENABLE_REQUIREMENTS_SYNC: 'yes'
+      REQUIREMENTS_SYNC_FILES: 'requirements.txt'
       USE_WHISPER_TRANSCRIBE: 'True'
       WHISPER_MODEL: 'medium'
       WHISPER_BIN: '/home/mediacms.io/bin/whisper'
