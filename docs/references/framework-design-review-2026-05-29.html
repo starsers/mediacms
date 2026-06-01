@@ -1,0 +1,527 @@
+<!DOCTYPE html><html><head>
+      <title>framework-design-review-2026-05-29</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css">
+      
+      
+      
+      
+      
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-details{margin:0;padding:0;border:none}.markdown-preview .md-toc summary.md-toc-link-wrapper{cursor:pointer;list-style-position:outside}.markdown-preview .md-toc summary.md-toc-link-wrapper::marker{font-size:.85em}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='0']{margin-left:12px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='1']{margin-left:28px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='2']{margin-left:44px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='3']{margin-left:60px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='4']{margin-left:76px}.markdown-preview .md-toc .md-toc-link-wrapper[data-level='5']{margin-left:80px}.markdown-preview a.tag,.markdown-preview a.tag:active,.markdown-preview a.tag:link,.markdown-preview a.tag:visited,.markdown-preview span.tag:not(.token){display:inline-block;background-color:var(--vscode-badge-background,rgba(127,127,127,.18));color:var(--vscode-badge-foreground,currentColor);border-radius:2em;font-size:.85em;font-weight:500;padding:.05em .55em;line-height:1.5;white-space:nowrap;text-decoration:none;text-shadow:none;box-shadow:none;transition:background-color .12s ease,opacity .12s ease}.markdown-preview a.tag{cursor:pointer}.markdown-preview a.tag:focus,.markdown-preview a.tag:hover{background-color:var(--vscode-badge-background,rgba(127,127,127,.32));color:var(--vscode-badge-foreground,currentColor);opacity:.85;text-decoration:none;outline:0}.markdown-preview .wikilink-embed-content{border-left:3px solid var(--vscode-textBlockQuote-border,rgba(128,128,128,.3));background:var(--vscode-textBlockQuote-background,rgba(128,128,128,.05));margin:.5em 0;padding:.5em .75em;border-radius:0 3px 3px 0}.markdown-preview .wikilink-embed-content.wikilink-embed-error{border-left-color:var(--vscode-errorForeground,#cf222e);color:var(--vscode-errorForeground,#cf222e);font-style:italic;opacity:.8}.markdown-preview .wikilink-embed-content h1:first-child,.markdown-preview .wikilink-embed-content h2:first-child,.markdown-preview .wikilink-embed-content h3:first-child,.markdown-preview .wikilink-embed-content h4:first-child,.markdown-preview .wikilink-embed-content h5:first-child,.markdown-preview .wikilink-embed-content h6:first-child{margin-top:.25em}.markdown-preview .wikilink-embed-content .wikilink-embed-content{margin:.25em 0;padding:.25em .5em}.markdown-preview .block-id{display:none}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-details{margin:0;padding:0;border:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='0']{padding-left:0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='1']{padding-left:16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='2']{padding-left:32px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='3']{padding-left:48px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='4']{padding-left:64px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper[data-level='5']{padding-left:80px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script>
+    </head>
+    <body for="html-export">
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="mediacms--waic-素材平台框架设计评审">MediaCMS / WAIC 素材平台框架设计评审 </h1>
+<blockquote>
+<p>审查日期：2026-05-29<br>
+审查方式：基于仓库结构、核心配置、路由、前端构建配置与页面映射文档抽样分析<br>
+目标：总结当前代码框架设计中的主要问题，便于团队内部同步、转发和讨论</p>
+</blockquote>
+<hr>
+<h2 id="一-结论摘要">一、结论摘要 </h2>
+<p>当前仓库整体上属于 <strong>Django 单体应用 + 多套前端形态并存</strong> 的演进型架构。</p>
+<p>它的主要问题不是“某一层完全不可用”，而是：</p>
+<blockquote>
+<p><strong>后端路由、模板层、主前端、独立前端工具、静态构建产物之间边界不够清晰，系统已进入多代架构叠加状态，但尚未完成边界重整。</strong></p>
+</blockquote>
+<p>短期看，这种结构仍然支持功能迭代；但中长期会持续抬高以下成本：</p>
+<ul>
+<li>新功能接入成本</li>
+<li>新成员理解成本</li>
+<li>页面问题排查成本</li>
+<li>前端升级成本</li>
+<li>模块拆分与复用成本</li>
+<li>测试与配置治理成本</li>
+</ul>
+<hr>
+<h2 id="二-当前架构概览">二、当前架构概览 </h2>
+<h3 id="1-后端">1. 后端 </h3>
+<p>后端以 Django 为核心，承担：</p>
+<ul>
+<li>URL 路由聚合</li>
+<li>页面模板渲染</li>
+<li>REST API</li>
+<li>用户认证与权限</li>
+<li>后台管理</li>
+<li>媒体处理相关业务</li>
+</ul>
+<p>关键入口：</p>
+<ul>
+<li><code>cms/urls.py</code></li>
+<li><code>files/urls.py</code></li>
+<li><code>users/urls.py</code></li>
+<li><code>cms/settings.py</code></li>
+</ul>
+<h3 id="2-主前端">2. 主前端 </h3>
+<p>主前端位于 <code>frontend/</code>，采用：</p>
+<ul>
+<li>React 17</li>
+<li>自定义 <code>mediacms-scripts</code></li>
+<li>Webpack 风格构建链</li>
+<li>页面多入口方式</li>
+</ul>
+<p>关键文件：</p>
+<ul>
+<li><code>frontend/package.json</code></li>
+<li><code>frontend/config/mediacms.config.js</code></li>
+<li><code>frontend/config/mediacms.config.pages.js</code></li>
+<li><code>frontend/src/static/js/utils/renderer.js</code></li>
+</ul>
+<h3 id="3-独立前端工具">3. 独立前端工具 </h3>
+<p>仓库内还存在多个独立前端子应用：</p>
+<ul>
+<li><code>frontend-tools/video-editor/</code>：React 18 + Vite</li>
+<li><code>frontend-tools/chapters-editor/</code>：React 18 + Vite</li>
+<li><code>frontend-tools/video-js/</code>：React 19 + Vite</li>
+</ul>
+<p>这些工具不是主前端内部模块，而是各自独立构建后再集成到 Django 页面。</p>
+<h3 id="4-页面组织方式">4. 页面组织方式 </h3>
+<p>页面渲染链路通常为：</p>
+<ol>
+<li>Django URL</li>
+<li>Django View</li>
+<li>Django Template</li>
+<li>React 页面组件</li>
+<li>页面构建配置</li>
+<li>通用 Renderer 与 Layout 注入</li>
+</ol>
+<p>仓库中已经存在一份人工维护的页面索引文档：<code>FRONTEND_PAGES.md</code>。</p>
+<hr>
+<h2 id="三-主要框架设计问题">三、主要框架设计问题 </h2>
+<h2 id="问题-1路由与页面入口过于集中已经出现总线文件膨胀">问题 1：路由与页面入口过于集中，已经出现“总线文件膨胀” </h2>
+<h3 id="现象">现象 </h3>
+<p><code>cms/urls.py</code> 负责聚合多个一级入口，并且文件内已直接出现注释：</p>
+<blockquote>
+<p><code># refactor seriously</code></p>
+</blockquote>
+<p>与此同时，<code>files/urls.py</code> 不仅负责媒体相关页面，还混合承载了：</p>
+<ul>
+<li>普通页面路由</li>
+<li>API 路由</li>
+<li>管理端路由</li>
+<li>审批相关 API</li>
+<li>通知相关 API</li>
+<li>权限相关 API</li>
+<li>分享相关 API</li>
+<li>字幕上传与编辑</li>
+<li>文件下载与媒体 range 服务</li>
+<li>通用 slug 兜底页</li>
+</ul>
+<p>尤其值得注意的是最后的 slug 兜底路由：</p>
+<pre data-role="codeBlock" data-info="python" class="language-python python"><code>re_path<span class="token punctuation">(</span><span class="token string">r"^(?P&lt;slug&gt;[\w.-]*)$"</span><span class="token punctuation">,</span> views<span class="token punctuation">.</span>get_page<span class="token punctuation">,</span> name<span class="token operator">=</span><span class="token string">"get_page"</span><span class="token punctuation">)</span>
+</code></pre><h3 id="为什么这是设计问题">为什么这是设计问题 </h3>
+<p>这说明 <code>files</code> 模块已经不再只是“媒体域模块”，而逐渐承担了“站点业务主入口”的职责。</p>
+<p>结果是：</p>
+<ul>
+<li>路由组织依赖人工记忆</li>
+<li>顺序敏感，容易被兜底路由影响</li>
+<li>页面、接口、管理端混在一起</li>
+<li>后续拆分难度越来越高</li>
+</ul>
+<h3 id="影响">影响 </h3>
+<ul>
+<li>新功能不知道该放在哪个模块</li>
+<li>新页面新增时容易与现有兜底规则冲突</li>
+<li>测试边界模糊</li>
+<li><code>files</code> app 持续膨胀，成为“超级模块”</li>
+</ul>
+<h3 id="判断">判断 </h3>
+<p>这是当前最重要的结构问题之一，优先级 <strong>高</strong>。</p>
+<hr>
+<h2 id="问题-2页面渲染链路过长source-of-truth-不单一">问题 2：页面渲染链路过长，Source of Truth 不单一 </h2>
+<h3 id="现象-1">现象 </h3>
+<p>一个前端页面的完整入口往往需要同时跨越以下位置：</p>
+<ul>
+<li>Django URL</li>
+<li>Django View</li>
+<li>Django Template</li>
+<li>React 页面组件</li>
+<li>前端页面构建配置</li>
+<li>通用 renderer</li>
+</ul>
+<p><code>FRONTEND_PAGES.md</code> 中需要专门维护 URL、view、template、React page 的映射关系，说明页面结构本身并不够自解释。</p>
+<h3 id="为什么这是设计问题-1">为什么这是设计问题 </h3>
+<p>多层结构本身不是问题，问题在于：</p>
+<blockquote>
+<p><strong>页面入口定义被分散在多个层级中，没有单一、稳定、显式的页面事实来源。</strong></p>
+</blockquote>
+<p>这样会导致页面的生命周期被多处共同拼装，而不是一个地方定义、其他地方消费。</p>
+<h3 id="影响-1">影响 </h3>
+<ul>
+<li>页面定位路径长</li>
+<li>改一个页面经常要跨 3~5 个位置</li>
+<li>模板、构建配置、React 组件之间容易出现不同步</li>
+<li>页面问题排查成本高</li>
+</ul>
+<h3 id="判断-1">判断 </h3>
+<p>这是影响开发效率和可维护性的核心问题，优先级 <strong>高</strong>。</p>
+<hr>
+<h2 id="问题-3cmssettingspy-承担了过多产品逻辑配置中心过载">问题 3：<code>cms/settings.py</code> 承担了过多产品逻辑，配置中心过载 </h2>
+<h3 id="现象-2">现象 </h3>
+<p><code>cms/settings.py</code> 不仅包含常规 Django 配置，还混入大量产品与展示层开关，例如：</p>
+<ul>
+<li>是否允许登录、注册、上传、点赞、举报、分享</li>
+<li>默认主题、Logo、额外 CSS</li>
+<li>页面可见性控制</li>
+<li>前端交互行为开关</li>
+<li>视频转写与处理策略</li>
+<li>SAML / RBAC / LTI 等能力开关</li>
+<li>UI 文案和展示相关配置</li>
+</ul>
+<p>随后，这些配置又被 <code>files/context_processors.py</code> 批量注入到前端运行时上下文。</p>
+<h3 id="为什么这是设计问题-2">为什么这是设计问题 </h3>
+<p><code>settings.py</code> 适合承载：</p>
+<ul>
+<li>环境配置</li>
+<li>部署配置</li>
+<li>框架配置</li>
+</ul>
+<p>但当前它还承担了大量：</p>
+<ul>
+<li>产品规则</li>
+<li>前端功能开关</li>
+<li>展示策略</li>
+<li>UI 配置</li>
+</ul>
+<p>这意味着：</p>
+<blockquote>
+<p><strong>后端配置文件已经成为整站产品行为的事实中心。</strong></p>
+</blockquote>
+<h3 id="影响-2">影响 </h3>
+<ul>
+<li>环境配置与业务策略耦合</li>
+<li>前端行为依赖后端隐式注入</li>
+<li>配置项数量持续增长，难以审计与测试</li>
+<li>修改一个前端行为，经常要同时理解 settings、template、context processor、React 页面</li>
+</ul>
+<h3 id="判断-2">判断 </h3>
+<p>这是典型的“早期方便、后期变重”的设计，优先级 <strong>高</strong>。</p>
+<hr>
+<h2 id="问题-4前端体系分裂已经形成多代技术栈并存">问题 4：前端体系分裂，已经形成多代技术栈并存 </h2>
+<h3 id="现象-3">现象 </h3>
+<p>当前仓库中至少并存三套前端体系：</p>
+<table>
+<thead>
+<tr>
+<th>子系统</th>
+<th>技术栈</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>主前端</td>
+<td>React 17 + 自定义 Webpack 构建</td>
+<td>核心主站</td>
+</tr>
+<tr>
+<td>视频/章节编辑器</td>
+<td>React 18 + Vite</td>
+<td>独立工具页</td>
+</tr>
+<tr>
+<td>Video.js 工具</td>
+<td>React 19 + Vite</td>
+<td>又一套前端版本</td>
+</tr>
+</tbody>
+</table>
+<h3 id="为什么这是设计问题-3">为什么这是设计问题 </h3>
+<p>这不是单纯的“版本不同”，而是说明前端的演进路径已经分叉：</p>
+<ul>
+<li>主站仍停留在旧构建体系</li>
+<li>新工具页采用新一代构建方式</li>
+<li>React 主版本不统一</li>
+<li>样式、工程规范、升级路径可能逐渐失去一致性</li>
+</ul>
+<h3 id="影响-3">影响 </h3>
+<ul>
+<li>依赖升级复杂</li>
+<li>公共组件难复用</li>
+<li>前端工程治理难统一</li>
+<li>新成员需要理解多套构建方式</li>
+<li>后续如果要统一设计系统、埋点、监控、测试，会遇到额外阻力</li>
+</ul>
+<h3 id="判断-3">判断 </h3>
+<p>这是中长期影响最大的技术演进问题之一，优先级 <strong>高</strong>。</p>
+<hr>
+<h2 id="问题-5源码与静态构建产物边界不清晰">问题 5：源码与静态构建产物边界不清晰 </h2>
+<h3 id="现象-4">现象 </h3>
+<p>多个前端工具直接构建到仓库 <code>static/</code> 目录，例如：</p>
+<ul>
+<li><code>static/video_editor/</code></li>
+<li><code>static/chapters_editor/</code></li>
+<li><code>static/video_js/</code></li>
+</ul>
+<p>主前端也依赖 <code>static/</code> 下的资源。</p>
+<h3 id="为什么这是设计问题-4">为什么这是设计问题 </h3>
+<p>当构建产物直接与仓库静态资源混在一起时，经常出现以下问题：</p>
+<ul>
+<li>很难一眼判断哪些文件是源码、哪些是产物</li>
+<li>容易有人直接修改产物文件救火</li>
+<li>重新构建后，人工修改可能被覆盖</li>
+<li>diff 中可能混入大量构建噪音</li>
+<li>部署流程可能依赖“仓库里已有 build 结果”</li>
+</ul>
+<h3 id="影响-4">影响 </h3>
+<ul>
+<li>回滚困难</li>
+<li>代码评审噪音大</li>
+<li>构建与发布边界模糊</li>
+<li>新成员容易误改静态产物</li>
+</ul>
+<h3 id="判断-4">判断 </h3>
+<p>这是典型的维护性问题，优先级 <strong>中高</strong>。</p>
+<hr>
+<h2 id="问题-6files-app-职责范围过宽领域边界失真">问题 6：<code>files</code> app 职责范围过宽，领域边界失真 </h2>
+<h3 id="现象-5">现象 </h3>
+<p>从命名上看，<code>files</code> 应当主要承载媒体/文件域逻辑；但从实际结构看，它已经覆盖：</p>
+<ul>
+<li>媒体页面</li>
+<li>媒体 API</li>
+<li>管理页</li>
+<li>审批流</li>
+<li>通知</li>
+<li>权限申请</li>
+<li>分享</li>
+<li>字幕</li>
+<li>转写</li>
+<li>水印下载</li>
+<li>媒体 range 传输</li>
+<li>通用 CMS 页面兜底</li>
+</ul>
+<h3 id="为什么这是设计问题-5">为什么这是设计问题 </h3>
+<p>当一个模块名与实际职责范围明显不一致时，往往意味着：</p>
+<ul>
+<li>模块边界已经失效</li>
+<li>新功能会继续倾向于“先塞进去再说”</li>
+<li>后续拆分成本会越来越高</li>
+</ul>
+<h3 id="影响-5">影响 </h3>
+<ul>
+<li>业务归属模糊</li>
+<li>代码审查难以按领域分工</li>
+<li>小改动可能影响多个无关能力</li>
+<li>很难形成清晰的模块 owner 机制</li>
+</ul>
+<h3 id="判断-5">判断 </h3>
+<p>这是架构命名与职责偏离的典型问题，优先级 <strong>高</strong>。</p>
+<hr>
+<h2 id="问题-7context-processor-承担了大量前端运行时配置隐式依赖过重">问题 7：Context Processor 承担了大量前端运行时配置，隐式依赖过重 </h2>
+<h3 id="现象-6">现象 </h3>
+<p><code>files/context_processors.py</code> 会向前端注入大量运行时变量，包括：</p>
+<ul>
+<li>站点信息</li>
+<li>用户状态</li>
+<li>功能开关</li>
+<li>权限状态</li>
+<li>上传限制</li>
+<li>主题与 Logo</li>
+<li>翻译文本</li>
+<li>版本信息</li>
+<li>LTI 会话信息</li>
+</ul>
+<h3 id="为什么这是设计问题-6">为什么这是设计问题 </h3>
+<p>少量全局模板变量是合理的，但当大量页面行为依赖 context processor 时，就会使前端变成：</p>
+<ul>
+<li>一部分由 React 驱动</li>
+<li>一部分由 Django 模板注入驱动</li>
+<li>一部分由 settings 开关驱动</li>
+</ul>
+<p>也就是说，前端运行条件不够显式，属于<strong>隐式依赖过多</strong>。</p>
+<h3 id="影响-6">影响 </h3>
+<ul>
+<li>前端独立测试难度增加</li>
+<li>组件复用能力下降</li>
+<li>页面行为对服务端上下文过于敏感</li>
+<li>本地 mock 与调试复杂</li>
+</ul>
+<h3 id="判断-6">判断 </h3>
+<p>这属于结构可解释性不足的问题，优先级 <strong>中高</strong>。</p>
+<hr>
+<h2 id="问题-8主前端-renderer-入口逻辑承担了过多兼容职责">问题 8：主前端 renderer 入口逻辑承担了过多兼容职责 </h2>
+<h3 id="现象-7">现象 </h3>
+<p><code>frontend/src/static/js/utils/renderer.js</code> 需要兼容：</p>
+<ul>
+<li>embedded app</li>
+<li>普通页面</li>
+<li>仅内容区</li>
+<li>仅 header / sidebar 的不同挂载情况</li>
+</ul>
+<p>这说明页面外壳结构并不完全统一，renderer 正在承担历史兼容层的角色。</p>
+<h3 id="为什么这是设计问题-7">为什么这是设计问题 </h3>
+<p>前端入口层本应尽量简单稳定：</p>
+<ul>
+<li>找到挂载点</li>
+<li>挂载页面</li>
+<li>注入必要 provider</li>
+</ul>
+<p>如果入口层需要处理大量“页面结构分支”，往往说明模板契约不够稳定，或者旧页面与新页面没有收敛到统一页面壳模型。</p>
+<h3 id="影响-7">影响 </h3>
+<ul>
+<li>入口层变脆</li>
+<li>布局问题排查成本高</li>
+<li>后续统一页面结构更难推进</li>
+</ul>
+<h3 id="判断-7">判断 </h3>
+<p>属于中优先级结构问题。</p>
+<hr>
+<h2 id="问题-9系统理解高度依赖人工索引文档代码结构自解释能力偏弱">问题 9：系统理解高度依赖人工索引文档，代码结构自解释能力偏弱 </h2>
+<h3 id="现象-8">现象 </h3>
+<p>仓库内已存在较详细的 <code>FRONTEND_PAGES.md</code>，用于解释页面 URL、模板、React 页面、配置入口之间的对应关系。</p>
+<h3 id="为什么这是设计问题-8">为什么这是设计问题 </h3>
+<p>文档本身是好事，但如果系统必须依赖额外人工索引文档，才能快速理解页面结构，通常说明：</p>
+<ul>
+<li>页面定义分散</li>
+<li>约定不够统一</li>
+<li>命名与职责边界不够自然</li>
+<li>代码结构缺少直接表达力</li>
+</ul>
+<h3 id="影响-8">影响 </h3>
+<ul>
+<li>文档一旦滞后就会误导</li>
+<li>理解系统需要同时依赖代码和手工地图</li>
+<li>新成员 onboarding 时间变长</li>
+</ul>
+<h3 id="判断-8">判断 </h3>
+<p>这是可维护性问题，优先级 <strong>中</strong>。</p>
+<hr>
+<h2 id="四-次一级问题">四、次一级问题 </h2>
+<p>除上述核心问题外，还存在一些次一级但值得关注的信号：</p>
+<h3 id="1-环境配置-部署细节-默认值-业务开关混杂">1. 环境配置、部署细节、默认值、业务开关混杂 </h3>
+<p><code>cms/settings.py</code> 中同时出现：</p>
+<ul>
+<li><code>ALLOWED_HOSTS = ["*", ...]</code></li>
+<li>数据库默认连接信息</li>
+<li>Redis 默认地址</li>
+<li>邮件默认配置</li>
+<li>媒体处理命令路径</li>
+<li>UI 及产品行为开关</li>
+</ul>
+<p>这进一步说明配置职责没有被很好分层。</p>
+<h3 id="2-python-工程治理信息偏弱">2. Python 工程治理信息偏弱 </h3>
+<p><code>pyproject.toml</code> 当前几乎只包含 Black 配置，看不到更完整的项目工程治理中心信息。</p>
+<h3 id="3-前端风格处于跨代混合状态">3. 前端风格处于跨代混合状态 </h3>
+<p>从页面结构可见：</p>
+<ul>
+<li><code>.js</code> 与 <code>.tsx</code> 混用</li>
+<li>class 组件思路与函数组件思路可能并存</li>
+<li>页面基类 <code>_Page.js</code>、<code>_MediaPage.js</code>、<code>_VideoMediaPage.js</code> 等历史抽象仍在发挥作用</li>
+</ul>
+<p>这不是立刻致命的问题，但说明主前端尚未完成统一风格收敛。</p>
+<hr>
+<h2 id="五-按严重性排序">五、按严重性排序 </h2>
+<h3 id="高优先级">高优先级 </h3>
+<ol>
+<li>路由与页面入口过于分散，<code>files</code> app 逐渐成为超级模块</li>
+<li>页面渲染链路过长，Source of Truth 不单一</li>
+<li><code>cms/settings.py</code> 过载，环境配置与产品逻辑强耦合</li>
+<li>前端体系分裂，React / 构建工具多代并存</li>
+<li><code>files</code> 模块职责范围失真，领域边界不清</li>
+</ol>
+<h3 id="中优先级">中优先级 </h3>
+<ol start="6">
+<li>静态构建产物与源码边界模糊</li>
+<li>context processor 向前端注入过多运行时配置</li>
+<li>renderer 入口承担过多历史兼容逻辑</li>
+<li>系统理解依赖人工索引文档</li>
+</ol>
+<h3 id="中低优先级">中低优先级 </h3>
+<ol start="10">
+<li>Python 工程治理中心较弱</li>
+<li>前端风格与抽象跨代混用</li>
+</ol>
+<hr>
+<h2 id="六-适用阶段判断">六、适用阶段判断 </h2>
+<h3 id="当前架构适合">当前架构适合 </h3>
+<ul>
+<li>小团队持续维护</li>
+<li>需求变化快、优先交付</li>
+<li>历史系统逐步扩展</li>
+<li>功能多于治理的阶段</li>
+</ul>
+<h3 id="当前架构不适合">当前架构不适合 </h3>
+<ul>
+<li>多团队并行长期演进</li>
+<li>想统一前端工程体系</li>
+<li>想建立清晰的模块 ownership</li>
+<li>想显著降低新人接手成本</li>
+<li>想逐步走向更稳定的测试与发布治理</li>
+</ul>
+<hr>
+<h2 id="七-总评">七、总评 </h2>
+<p>一句话总结：</p>
+<blockquote>
+<p><strong>这个项目当前最大的框架设计问题，不是单个模块写得差，而是系统已经形成“多代架构叠加”的状态，但模块边界、页面边界、配置边界、前端边界还没有同步重整。</strong></p>
+</blockquote>
+<p>因此，当前最典型的架构症状是：</p>
+<ul>
+<li>Django 既像后端，又像页面编排器，又像前端配置中心</li>
+<li>主前端与多个工具前端各自演进</li>
+<li><code>files</code> app 被不断扩展为业务主入口</li>
+<li>页面渲染链路跨越多个层级</li>
+<li>文档正在替架构本身承担解释成本</li>
+</ul>
+<p>如果继续按当前结构堆叠功能，系统短期仍可工作，但中长期维护成本会持续上升。</p>
+<hr>
+<h2 id="八-建议的后续讨论方向">八、建议的后续讨论方向 </h2>
+<p>本评审文档聚焦“问题识别”，不展开详细改造方案。</p>
+<p>如果后续需要继续推进，可进一步输出以下文档之一：</p>
+<ol>
+<li><strong>架构问题清单 + 优先级 + 分阶段重构路线图</strong></li>
+<li><strong>按目录逐项点评（cms / files / frontend / frontend-tools）</strong></li>
+<li><strong>页面架构重整建议（路由、模板、React 页面入口统一）</strong></li>
+<li><strong>前端工程统一建议（React 版本、构建链、静态产物策略）</strong></li>
+</ol>
+<hr>
+<h2 id="九-审查依据抽样">九、审查依据（抽样） </h2>
+<p>本次判断主要基于以下文件抽样：</p>
+<ul>
+<li><code>cms/urls.py</code></li>
+<li><code>cms/settings.py</code></li>
+<li><code>files/urls.py</code></li>
+<li><code>users/urls.py</code></li>
+<li><code>files/context_processors.py</code></li>
+<li><code>frontend/package.json</code></li>
+<li><code>frontend/config/mediacms.config.js</code></li>
+<li><code>frontend/config/mediacms.config.pages.js</code></li>
+<li><code>frontend/src/static/js/utils/renderer.js</code></li>
+<li><code>frontend-tools/video-editor/package.json</code></li>
+<li><code>frontend-tools/chapters-editor/package.json</code></li>
+<li><code>frontend-tools/video-js/package.json</code></li>
+<li><code>FRONTEND_PAGES.md</code></li>
+</ul>
+<p>如需更严格的结论，建议下一步结合：</p>
+<ul>
+<li>API views / serializers / models 分层关系</li>
+<li>模板目录与前端页面的真实耦合程度</li>
+<li>Celery 任务与媒体处理职责边界</li>
+<li>是否存在未使用或黑盒前端子系统</li>
+</ul>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+  
+    </body></html>

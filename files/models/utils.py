@@ -30,6 +30,9 @@ MEDIA_TYPES_SUPPORTED = (
     ("pdf", "Pdf"),
     ("audio", "Audio"),
     ("document", "Document"),
+    ("text", "Text"),
+    ("spreadsheet", "Spreadsheet"),
+    ("presentation", "Presentation"),
 )
 
 ENCODE_EXTENSIONS = (

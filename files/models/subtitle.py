@@ -3,10 +3,13 @@ import tempfile
 
 import pysubs2
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
+from pgvector.django import VectorField
 
 from .. import helpers
 from .utils import MEDIA_ENCODING_STATUS, subtitles_file_path
@@ -102,6 +105,48 @@ class TranscriptionRequest(models.Model):
 
     def __str__(self):
         return f"Transcription request for {self.media.title} - {self.status}"
+
+
+class TranscriptSegment(models.Model):
+    SOURCE_SUBTITLE = "subtitle"
+    SOURCE_WHISPER = "whisper"
+    SOURCE_AI = "ai"
+    SOURCE_IMPORTED = "imported"
+    SOURCE_CHOICES = (
+        (SOURCE_SUBTITLE, "Subtitle"),
+        (SOURCE_WHISPER, "Whisper"),
+        (SOURCE_AI, "AI"),
+        (SOURCE_IMPORTED, "Imported"),
+    )
+
+    media = models.ForeignKey("Media", on_delete=models.CASCADE, related_name="transcript_segments")
+    subtitle = models.ForeignKey("Subtitle", on_delete=models.CASCADE, related_name="segments", null=True, blank=True)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE, null=True, blank=True)
+    segment_index = models.IntegerField()
+    start_seconds = models.FloatField()
+    end_seconds = models.FloatField()
+    content = models.TextField()
+    content_search = SearchVectorField(null=True)
+    embedding = VectorField(dimensions=1024, null=True, blank=True)
+    source_type = models.CharField(max_length=20, choices=SOURCE_CHOICES, default=SOURCE_SUBTITLE, db_index=True)
+    extra_metadata = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["media_id", "segment_index", "id"]
+        constraints = [
+            models.UniqueConstraint(fields=["media", "subtitle", "segment_index"], name="trseg_media_sub_idx_uniq"),
+            models.CheckConstraint(condition=models.Q(start_seconds__gte=0), name="trseg_start_gte_0"),
+            models.CheckConstraint(condition=models.Q(end_seconds__gte=models.F("start_seconds")), name="trseg_end_after_start"),
+        ]
+        indexes = [
+            GinIndex(fields=["content_search"], name="trseg_search_idx"),
+            models.Index(fields=["media", "start_seconds"], name="trseg_media_start_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.media_id}:{self.segment_index}"
 
 
 @receiver(post_save, sender=Subtitle)

@@ -11,7 +11,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.core.files import File
 from django.db import models
-from django.db.models import Func, Value
+from django.db.models import F, Func, Q, Value
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_delete
 from django.dispatch import receiver
 from django.urls import reverse
@@ -19,7 +19,7 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
-from pgvector.django import VectorField
+from pgvector.django import HnswIndex, VectorField
 
 from .. import helpers
 from ..stop_words import STOP_WORDS
@@ -246,9 +246,9 @@ class Media(models.Model):
     class Meta:
         ordering = ["-add_date"]
         indexes = [
-            # TODO: check with pgdash.io or other tool what index need be
-            # removed
-            GinIndex(fields=["search"])
+            GinIndex(fields=["search"]),
+            GinIndex(fields=["title"], name="media_title_trgm_idx", opclasses=["gin_trgm_ops"]),
+            HnswIndex(fields=["embedding"], opclasses=["vector_cosine_ops"], name="media_embedding_idx", m=16, ef_construction=64),
         ]
 
     def __str__(self):
@@ -1067,6 +1067,46 @@ class Media(models.Model):
         if not self.pk:
             return False
         return self.permissions.exists() or self.category.filter(is_rbac_category=True).exists()
+
+
+class MediaFaceEmbedding(models.Model):
+    SOURCE_AI = "ai"
+    SOURCE_HUMAN = "human"
+    SOURCE_IMPORTED = "imported"
+    SOURCE_CHOICES = (
+        (SOURCE_AI, "AI"),
+        (SOURCE_HUMAN, "Human"),
+        (SOURCE_IMPORTED, "Imported"),
+    )
+
+    media = models.ForeignKey("Media", on_delete=models.CASCADE, related_name="face_embeddings")
+    person_name = models.CharField(max_length=200, blank=True, db_index=True)
+    embedding = VectorField(dimensions=512)
+    source_type = models.CharField(max_length=20, choices=SOURCE_CHOICES, default=SOURCE_AI, db_index=True)
+    confidence = models.FloatField(null=True, blank=True)
+    start_seconds = models.FloatField(null=True, blank=True)
+    end_seconds = models.FloatField(null=True, blank=True)
+    frame_no = models.IntegerField(null=True, blank=True)
+    image_path = models.CharField(max_length=500, blank=True)
+    extra_metadata = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["media_id", "start_seconds", "id"]
+        constraints = [
+            models.CheckConstraint(condition=Q(confidence__isnull=True) | (Q(confidence__gte=0) & Q(confidence__lte=1)), name="mface_conf_range"),
+            models.CheckConstraint(condition=Q(start_seconds__isnull=True) | Q(start_seconds__gte=0), name="mface_start_gte_0"),
+            models.CheckConstraint(condition=Q(end_seconds__isnull=True) | Q(start_seconds__isnull=True) | Q(end_seconds__gte=F("start_seconds")), name="mface_end_after_start"),
+        ]
+        indexes = [
+            HnswIndex(fields=["embedding"], opclasses=["vector_cosine_ops"], name="mface_embed_idx", m=16, ef_construction=64),
+            models.Index(fields=["media", "start_seconds"], name="mface_media_start_idx"),
+            models.Index(fields=["confidence"], name="mface_conf_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.media_id}:{self.person_name or self.id}"
 
 
 class MediaPermission(models.Model):

@@ -23,6 +23,15 @@ class Category(models.Model):
 
     is_global = models.BooleanField(default=False, help_text="global categories or user specific")
 
+    parent = models.ForeignKey(
+        "self",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="children",
+        help_text="Parent category for hierarchical classification tree",
+    )
+
     media_count = models.IntegerField(default=0, help_text="number of media")
 
     thumbnail = ProcessedImageField(
