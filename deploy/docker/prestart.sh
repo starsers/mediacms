@@ -36,6 +36,11 @@ if [ X"$ENABLE_MIGRATIONS" = X"yes" ]; then
         else
             echo "Skipping frontend static sync because frontend/dist/static does not exist"
         fi
+        if [ -f static/openreel/index.html ]; then
+            echo "OpenReel static assets detected"
+        else
+            echo "WARNING: static/openreel/index.html is missing; /clip/editor/ will return 503"
+        fi
         echo "RUNNING COLLECTSTATIC"
         python manage.py collectstatic --noinput
     else

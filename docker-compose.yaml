@@ -7,7 +7,12 @@ services:
       - ./:/home/mediacms.io/mediacms/
       - frontend_node_modules:/home/mediacms.io/mediacms/frontend/node_modules
       - scripts_node_modules:/home/mediacms.io/mediacms/frontend/packages/scripts/node_modules
+      - openreel_node_modules:/home/mediacms.io/mediacms/frontend-tools/openreel-editor/node_modules
+      - openreel_apps_web_node_modules:/home/mediacms.io/mediacms/frontend-tools/openreel-editor/apps/web/node_modules
+      - openreel_packages_core_node_modules:/home/mediacms.io/mediacms/frontend-tools/openreel-editor/packages/core/node_modules
+      - openreel_packages_ui_node_modules:/home/mediacms.io/mediacms/frontend-tools/openreel-editor/packages/ui/node_modules
       - npm_cache:/root/.npm
+      - pnpm_store:/pnpm/store
     working_dir: /home/mediacms.io/mediacms/frontend/
     command: >
       bash -c "
@@ -18,7 +23,15 @@ services:
       cd ../.. &&
       npm run dist &&
       mkdir -p ../static &&
-      cp -a dist/static/. ../static/
+      cp -a dist/static/. ../static/ &&
+      cd ../frontend-tools/openreel-editor &&
+      corepack enable &&
+      corepack prepare pnpm@9.0.0 --activate &&
+      pnpm config set registry https://registry.npmmirror.com &&
+      pnpm config set store-dir /pnpm/store &&
+      pnpm install --frozen-lockfile &&
+      pnpm build:wasm &&
+      pnpm --filter @openreel/web build
       "
   migrations:
     build:
@@ -164,3 +177,8 @@ volumes:
   frontend_node_modules:
   scripts_node_modules:
   npm_cache:
+  pnpm_store:
+  openreel_node_modules:
+  openreel_apps_web_node_modules:
+  openreel_packages_core_node_modules:
+  openreel_packages_ui_node_modules:
