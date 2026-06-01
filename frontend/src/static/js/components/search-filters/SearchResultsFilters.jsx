@@ -12,6 +12,7 @@ const filters = {
     { id: 'audio', title: 'Audio' },
     { id: 'image', title: 'Image' },
     { id: 'pdf', title: 'Pdf' },
+    { id: 'document', title: 'Document' },
   ],
   upload_date: [
     { id: 'all', title: 'All' },

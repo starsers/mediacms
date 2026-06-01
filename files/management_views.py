@@ -65,7 +65,7 @@ class MediaList(APIView):
         else:
             ordering = "-"
 
-        if media_type not in ["video", "image", "audio", "pdf"]:
+        if media_type not in ["video", "image", "audio", "pdf", "document"]:
             media_type = None
 
         if state not in ["private", "public", "unlisted"]:

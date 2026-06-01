@@ -172,6 +172,10 @@ const typeFilters = [
     id: 'pdf',
     label: 'Pdf',
   },
+  {
+    id: 'document',
+    label: 'Document',
+  },
 ];
 
 const sortingOptions = [
@@ -223,6 +227,9 @@ export function SearchMediaFiltersRow(props) {
         break;
       case 'pdf':
         newArgs.media_type = 'pdf';
+        break;
+      case 'document':
+        newArgs.media_type = 'document';
         break;
     }
 

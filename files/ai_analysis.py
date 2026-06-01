@@ -98,7 +98,7 @@ def _extract_file_metadata(media) -> dict:
     path = media.media_file.path
     ext = os.path.splitext(path)[1].lower()
     meta = {}
-    
+
     try:
         if ext == '.pdf':
             import fitz
@@ -106,35 +106,72 @@ def _extract_file_metadata(media) -> dict:
             meta['page_count'] = doc.page_count
             meta['author'] = doc.metadata.get('author', '')
             doc.close()
-        
+
         elif ext in ('.docx', '.doc'):
             from docx import Document
             doc = Document(path)
             meta['page_count'] = len(doc.paragraphs)
             core = doc.core_properties
             meta['author'] = str(core.author) if core.author else ''
-        
+
         elif ext in ('.pptx', '.ppt'):
             from pptx import Presentation
             prs = Presentation(path)
             meta['page_count'] = len(prs.slides)
-        
+
         elif ext in ('.xlsx', '.xls'):
             import openpyxl
             wb = openpyxl.load_workbook(path, read_only=True)
             meta['sheet_count'] = len(wb.sheetnames)
             wb.close()
-    
+
     except Exception as e:
         logger.warning(f"Metadata extraction failed: {e}")
-    
+
     # File size
     try:
         meta['file_size_bytes'] = media.media_file.size
     except Exception:
         pass
-    
+
     return meta
+
+
+def _document_type_category_name(media) -> str:
+    ext = os.path.splitext(media.media_file.path)[1].lower()
+    type_categories = {
+        '.pdf': 'PDF',
+        '.doc': 'Word',
+        '.docx': 'Word',
+        '.xls': 'Excel',
+        '.xlsx': 'Excel',
+        '.ppt': 'PPT',
+        '.pptx': 'PPT',
+        '.txt': 'Text',
+        '.md': 'Text',
+        '.csv': 'Text',
+        '.json': 'Text',
+        '.xml': 'Text',
+        '.log': 'Text',
+        '.rst': 'Text',
+    }
+    return type_categories.get(ext, 'Document')
+
+
+def _attach_document_type_category(media) -> None:
+    from files.models import Category
+
+    title = _document_type_category_name(media).strip()[:50]
+    if not title:
+        return
+
+    category, created = Category.objects.get_or_create(
+        title=title,
+        defaults={'is_global': True},
+    )
+    media.category.add(category)
+    if created:
+        logger.info(f"Auto-created document type category '{title}' for {media.friendly_token}")
 
 
 # ── DashScope API helpers ────────────────────────────────────────────────
@@ -223,9 +260,11 @@ def analyze_document(media) -> bool:
         logger.warning(f"No text extracted from {media.friendly_token}")
         return False
     
+    _attach_document_type_category(media)
+
     # Gather existing tags and categories for AI context
     tags_text, cats_text, tag_name_set, category_map = _get_existing_context()
-    
+
     prompt = _build_tag_category_prompt(text, tags_text, cats_text, content_type="文档")
     
     result = _call_qwen_text(prompt, max_tokens=600)

@@ -280,6 +280,7 @@ export function ListItem(props) {
       isMediaItem = true;
       break;
     case 'pdf':
+    case 'document':
       isMediaItem = true;
       break;
   }

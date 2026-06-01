@@ -516,6 +516,8 @@ class Media(models.Model):
                 self.media_type = "image"
             elif kind == "pdf":
                 self.media_type = "pdf"
+            elif kind == "document":
+                self.media_type = "document"
             elif kind == "audio":
                 self.media_type = "audio"
             elif kind == "video":

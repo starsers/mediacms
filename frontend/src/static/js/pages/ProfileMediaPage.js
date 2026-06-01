@@ -304,6 +304,7 @@ class ProfileMediaPage extends Page {
             case 'audio':
             case 'image':
             case 'pdf':
+            case 'document':
                 args.media_type = updatedArgs.media_type;
                 break;
         }

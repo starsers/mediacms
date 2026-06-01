@@ -143,8 +143,8 @@ class MediaList(APIView):
                 ordering = "-"
 
         if media_type and "," in media_type:
-            media_types = [t.strip() for t in media_type.split(",") if t.strip() in ["video", "image", "audio", "pdf"]]
-        elif media_type not in ["video", "image", "audio", "pdf"]:
+            media_types = [t.strip() for t in media_type.split(",") if t.strip() in ["video", "image", "audio", "pdf", "document"]]
+        elif media_type not in ["video", "image", "audio", "pdf", "document"]:
             media_type = None
 
         gte = None
@@ -1167,8 +1167,8 @@ class MediaSearch(APIView):
                 ordering = "-"
 
         if media_type and "," in media_type:
-            media_types = [t.strip() for t in media_type.split(",") if t.strip() in ["video", "image", "audio", "pdf"]]
-        elif media_type not in ["video", "image", "audio", "pdf"]:
+            media_types = [t.strip() for t in media_type.split(",") if t.strip() in ["video", "image", "audio", "pdf", "document"]]
+        elif media_type not in ["video", "image", "audio", "pdf", "document"]:
             media_type = None
 
         if not (query or category or tag):

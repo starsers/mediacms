@@ -12,6 +12,7 @@ const filters = {
     { id: 'audio', title: translateString('Audio') },
     { id: 'image', title: translateString('Image') },
     { id: 'pdf', title: translateString('Pdf') },
+    { id: 'document', title: translateString('Document') },
   ],
   upload_date: [
     { id: 'all', title: translateString('All') },
