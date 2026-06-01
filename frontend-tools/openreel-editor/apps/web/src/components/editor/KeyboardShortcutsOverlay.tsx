@@ -97,9 +97,7 @@ export const KeyboardShortcutsOverlay: React.FC<
       const conflict = keyboardShortcuts.findConflict(newKey, shortcutId);
 
       if (conflict) {
-        alert(
-          `This shortcut conflicts with "${conflict.name}". Choose a different key.`,
-        );
+        alert(`该快捷键与“${conflict.name}”冲突，请选择其他按键。`);
         return;
       }
 

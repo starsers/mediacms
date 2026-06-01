@@ -13,6 +13,7 @@ import { useProjectRecovery } from "./hooks/useProjectRecovery";
 import { useKieAIPoller } from "./hooks/useKieAIPoller";
 import { SOCIAL_MEDIA_PRESETS, type SocialMediaCategory } from "@openreel/core";
 import { TooltipProvider } from "@openreel/ui";
+import { observeAndLocalize, t } from "./localization";
 
 const EditorInterface = lazy(() =>
   import("./components/editor/EditorInterface").then((m) => ({
@@ -52,7 +53,7 @@ function App() {
     if (route === "new") {
       hasHandledInitialRoute.current = true;
 
-      let projectName = "New Project";
+      let projectName = t("app.newProject");
       let width = 1920;
       let height = 1080;
       let frameRate = fps;
@@ -64,7 +65,7 @@ function App() {
           width = preset.width;
           height = preset.height;
           frameRate = preset.frameRate || fps;
-          projectName = `New ${presetKey.charAt(0).toUpperCase() + presetKey.slice(1).replace(/-/g, " ")} Project`;
+          projectName = `新建 ${presetKey.charAt(0).toUpperCase() + presetKey.slice(1).replace(/-/g, " ")} 项目`;
         }
       } else if (parsedDimensions) {
         width = parsedDimensions.width;
@@ -79,11 +80,11 @@ function App() {
 
         const aspectRatio = width / height;
         if (aspectRatio < 1) {
-          projectName = "New Vertical Video";
+          projectName = t("app.newVerticalVideo");
         } else if (aspectRatio > 1) {
-          projectName = "New Horizontal Video";
+          projectName = t("app.newHorizontalVideo");
         } else {
-          projectName = "New Square Video";
+          projectName = t("app.newSquareVideo");
         }
       }
 
@@ -122,6 +123,11 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  useEffect(() => {
+    const observer = observeAndLocalize();
+    return () => observer?.disconnect();
+  }, []);
+
   const showWelcome =
     ["welcome", "templates", "recent"].includes(route) && !skipWelcomeScreen;
   const initialTab =
@@ -141,7 +147,7 @@ function App() {
         ) : showWelcome ? (
           <WelcomeScreen initialTab={initialTab} />
         ) : (
-          <Suspense fallback={<LoadingSpinner message="Loading editor..." />}>
+          <Suspense fallback={<LoadingSpinner message={t("app.loadingEditor")} />}>
             <EditorInterface />
           </Suspense>
         )}

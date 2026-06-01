@@ -212,8 +212,8 @@ export const useProcessingStore = create<ProcessingState>((set, get) => ({
 }));
 
 export const PROCESSING_TYPE_LABELS: Record<ProcessingType, string> = {
-  "background-removal": "Background Removal",
-  "auto-reframe": "Auto Reframe",
-  "color-grading": "Color Grading",
-  effects: "Video Effects",
+  "background-removal": "背景移除",
+  "auto-reframe": "智能重构图",
+  "color-grading": "调色",
+  effects: "视频效果",
 };
