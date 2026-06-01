@@ -79,8 +79,6 @@ services:
       pnpm build:wasm &&
       pnpm --filter @openreel/web build
       "
-    depends_on:
-      - web
   web:
     build:
       context: .
