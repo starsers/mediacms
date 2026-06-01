@@ -52,6 +52,31 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY frontend/ ./
 RUN npm run dist
 
+
+FROM node:20-bookworm-slim AS openreel-build
+
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+
+ENV PNPM_HOME=/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+
+WORKDIR /app/mediacms/frontend-tools/openreel-editor
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+COPY frontend-tools/openreel-editor/package.json frontend-tools/openreel-editor/pnpm-lock.yaml frontend-tools/openreel-editor/pnpm-workspace.yaml ./
+COPY frontend-tools/openreel-editor/apps/web/package.json ./apps/web/
+COPY frontend-tools/openreel-editor/packages/core/package.json ./packages/core/
+COPY frontend-tools/openreel-editor/packages/ui/package.json ./packages/ui/
+RUN --mount=type=cache,target=/pnpm/store \
+    pnpm config set registry "$NPM_REGISTRY" && \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile
+COPY frontend-tools/openreel-editor/ ./
+RUN --mount=type=cache,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm build:wasm && \
+    pnpm --filter @openreel/web build
+
 FROM python:3.13-slim-bookworm AS runtime-deps
 
 SHELL ["/bin/bash", "-c"]
@@ -138,6 +163,7 @@ FROM runtime-deps AS base
 COPY . /home/mediacms.io/mediacms
 COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/static/
 COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/frontend/dist/static/
+COPY --from=openreel-build /app/mediacms/static/openreel/ /home/mediacms.io/mediacms/static/openreel/
 RUN mkdir -p /home/mediacms.io/mediacms/static_image && \
     cp -a /home/mediacms.io/mediacms/static/. /home/mediacms.io/mediacms/static_image/
 WORKDIR /home/mediacms.io/mediacms
@@ -162,6 +188,7 @@ FROM full-deps AS full
 COPY . /home/mediacms.io/mediacms
 COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/static/
 COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/frontend/dist/static/
+COPY --from=openreel-build /app/mediacms/static/openreel/ /home/mediacms.io/mediacms/static/openreel/
 RUN mkdir -p /home/mediacms.io/mediacms/static_image && \
     cp -a /home/mediacms.io/mediacms/static/. /home/mediacms.io/mediacms/static_image/
 WORKDIR /home/mediacms.io/mediacms

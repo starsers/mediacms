@@ -58,6 +58,29 @@ services:
       - "8088:8088"
     depends_on:
       - web
+
+  openreel-build:
+    image: node:20
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+      - openreel_node_modules:/home/mediacms.io/mediacms/frontend-tools/openreel-editor/node_modules
+      - openreel_apps_web_node_modules:/home/mediacms.io/mediacms/frontend-tools/openreel-editor/apps/web/node_modules
+      - openreel_packages_core_node_modules:/home/mediacms.io/mediacms/frontend-tools/openreel-editor/packages/core/node_modules
+      - openreel_packages_ui_node_modules:/home/mediacms.io/mediacms/frontend-tools/openreel-editor/packages/ui/node_modules
+      - pnpm_store:/pnpm/store
+    working_dir: /home/mediacms.io/mediacms/frontend-tools/openreel-editor/
+    command: >
+      bash -c "
+      corepack enable &&
+      corepack prepare pnpm@9.0.0 --activate &&
+      pnpm config set registry https://registry.npmmirror.com &&
+      pnpm config set store-dir /pnpm/store &&
+      pnpm install --frozen-lockfile &&
+      pnpm build:wasm &&
+      pnpm --filter @openreel/web build
+      "
+    depends_on:
+      - web
   web:
     build:
       context: .
@@ -86,6 +109,7 @@ services:
       - backend_uv_cache:/root/.cache/uv
     depends_on:
       - migrations
+      - openreel-build
   db:
     image: pgvector/pgvector:pg17
     volumes:
@@ -155,4 +179,9 @@ volumes:
   frontend_node_modules:
   scripts_node_modules:
   npm_cache:
+  pnpm_store:
+  openreel_node_modules:
+  openreel_apps_web_node_modules:
+  openreel_packages_core_node_modules:
+  openreel_packages_ui_node_modules:
   postgres_data:
