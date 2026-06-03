@@ -110,6 +110,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         supervisor \
         nginx \
         imagemagick \
+        libreoffice \
+        fonts-noto-cjk \
+        fontconfig \
         procps \
         build-essential \
         pkg-config \

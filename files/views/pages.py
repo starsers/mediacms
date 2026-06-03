@@ -1134,6 +1134,69 @@ def view_media(request):
     return render(request, "cms/media.html", context)
 
 
+def media_inline_preview(request, friendly_token):
+    """Render a safe inline HTML preview for non-video media."""
+
+    media = Media.objects.select_related("user").filter(friendly_token=friendly_token).first()
+    if not media:
+        return HttpResponse("Media not found", status=404)
+
+    if media.state == "private":
+        allowed = False
+        if request.user.is_authenticated:
+            allowed = (
+                request.user == media.user
+                or request.user.has_member_access_to_media(media)
+                or is_mediacms_editor(request.user)
+            )
+        if not allowed:
+            return HttpResponse("Forbidden", status=403)
+
+    if not media.media_file:
+        return HttpResponse(_waic_preview_shell(media.title, '<div class="empty">没有可预览的文件。</div>'))
+
+    path = media.media_file.path
+    ext = os.path.splitext(path)[1].lower()
+    pdf_conversion_error = None
+    if request.GET.get("format") == "pdf" and ext in WAIC_OFFICE_PDF_EXTENSIONS:
+        try:
+            pdf_path = _waic_office_pdf_path(media, path)
+            response = FileResponse(open(pdf_path, "rb"), content_type="application/pdf")
+            response["Content-Disposition"] = f'inline; filename="{media.friendly_token}.pdf"'
+            return response
+        except Exception as exc:
+            pdf_conversion_error = str(exc)
+
+    try:
+        if ext in (".docx",):
+            body = _waic_docx_preview(path)
+            kind = "DOCX_PREVIEW"
+        elif ext in (".pptx",):
+            body = _waic_pptx_preview(path)
+            kind = "PPTX_PREVIEW"
+        elif ext in (".xlsx", ".xlsm"):
+            body = _waic_xlsx_preview(path)
+            kind = "XLSX_PREVIEW"
+        elif ext in (".txt", ".md", ".csv", ".json", ".xml", ".log", ".rst"):
+            body = _waic_text_preview(path)
+            kind = "TEXT_PREVIEW"
+        else:
+            body = '<div class="empty">此文件类型暂不支持页面内解析预览，请下载后查看。</div>'
+            kind = "FILE_PREVIEW"
+    except Exception as exc:
+        body = f'<div class="empty">预览生成失败：{escape(str(exc))}</div>'
+        kind = "PREVIEW_ERROR"
+
+    if pdf_conversion_error:
+        body = (
+            '<div class="empty">PDF 预览暂不可用，已切换为文本降级预览。'
+            f"<br>{escape(pdf_conversion_error)}</div>"
+            + body
+        )
+
+    return HttpResponse(_waic_preview_shell(media.title, body, kind=kind), content_type="text/html; charset=utf-8")
+
+
 def view_playlist(request, friendly_token):
     """View playlist view"""
 

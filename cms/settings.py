@@ -582,7 +582,7 @@ NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 100
 FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
 
 # If 'all' is in the list, no check is performed
-ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf", "document"]
+ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf", "document", "text", "spreadsheet", "presentation"]
 
 # transcription options
 # the mediacms-full docker image needs to be used in order to be able to use transcription

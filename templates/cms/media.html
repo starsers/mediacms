@@ -62,7 +62,7 @@
 {% block content %}
     {% if is_media_allowed_type %}
 
-        <div id="page-media"></div>
+        <div id="page-media" class="waic-cyber-page waic-media-detail" data-waic-kicker="MEDIA_DETAIL" data-waic-media-type="{{ media_object.media_type|default:''|escape }}"></div>
     {% else %}
         <div class="user-action-form-wrap">
             <div class="user-action-form-inner">
@@ -76,6 +76,179 @@
 {% block bottomimports %}
     <script src="{% static "js/media.js" %}?v={{ VERSION }}"></script>
     <script>
+    window.WAIC_MEDIA_FALLBACK = {
+      title: "{{ media_object.title|default:''|escapejs }}",
+      mediaType: "{{ media_object.media_type|default:''|escapejs }}",
+      originalUrl: "{{ media_object.original_media_url|default:''|escapejs }}",
+      previewUrl: "{% if media %}{% url 'api_media_inline_preview' media %}{% endif %}",
+      posterUrl: "{{ media_object.poster_url|default:''|escapejs }}",
+      thumbnailUrl: "{{ media_object.thumbnail_url|default:''|escapejs }}",
+      allowDownload: {% if media_object.allow_download %}true{% else %}false{% endif %}
+    };
+
+    (function() {
+      var cfg = window.WAIC_MEDIA_FALLBACK || {};
+      var type = (cfg.mediaType || '').toLowerCase();
+      if (!type || type === 'video') return;
+
+      function absUrl(url) {
+        if (!url) return '';
+        if (/^https?:\/\//i.test(url)) return url;
+        return window.location.origin + '/' + String(url).replace(/^\/+/, '');
+      }
+
+      function extension(url) {
+        var clean = String(url || '').split('?')[0].split('#')[0];
+        var parts = clean.split('.');
+        return parts.length > 1 ? parts.pop().toLowerCase() : '';
+      }
+
+      function appendQuery(url, query) {
+        if (!url) return '';
+        return url + (url.indexOf('?') === -1 ? '?' : '&') + query;
+      }
+
+      function typeLabel() {
+        var labels = {
+          audio: '音频文件',
+          image: '图片文件',
+          pdf: 'PDF 文档',
+          document: '文档文件',
+          text: '文本文件',
+          spreadsheet: '表格文件',
+          presentation: '演示文件'
+        };
+        return labels[type] || '附件文件';
+      }
+
+      function iconName() {
+        var icons = {
+          audio: 'audiotrack',
+          image: 'image',
+          pdf: 'picture_as_pdf',
+          document: 'description',
+          text: 'article',
+          spreadsheet: 'table_chart',
+          presentation: 'slideshow'
+        };
+        return icons[type] || 'insert_drive_file';
+      }
+
+      function escapeHtml(value) {
+        var div = document.createElement('div');
+        div.textContent = value || '';
+        return div.innerHTML;
+      }
+
+      function fileCard(fileUrl, message) {
+        var ext = extension(fileUrl).toUpperCase();
+        return '' +
+          '<div class="waic-native-file-card">' +
+            '<div class="waic-native-file-icon"><i class="material-icons">' + iconName() + '</i></div>' +
+            '<div class="waic-native-file-main">' +
+              '<div class="waic-native-file-type">' + typeLabel() + (ext ? ' / ' + ext : '') + '</div>' +
+              '<h2>' + escapeHtml(cfg.title || '未命名素材') + '</h2>' +
+              '<p>' + escapeHtml(message || '此类型文件不支持浏览器内完整预览，可打开或下载查看。') + '</p>' +
+              '<div class="waic-native-file-actions">' +
+                (fileUrl ? '<a href="' + fileUrl + '" target="_blank" rel="noopener">打开文件</a>' : '') +
+                (cfg.allowDownload && fileUrl ? '<a href="' + fileUrl + '" download>下载文件</a>' : '') +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      }
+
+      function renderText(container, fileUrl) {
+        container.innerHTML = fileCard(fileUrl, '正在加载文本预览...');
+        fetch(fileUrl).then(function(response) {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return response.text();
+        }).then(function(text) {
+          container.innerHTML = '' +
+            '<div class="waic-native-text-viewer">' +
+              '<div class="waic-native-viewer-toolbar">' +
+                '<span>TEXT_PREVIEW</span>' +
+                '<a href="' + fileUrl + '" target="_blank" rel="noopener">打开原文件</a>' +
+              '</div>' +
+              '<pre>' + escapeHtml(text.slice(0, 120000)) + '</pre>' +
+            '</div>';
+        }).catch(function() {
+          container.innerHTML = fileCard(fileUrl, '文本预览加载失败，可打开或下载查看。');
+        });
+      }
+
+      function renderNativeViewer() {
+        var host = document.querySelector('#page-media .viewer-container');
+        if (!host) return false;
+
+        var originalUrl = absUrl(cfg.originalUrl);
+        var posterUrl = absUrl(cfg.posterUrl || cfg.thumbnailUrl);
+        var fileUrl = originalUrl || posterUrl;
+        if (!fileUrl) return false;
+
+        host.classList.add('waic-native-viewer-host');
+        if (host.querySelector('.waic-native-viewer')) return true;
+        host.querySelectorAll('.viewer-attachment-container, .player-container.viewer-attachment-container').forEach(function(node) {
+          node.remove();
+        });
+
+        var html = '';
+        if (type === 'image') {
+          html = '<div class="waic-native-viewer waic-native-image-viewer"><img src="' + fileUrl + '" alt="' + escapeHtml(cfg.title) + '"></div>';
+        } else if (type === 'pdf') {
+          html = '<div class="waic-native-viewer waic-native-pdf-viewer"><iframe src="' + fileUrl + '#toolbar=1&navpanes=0" title="' + escapeHtml(cfg.title || 'PDF') + '"></iframe></div>';
+        } else if (type === 'audio') {
+          html = '' +
+            '<div class="waic-native-viewer waic-native-audio-viewer">' +
+              (posterUrl ? '<img src="' + posterUrl + '" alt="">' : '<i class="material-icons">audiotrack</i>') +
+              '<h2>' + escapeHtml(cfg.title || '音频素材') + '</h2>' +
+              '<audio controls preload="metadata" src="' + fileUrl + '"></audio>' +
+            '</div>';
+        } else if (type === 'text') {
+          html = '<div class="waic-native-viewer"></div>';
+        } else if (type === 'document' || type === 'spreadsheet' || type === 'presentation') {
+          var previewUrl = absUrl(cfg.previewUrl);
+          var officePreviewUrl = appendQuery(previewUrl, 'format=pdf');
+          html = '' +
+            '<div class="waic-native-viewer waic-native-office-viewer">' +
+              '<div class="waic-native-viewer-toolbar">' +
+                '<span>' + typeLabel().replace('文件', '预览') + '</span>' +
+                '<div class="waic-native-toolbar-actions">' +
+                  '<a href="' + officePreviewUrl + '" target="_blank" rel="noopener">新窗口预览</a>' +
+                  (cfg.allowDownload && fileUrl ? '<a href="' + fileUrl + '" download>下载文件</a>' : '') +
+                '</div>' +
+              '</div>' +
+              '<iframe src="' + officePreviewUrl + '" title="' + escapeHtml(cfg.title || typeLabel()) + '"></iframe>' +
+            '</div>';
+        } else {
+          html = '<div class="waic-native-viewer">' + fileCard(fileUrl) + '</div>';
+        }
+
+        host.innerHTML = html;
+        if (type === 'text') {
+          renderText(host.querySelector('.waic-native-viewer'), fileUrl);
+        }
+        return true;
+      }
+
+      function scheduleRender() {
+        var tries = 0;
+        function tick() {
+          if (renderNativeViewer()) return;
+          tries += 1;
+          if (tries < 30) setTimeout(tick, 300);
+        }
+        tick();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', scheduleRender);
+      } else {
+        scheduleRender();
+      }
+      setTimeout(renderNativeViewer, 1800);
+      setTimeout(renderNativeViewer, 4200);
+    })();
+
     // Subtitle timestamp seek: jump to ?t=SECONDS
     (function() {
       var params = new URLSearchParams(location.search);
