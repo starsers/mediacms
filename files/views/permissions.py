@@ -24,13 +24,39 @@ def request_access(request):
     """Member requests access to media/category/tag (download/clip)"""
     data = json.loads(request.body)
     scope_type = data.get('scope_type', 'media')
+    media_id = data.get('media_id')
+    category_id = data.get('category_id')
+    tag_id = data.get('tag_id')
+
+    if scope_type == 'category':
+        if category_id and str(category_id).isdigit():
+            category_id = int(category_id)
+        else:
+            category_uid = data.get('category_uid') or data.get('category_id')
+            category = Category.objects.filter(uid=category_uid).first()
+            if not category:
+                return JsonResponse({'error': 'Category not found'}, status=404)
+            category_id = category.id
+
+    if scope_type == 'tag':
+        if tag_id and str(tag_id).isdigit():
+            tag_id = int(tag_id)
+        else:
+            tag_title = data.get('tag_title') or data.get('tag_id')
+            tag = Tag.objects.filter(title=tag_title).first()
+            if not tag:
+                return JsonResponse({'error': 'Tag not found'}, status=404)
+            tag_id = tag.id
+
+    if scope_type == 'media' and media_id and str(media_id).isdigit():
+        media_id = int(media_id)
 
     req = AccessRequest.objects.create(
         user=request.user,
         scope_type=scope_type,
-        media_id=data.get('media_id'),
-        category_id=data.get('category_id'),
-        tag_id=data.get('tag_id'),
+        media_id=media_id,
+        category_id=category_id,
+        tag_id=tag_id,
         status='pending',
     )
 

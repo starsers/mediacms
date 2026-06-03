@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block headtitle %}Playlist - {{PORTAL_NAME}}{% endblock headtitle %}
+{% block headtitle %}播放列表 - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block topimports %}
 <link href="{% static "css/playlist.css" %}" rel="preload" as="style">
@@ -9,7 +9,7 @@
 {%endblock topimports %}
 
 {% block content %}
-{% if user %}<div id="page-playlist"></div>{% endif %}
+{% if user %}<div id="page-playlist" class="waic-cyber-page waic-page-surface waic-page-surface--media" data-waic-kicker="PLAYLIST_NODE"></div>{% endif %}
 {% endblock %}
 
 {% block bottomimports %}

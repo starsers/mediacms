@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block headtitle %}{% if user.name %}{{user.name}} - {% endif %}Playlists - {{PORTAL_NAME}}{% endblock headtitle %}
+{% block headtitle %}{% if user.name %}{{user.name}} - {% endif %}播放列表 - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block headermeta %}
 
-<meta property="og:title" content="{% if user.name %}{{user.name}} - {% endif %}Playlists - {{PORTAL_NAME}}">
+<meta property="og:title" content="{% if user.name %}{{user.name}} - {% endif %}播放列表 - {{PORTAL_NAME}}">
 <meta property="og:type" content="website">
 <meta property="og:description" content="">
 
@@ -25,9 +25,25 @@ No such user
 {% endblock %}
 
 {% block content %}
-{% if user %}<div id="page-profile-playlists"></div>{% endif %}
+{% if user %}<div id="page-profile-playlists" class="waic-cyber-page waic-profile-page waic-page-surface" data-waic-kicker="PROFILE_PLAYLISTS"></div>{% endif %}
 {% endblock %}
 
 {% block bottomimports %}
     <script src="{% static "js/profile-playlists.js" %}?v={{ VERSION }}"></script>
+    <script>
+    (function() {
+      function localizePlaylistLabels() {
+        document.querySelectorAll('#page-profile-playlists h1, #page-profile-playlists h2, #page-profile-playlists h3, #page-profile-playlists .media-list-header, #page-profile-playlists .items-list-header').forEach(function(node) {
+          if (node.textContent && node.textContent.trim() === 'Created playlists') {
+            node.textContent = '已创建的播放列表';
+          }
+        });
+      }
+      var target = document.getElementById('page-profile-playlists');
+      if (target) {
+        localizePlaylistLabels();
+        new MutationObserver(localizePlaylistLabels).observe(target, { childList: true, subtree: true });
+      }
+    })();
+    </script>
 {% endblock bottomimports %}
