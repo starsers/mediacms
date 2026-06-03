@@ -5635,6 +5635,226 @@ body.dark_theme .media-drag-drop-inner {
 .item-thumb.no-thumb[data-media-type="pdf"]::before          { content: "picture_as_pdf" !important; }
 .item-thumb.no-thumb[data-media-type="spreadsheet"]::before  { content: "table_chart" !important; }
 .item-thumb.no-thumb[data-media-type="presentation"]::before { content: "slideshow" !important; }
+
+/* WAIC media detail native fallback viewers for non-video assets */
+#page-media.waic-media-detail[data-waic-media-type]:not([data-waic-media-type="video"]) .viewer-attachment-container,
+#page-media.waic-media-detail[data-waic-media-type]:not([data-waic-media-type="video"]) .player-container.viewer-attachment-container {
+  display: none !important;
+}
+.waic-media-detail .viewer-container.waic-native-viewer-host {
+  min-height: 420px !important;
+  padding: 18px !important;
+  border: 1px solid rgba(30, 58, 95, 0.12) !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08) !important;
+  backdrop-filter: blur(12px);
+}
+.waic-native-viewer {
+  display: flex;
+  width: 100%;
+  min-height: 380px;
+  align-items: center;
+  justify-content: center;
+}
+.waic-native-image-viewer img {
+  display: block;
+  max-width: 100%;
+  max-height: 72vh;
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.18);
+}
+.waic-native-pdf-viewer iframe {
+  width: 100%;
+  min-height: 72vh;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+}
+.waic-native-office-viewer {
+  display: flex;
+  min-height: 74vh;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+  border: 1px solid rgba(30, 58, 95, 0.12);
+  border-radius: 8px;
+  background: #fff;
+}
+.waic-native-office-viewer iframe {
+  width: 100%;
+  min-height: 70vh;
+  flex: 1;
+  border: 0;
+  background: #fff;
+}
+.waic-native-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.waic-native-audio-viewer {
+  flex-direction: column;
+  gap: 16px;
+  padding: 38px 24px;
+  text-align: center;
+}
+.waic-native-audio-viewer img,
+.waic-native-audio-viewer > .material-icons {
+  width: 144px;
+  height: 144px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: linear-gradient(135deg, rgba(76, 215, 246, 0.14), rgba(124, 58, 237, 0.12));
+  color: var(--waic-blue);
+  font-size: 72px;
+  line-height: 144px;
+}
+.waic-native-audio-viewer h2 {
+  max-width: 680px;
+  margin: 0;
+  color: var(--waic-heading);
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-size: 22px;
+}
+.waic-native-audio-viewer audio {
+  width: min(680px, 100%);
+}
+.waic-native-file-card {
+  display: grid;
+  width: min(760px, 100%);
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 28px;
+  border: 1px solid rgba(30, 58, 95, 0.12);
+  border-radius: 8px;
+  background: rgba(248, 250, 252, 0.9);
+}
+.waic-native-file-icon {
+  display: flex;
+  width: 88px;
+  height: 88px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(26, 86, 219, 0.12), rgba(76, 215, 246, 0.16));
+  color: var(--waic-blue);
+}
+.waic-native-file-icon .material-icons {
+  font-size: 42px;
+}
+.waic-native-file-type,
+.waic-native-viewer-toolbar span {
+  color: var(--waic-blue);
+  font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+}
+.waic-native-file-main h2 {
+  margin: 6px 0 8px;
+  color: var(--waic-heading);
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+  font-size: 22px;
+  line-height: 1.25;
+}
+.waic-native-file-main p {
+  margin: 0;
+  color: var(--waic-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.waic-native-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.waic-native-file-actions a,
+.waic-native-viewer-toolbar a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid rgba(26, 86, 219, 0.16);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1a56db, #4cd7f6);
+  color: #fff !important;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.waic-native-text-viewer {
+  display: block;
+  width: 100%;
+  min-height: 380px;
+  overflow: hidden;
+  border: 1px solid rgba(30, 58, 95, 0.12);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.96);
+}
+.waic-native-viewer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(76, 215, 246, 0.16);
+}
+.waic-native-viewer-toolbar a {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.waic-native-text-viewer pre {
+  max-height: 70vh;
+  margin: 0;
+  padding: 18px;
+  overflow: auto;
+  color: #dbeafe;
+  font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+body.dark_theme .waic-media-detail .viewer-container.waic-native-viewer-host {
+  border-color: rgba(76, 215, 246, 0.14) !important;
+  background: rgba(10, 11, 30, 0.76) !important;
+  box-shadow: 0 0 32px rgba(76, 215, 246, 0.08) !important;
+}
+body.dark_theme .waic-native-file-card {
+  border-color: rgba(76, 215, 246, 0.14);
+  background: rgba(15, 23, 42, 0.62);
+}
+@media (max-width: 640px) {
+  .waic-media-detail .viewer-container.waic-native-viewer-host {
+    min-height: 300px !important;
+    padding: 12px !important;
+  }
+  .waic-native-pdf-viewer iframe {
+    min-height: 62vh;
+  }
+  .waic-native-office-viewer,
+  .waic-native-office-viewer iframe {
+    min-height: 62vh;
+  }
+  .waic-native-file-card {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    text-align: center;
+  }
+  .waic-native-file-icon {
+    margin: 0 auto;
+  }
+  .waic-native-file-actions {
+    justify-content: center;
+  }
+}
 .item-thumb.no-thumb[data-media-type="document"]::before     { content: "description" !important; }
 .item-thumb.no-thumb[data-media-type="text"]::before         { content: "article" !important; }
 /* 兜底：其他所有 attachment 类 */

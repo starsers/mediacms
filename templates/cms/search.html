@@ -5,7 +5,7 @@
 
 {% block content %}
 {% get_current_language as LANGUAGE_CODE %}
-{% if user %}<div id="page-search"><div class="waic-search-loading">{{ "Loading search results..." | custom_translate:LANGUAGE_CODE }}</div></div>{% endif %}
+{% if user %}<div id="page-search" class="waic-cyber-page waic-page-surface waic-page-surface--media" data-waic-kicker="SEARCH_MATRIX"><div class="waic-search-loading">{{ "Loading search results..." | custom_translate:LANGUAGE_CODE }}</div></div>{% endif %}
 {% endblock %}
 
 {% block bottomimports %}

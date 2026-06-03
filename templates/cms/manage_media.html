@@ -15,10 +15,9 @@
 <script>
 window.CATEGORIES = {{ categories|safe }};
 </script>
-<div id="page-manage-media"></div>
+<div id="page-manage-media" class="waic-cyber-page waic-admin-page" data-waic-kicker="MEDIA_CONTROL"></div>
 {% endblock %}
 
 {% block bottomimports %}
     <script src="{% static "js/manage-media.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}
-
