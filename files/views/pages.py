@@ -1,12 +1,19 @@
 import json
+import hashlib
 import os
 import re
+import shutil
+import subprocess
+import tempfile
+import zipfile
+from html import escape
+from xml.etree import ElementTree as ET
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.utils.html import mark_safe, strip_tags
 from django.views.decorators.csrf import csrf_exempt
@@ -37,6 +44,272 @@ from ..methods import (
 )
 from ..models import Category, Media, Page, Playlist, Subtitle, Tag, VideoTrimRequest
 from ..tasks import save_user_action, video_trim_task
+from ..waic_categories import waic_fixed_category_options, waic_fixed_category_queryset
+
+WAIC_OFFICE_PDF_EXTENSIONS = {".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xlsm", ".xls"}
+
+
+def _waic_xml_text_nodes(root):
+    texts = []
+    for node in root.iter():
+        if node.tag.endswith("}t") and node.text:
+            texts.append(node.text)
+    return texts
+
+
+def _waic_preview_shell(title, body, kind="DOCUMENT_PREVIEW"):
+    return f"""<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body {{
+  margin: 0;
+  padding: 24px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}}
+.preview-wrap {{
+  max-width: 1080px;
+  margin: 0 auto;
+}}
+.preview-kicker {{
+  display: inline-flex;
+  height: 26px;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid rgba(26,86,219,.18);
+  border-radius: 8px;
+  color: #1a56db;
+  font: 800 11px/1 "JetBrains Mono", Consolas, monospace;
+}}
+h1 {{
+  margin: 12px 0 20px;
+  font-size: 24px;
+  line-height: 1.28;
+}}
+.doc, .sheet, .slides, .text-preview {{
+  border: 1px solid rgba(30,58,95,.12);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 38px rgba(15,23,42,.08);
+  overflow: hidden;
+}}
+.doc {{
+  padding: 28px 34px;
+  font-size: 15px;
+  line-height: 1.85;
+}}
+.doc p {{ margin: 0 0 12px; }}
+.slide {{
+  margin: 18px;
+  padding: 22px;
+  border: 1px solid rgba(30,58,95,.1);
+  border-radius: 8px;
+  background: #fff;
+}}
+.slide h2 {{ margin: 0 0 14px; font-size: 16px; color: #1a56db; }}
+.slide p {{ margin: 0 0 8px; line-height: 1.7; }}
+table {{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}}
+th, td {{
+  padding: 9px 10px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+}}
+th {{ background: #eff6ff; color: #1e3a5f; }}
+pre {{
+  margin: 0;
+  padding: 22px;
+  max-height: 82vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: 13px/1.65 "JetBrains Mono", Consolas, monospace;
+}}
+.empty {{
+  padding: 40px;
+  color: #64748b;
+  text-align: center;
+}}
+</style>
+</head>
+<body>
+<main class="preview-wrap">
+  <span class="preview-kicker">{escape(kind)}</span>
+  <h1>{escape(title or "未命名素材")}</h1>
+  {body}
+</main>
+</body>
+</html>"""
+
+
+def _waic_docx_preview(path):
+    paragraphs = []
+    with zipfile.ZipFile(path) as archive:
+        root = ET.fromstring(archive.read("word/document.xml"))
+    for para in root.iter():
+        if not para.tag.endswith("}p"):
+            continue
+        text = "".join(_waic_xml_text_nodes(para)).strip()
+        if text:
+            paragraphs.append(f"<p>{escape(text)}</p>")
+    if not paragraphs:
+        return '<div class="empty">未读取到可预览文本。</div>'
+    return '<div class="doc">' + "\n".join(paragraphs[:1200]) + "</div>"
+
+
+def _waic_pptx_preview(path):
+    slides = []
+    with zipfile.ZipFile(path) as archive:
+        slide_names = sorted(
+            [name for name in archive.namelist() if re.match(r"ppt/slides/slide\d+\.xml$", name)],
+            key=lambda value: int(re.search(r"slide(\d+)\.xml$", value).group(1)),
+        )
+        for index, name in enumerate(slide_names[:80], start=1):
+            root = ET.fromstring(archive.read(name))
+            texts = [text.strip() for text in _waic_xml_text_nodes(root) if text.strip()]
+            if texts:
+                body = "".join(f"<p>{escape(text)}</p>" for text in texts)
+            else:
+                body = '<p class="empty">此页未读取到文本内容。</p>'
+            slides.append(f'<section class="slide"><h2>Slide {index}</h2>{body}</section>')
+    if not slides:
+        return '<div class="empty">未读取到可预览幻灯片。</div>'
+    return '<div class="slides">' + "\n".join(slides) + "</div>"
+
+
+def _waic_xlsx_preview(path):
+    with zipfile.ZipFile(path) as archive:
+        shared = []
+        if "xl/sharedStrings.xml" in archive.namelist():
+            root = ET.fromstring(archive.read("xl/sharedStrings.xml"))
+            for item in root.iter():
+                if item.tag.endswith("}si"):
+                    shared.append("".join(_waic_xml_text_nodes(item)))
+        sheet_names = [name for name in archive.namelist() if re.match(r"xl/worksheets/sheet\d+\.xml$", name)]
+        if not sheet_names:
+            return '<div class="empty">未读取到工作表。</div>'
+        root = ET.fromstring(archive.read(sorted(sheet_names)[0]))
+
+    rows = []
+    for row in root.iter():
+        if not row.tag.endswith("}row"):
+            continue
+        cells = []
+        for cell in row:
+            if not cell.tag.endswith("}c"):
+                continue
+            cell_type = cell.attrib.get("t")
+            value = ""
+            if cell_type == "inlineStr":
+                value = "".join(_waic_xml_text_nodes(cell))
+            else:
+                value_node = next((child for child in cell if child.tag.endswith("}v")), None)
+                if value_node is not None and value_node.text is not None:
+                    value = value_node.text
+                    if cell_type == "s" and value.isdigit():
+                        idx = int(value)
+                        value = shared[idx] if idx < len(shared) else value
+            cells.append(f"<td>{escape(value)}</td>")
+        if cells:
+            rows.append("<tr>" + "".join(cells[:30]) + "</tr>")
+        if len(rows) >= 300:
+            break
+    if not rows:
+        return '<div class="empty">未读取到可预览表格内容。</div>'
+    return '<div class="sheet"><table><tbody>' + "\n".join(rows) + "</tbody></table></div>"
+
+
+def _waic_text_preview(path):
+    with open(path, "rb") as handle:
+        data = handle.read(512000)
+    for encoding in ("utf-8", "utf-8-sig", "gbk", "latin-1"):
+        try:
+            text = data.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        text = ""
+    return '<div class="text-preview"><pre>' + escape(text) + "</pre></div>"
+
+
+def _waic_find_office_converter():
+    for executable in ("libreoffice", "soffice"):
+        path = shutil.which(executable)
+        if path:
+            return path
+    return None
+
+
+def _waic_office_pdf_path(media, source_path):
+    converter = _waic_find_office_converter()
+    if not converter:
+        raise RuntimeError("LibreOffice is not installed in this runtime.")
+
+    stat = os.stat(source_path)
+    cache_key = f"{media.friendly_token}:{source_path}:{stat.st_size}:{int(stat.st_mtime)}"
+    cache_hash = hashlib.sha1(cache_key.encode("utf-8")).hexdigest()[:16]
+    cache_name = f"{media.friendly_token}-{cache_hash}.pdf"
+    cache_root = getattr(settings, "TEMP_DIRECTORY", None) or tempfile.gettempdir()
+    if not os.path.isdir(cache_root):
+        cache_root = tempfile.gettempdir()
+    cache_dir = os.path.join(cache_root, "waic_previews")
+    os.makedirs(cache_dir, exist_ok=True)
+    cached_pdf = os.path.join(cache_dir, cache_name)
+    if os.path.exists(cached_pdf):
+        return cached_pdf
+
+    tmp_parent = getattr(settings, "TEMP_DIRECTORY", None) or tempfile.gettempdir()
+    if not os.path.isdir(tmp_parent):
+        tmp_parent = tempfile.gettempdir()
+    work_dir = tempfile.mkdtemp(prefix="waic-office-", dir=tmp_parent)
+    profile_dir = tempfile.mkdtemp(prefix="waic-lo-", dir=tmp_parent)
+    try:
+        command = [
+            converter,
+            "--headless",
+            "--nologo",
+            "--nofirststartwizard",
+            "--norestore",
+            f"-env:UserInstallation=file://{profile_dir.replace(os.sep, '/')}",
+            "--convert-to",
+            "pdf",
+            "--outdir",
+            work_dir,
+            source_path,
+        ]
+        completed = subprocess.run(
+            command,
+            check=False,
+            timeout=90,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        if completed.returncode != 0:
+            message = (completed.stderr or completed.stdout or "LibreOffice conversion failed.").strip()
+            raise RuntimeError(message[-500:])
+
+        generated = [
+            os.path.join(work_dir, filename)
+            for filename in os.listdir(work_dir)
+            if filename.lower().endswith(".pdf")
+        ]
+        if not generated:
+            raise RuntimeError("LibreOffice did not produce a PDF file.")
+        shutil.move(generated[0], cached_pdf)
+        return cached_pdf
+    finally:
+        shutil.rmtree(work_dir, ignore_errors=True)
+        shutil.rmtree(profile_dir, ignore_errors=True)
 
 
 def get_page(request, slug):
@@ -674,15 +947,12 @@ def featured_media(request):
 def index(request):
     """Index view"""
     from datetime import date
-    from ..models import Category, Media
+    from ..models import Media
 
     # 分类统计 — 取不包含子分类标识的顶级分类
     categories = []
-    all_cats = Category.objects.all().order_by('title')
-    for cat in all_cats:
+    for cat in waic_fixed_category_queryset():
         # 跳过子分类（标题含 " > "）
-        if ' > ' in cat.title:
-            continue
         count = Media.objects.filter(category=cat, state='public').count()
         categories.append({
             'title': cat.title,
@@ -735,8 +1005,8 @@ def manage_media(request):
     if not is_mediacms_editor(request.user):
         return HttpResponseRedirect("/")
 
-    categories = Category.objects.all().order_by('title').values_list('title', flat=True)
-    context = {'categories': list(categories)}
+    categories = [category["title"] for category in waic_fixed_category_options()]
+    context = {'categories': categories}
     return render(request, "cms/manage_media.html", context)
 
 
@@ -815,6 +1085,7 @@ def upload_media(request):
     context["can_add"] = user_allowed_to_upload(request)
     can_upload_exp = settings.CANNOT_ADD_MEDIA_MESSAGE
     context["can_upload_exp"] = can_upload_exp
+    context["categories"] = waic_fixed_category_options()
 
     return render(request, "cms/add-media.html", context)
 

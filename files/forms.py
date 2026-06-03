@@ -8,6 +8,7 @@ from django.conf import settings
 
 from .methods import get_next_state, is_mediacms_editor
 from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle
+from .waic_categories import waic_fixed_category_queryset
 from .widgets import CategoryModalWidget
 
 _PUBLISH_STATE_HTML = (Path(__file__).parent.parent / 'templates/cms/partials/media_publish_state.html').read_text()
@@ -142,6 +143,7 @@ class MediaPublishForm(forms.ModelForm):
         self.was_shared = self.instance.is_shared if self.instance.pk else False
         self.had_explicit_permission = self.instance.permissions.exists() if self.instance.pk else False
         is_embed_mode = self._check_embed_mode()
+        self.fields['category'].queryset = waic_fixed_category_queryset()
 
         self.fields["shared"].initial = self.was_shared
         self.initial["shared"] = self.was_shared
@@ -164,7 +166,7 @@ class MediaPublishForm(forms.ModelForm):
             else:
                 self.fields['category'].initial = self.instance.category.all()
 
-                non_rbac_categories = Category.objects.filter(is_rbac_category=False)
+                non_rbac_categories = waic_fixed_category_queryset().filter(is_rbac_category=False)
                 rbac_categories = user.get_rbac_categories_as_contributor()
                 combined_category_ids = list(non_rbac_categories.values_list('id', flat=True)) + list(rbac_categories.values_list('id', flat=True))
 

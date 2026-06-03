@@ -5,6 +5,7 @@ class FineUploaderUploadForm(forms.Form):
     qqfile = forms.FileField()
     qquuid = forms.CharField()
     qqfilename = forms.CharField()
+    category_uid = forms.CharField()
     qqpartindex = forms.IntegerField(required=False)
     qqchunksize = forms.IntegerField(required=False)
     qqtotalparts = forms.IntegerField(required=False)
@@ -15,5 +16,6 @@ class FineUploaderUploadForm(forms.Form):
 class FineUploaderUploadSuccessForm(forms.Form):
     qquuid = forms.CharField()
     qqfilename = forms.CharField()
+    category_uid = forms.CharField()
     qqtotalparts = forms.IntegerField()
     qqtotalfilesize = forms.IntegerField(required=False)

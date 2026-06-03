@@ -5,9 +5,9 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from ..methods import is_mediacms_editor
 from ..models import Category, Tag
 from ..serializers import CategorySerializer, TagSerializer
+from ..waic_categories import waic_fixed_category_queryset
 
 
 class CategoryList(APIView):
@@ -24,20 +24,10 @@ class CategoryList(APIView):
     )
     def get(self, request, format=None):
         show_lms = getattr(settings, 'SHOW_LMS_COURSES_IN_CATEGORIES', True)
-        categories = Category.objects.prefetch_related("user")
+        categories = waic_fixed_category_queryset().prefetch_related("user")
 
         if not show_lms:
             categories = categories.filter(is_lms_course=False)
-
-        if not is_mediacms_editor(request.user):
-            categories = categories.filter(is_rbac_category=False)
-            if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
-                rbac_categories = request.user.get_rbac_categories_as_member()
-                if not show_lms:
-                    rbac_categories = rbac_categories.filter(is_lms_course=False)
-                categories = categories.union(rbac_categories)
-
-        categories = categories.order_by("title")
 
         serializer = CategorySerializer(categories, many=True, context={"request": request})
         ret = serializer.data

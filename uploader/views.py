@@ -11,6 +11,7 @@ from django.views import generic
 from files.helpers import rm_file
 from files.methods import user_allowed_to_upload
 from files.models import Media
+from files.waic_categories import get_waic_fixed_category
 
 from .fineuploader import ChunkedFineUploader
 from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
@@ -49,6 +50,10 @@ class FineUploaderView(generic.FormView):
         return super(FineUploaderView, self).dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        category = get_waic_fixed_category(category_uid=form.cleaned_data.get("category_uid"))
+        if category is None:
+            return self.make_response({"success": False, "error": "请选择有效的素材分类"}, status=400)
+
         self.upload = ChunkedFineUploader(form.cleaned_data, self.concurrent)
         if self.upload.concurrent and self.chunks_done:
             try:
@@ -66,6 +71,7 @@ class FineUploaderView(generic.FormView):
         with open(media_file, "rb") as f:
             myfile = File(f)
             new = Media.objects.create(media_file=myfile, user=self.request.user, title=self.upload.original_filename)
+            new.category.add(category)
 
         rm_file(media_file)
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))

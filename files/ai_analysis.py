@@ -159,19 +159,15 @@ def _document_type_category_name(media) -> str:
 
 
 def _attach_document_type_category(media) -> None:
-    from files.models import Category
+    from files.waic_categories import get_waic_fixed_category
 
-    title = _document_type_category_name(media).strip()[:50]
-    if not title:
+    if media.category.exists():
         return
 
-    category, created = Category.objects.get_or_create(
-        title=title,
-        defaults={'is_global': True},
-    )
-    media.category.add(category)
-    if created:
-        logger.info(f"Auto-created document type category '{title}' for {media.friendly_token}")
+    category = get_waic_fixed_category(title="会务文档")
+    if category:
+        media.category.add(category)
+        logger.info(f"Auto-categorized document {media.friendly_token} as '会务文档'")
 
 
 # ── DashScope API helpers ────────────────────────────────────────────────
@@ -450,7 +446,7 @@ def _get_existing_context() -> tuple:
     Returns (tags_text, categories_text, tag_name_set, category_map).
     The AI uses this to match vs create new tags/categories.
     """
-    from files.models import Tag, Category
+    from files.models import Tag
     
     # Existing tags (top 100 by usage)
     tags = list(Tag.objects.all().order_by('-media_count')[:100])
@@ -458,8 +454,9 @@ def _get_existing_context() -> tuple:
     tag_name_set = set(tag_names)
     tags_text = '\n'.join(f"  - {t}" for t in tag_names) if tag_names else "  （暂无已有标签）"
     
-    # Existing categories (global ones)
-    cats = list(Category.objects.filter(is_global=True))
+    # Existing categories are limited to the fixed WAIC taxonomy.
+    from files.waic_categories import waic_fixed_category_queryset
+    cats = list(waic_fixed_category_queryset())
     cat_names = [c.title for c in cats if c.title]
     cats_text = '\n'.join(f"  - {t}" for t in cat_names) if cat_names else "  （暂无已有分类）"
     category_map = {c.title: c for c in cats}
@@ -521,12 +518,15 @@ def _auto_categorize(media, category_match: str = '', category_suggestion: str =
     """Apply AI category decision.
     
     category_match: exact title of an existing Category in DB
-    category_suggestion: new category name to create if no match found
+    category_suggestion: fallback category name, limited to fixed WAIC categories
     """
-    from files.models import Category
+    from files.waic_categories import get_waic_fixed_category
+
+    if media.category.exists():
+        return
     
     if category_match:
-        cat = Category.objects.filter(title=category_match).first()
+        cat = get_waic_fixed_category(title=category_match)
         if cat:
             media.category.add(cat)
             logger.info(f"Auto-categorized {media.friendly_token} → existing '{category_match}'")
@@ -534,14 +534,9 @@ def _auto_categorize(media, category_match: str = '', category_suggestion: str =
     
     # No match → create new category if AI suggested one
     if category_suggestion:
-        cat, created = Category.objects.get_or_create(
-            title=category_suggestion,
-            defaults={'is_global': True}
-        )
-        media.category.add(cat)
-        if created:
-            logger.info(f"Auto-created category '{category_suggestion}' for {media.friendly_token}")
-        else:
+        cat = get_waic_fixed_category(title=category_suggestion)
+        if cat:
+            media.category.add(cat)
             logger.info(f"Auto-categorized {media.friendly_token} → '{category_suggestion}'")
 
 
