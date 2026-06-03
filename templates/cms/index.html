@@ -2,7 +2,14 @@
 {% load static %}
 
 {% block headermeta %}
-
+<script>
+// 侧边栏底部不钉死 + active补丁
+(function(){
+var s=document.createElement('style');
+s.textContent='.page-sidebar.fixed-bottom .page-sidebar-bottom{position:relative!important;bottom:auto!important;margin-top:auto!important}.page-sidebar.fixed-bottom{display:flex!important;flex-direction:column!important}.page-sidebar.fixed-bottom .page-sidebar-inner{flex:1;overflow-y:auto}.page-sidebar-bottom{padding:8px 16px!important;font-size:10px!important;opacity:0.35;text-align:center}';
+document.head.appendChild(s);
+})();
+</script>
 <link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 
@@ -110,14 +117,13 @@
     {% if categories %}
     <section class="waic-home-categories" data-purpose="category-navigation">
       <div class="waic-section-heading">
-        <span class="waic-section-kicker">TAXONOMY</span>
-        <h2 class="waic-section-title"><span class="material-icons">folder_open</span> 分类导航</h2>
+        <h2 class="waic-module-title"><span class="material-icons">folder_open</span> 分类导航</h2>
+        <p class="waic-module-note">按内容类型快速进入素材池，先看分类，再按场景继续筛选。</p>
       </div>
       <div class="waic-category-grid">
         {% for cat in categories %}
-        <a href="/search?q=&c={{cat.title|urlencode}}" class="waic-category-card{% if '文档' in cat.title %} waic-cat-kind-doc{% elif '嘉宾' in cat.title %} waic-cat-kind-person{% elif '活动' in cat.title %} waic-cat-kind-event{% elif '宣传' in cat.title %} waic-cat-kind-campaign{% elif '技术' in cat.title %} waic-cat-kind-code{% else %} waic-cat-kind-default{% endif %}{% if cat.count == 0 %} waic-category-empty{% endif %}">
-          <span class="waic-cat-code">#CAT-{{ forloop.counter|stringformat:"02d" }}</span>
-          <span class="waic-cat-icon material-icons">{% if '文档' in cat.title %}description{% elif '嘉宾' in cat.title %}person{% elif '活动' in cat.title %}event{% elif '图片' in cat.title %}image{% elif '音乐' in cat.title %}music_note{% elif '视频' in cat.title %}movie{% elif '宣传' in cat.title %}campaign{% elif '技术' in cat.title %}settings{% else %}folder{% endif %}</span>
+        <a href="/search?q=&c={{cat.title|urlencode}}" class="waic-category-card{% if '文档' in cat.title %} waic-cat-kind-doc{% elif '嘉宾' in cat.title %} waic-cat-kind-person{% elif '活动' in cat.title %} waic-cat-kind-event{% elif '宣传' in cat.title %} waic-cat-kind-campaign{% elif '技术' in cat.title %} waic-cat-kind-code{% elif '影片' in cat.title %} waic-cat-kind-film{% elif '电视' in cat.title %} waic-cat-kind-tv{% elif '视觉' in cat.title %} waic-cat-kind-visual{% elif '实验' in cat.title %} waic-cat-kind-experiment{% elif '纪录' in cat.title %} waic-cat-kind-documentary{% elif '音乐' in cat.title %} waic-cat-kind-music{% else %} waic-cat-kind-default{% endif %}{% if cat.count == 0 %} waic-category-empty{% endif %}">
+          <span class="waic-cat-icon material-icons">{% if '文档' in cat.title %}description{% elif '嘉宾' in cat.title %}person{% elif '活动' in cat.title %}event{% elif '宣传' in cat.title %}campaign{% elif '技术' in cat.title %}settings{% elif '影片' in cat.title %}movie{% elif '电视' in cat.title %}live_tv{% elif '视觉' in cat.title %}palette{% elif '实验' in cat.title %}science{% elif '纪录' in cat.title %}theaters{% elif '音乐' in cat.title %}music_note{% elif '图片' in cat.title %}image{% elif '视频' in cat.title %}movie{% else %}folder{% endif %}</span>
           <span class="waic-cat-name">{{cat.title}}</span>
           <span class="waic-cat-count">{{cat.count}} 个素材</span>
         </a>
@@ -128,36 +134,170 @@
 
     <section class="waic-media-partners" data-purpose="partners-filter">
       <div class="waic-section-heading">
-        <span class="waic-section-kicker">PARTNERS</span>
-        <h2 class="waic-section-title"><span class="material-icons">hub</span> 合作媒体</h2>
+        <h2 class="waic-module-title"><span class="material-icons">groups</span> 合作媒体</h2>
+        <p class="waic-module-note">按媒体机构快速查看相关素材，默认展示中性标签而非预选状态。</p>
       </div>
-      <div class="waic-partner-pills" aria-label="合作媒体筛选">
-        <a href="/search?q=新华社" class="waic-partner-pill is-active">新华社</a>
-        <a href="/search?q=人民日报" class="waic-partner-pill">人民日报</a>
-        <a href="/search?q=CCTV" class="waic-partner-pill">CCTV</a>
-        <a href="/search?q=澎湃新闻" class="waic-partner-pill">澎湃新闻</a>
-        <a href="/search?q=第一财经" class="waic-partner-pill">第一财经</a>
-        <a href="/search?q=凤凰网" class="waic-partner-pill">凤凰网</a>
-        <a href="/search?q=新民晚报" class="waic-partner-pill">新民晚报</a>
-      </div>
-      <div class="waic-partners-row">
-        <img src="{% static 'images/media-logos/media-partners.svg' %}" alt="合作媒体">
+      <div class="waic-partner-grid" aria-label="合作媒体入口">
+        <a href="/search?q=36氪" class="waic-partner-logo" title="36氪">
+          <img src="/static/images/media-logos/36kr.png" alt="36氪" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">36氪</span>
+        </a>
+        <a href="/search?q=CCTV" class="waic-partner-logo" title="CCTV">
+          <img src="/static/images/media-logos/cctv.svg" alt="CCTV" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">CCTV</span>
+        </a>
+        <a href="/search?q=CNTV" class="waic-partner-logo" title="CNTV">
+          <img src="/static/images/media-logos/cntv.png" alt="CNTV" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">CNTV</span>
+        </a>
+        <a href="/search?q=上海报业" class="waic-partner-logo" title="上海报业">
+          <img src="/static/images/media-logos/shanghai-baoye.svg" alt="上海报业" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">上海报业</span>
+        </a>
+        <a href="/search?q=上观新闻" class="waic-partner-logo" title="上观新闻">
+          <img src="/static/images/media-logos/shobserver.png" alt="上观新闻" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">上观新闻</span>
+        </a>
+        <a href="/search?q=东方网" class="waic-partner-logo" title="东方网">
+          <img src="/static/images/media-logos/eastday.svg" alt="东方网" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">东方网</span>
+        </a>
+        <a href="/search?q=中国新闻网" class="waic-partner-logo" title="中国新闻网">
+          <img src="/static/images/media-logos/chinanews.png" alt="中国新闻网" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">中国新闻网</span>
+        </a>
+        <a href="/search?q=中国经济信息社" class="waic-partner-logo" title="中国经济信息社">
+          <img src="/static/images/media-logos/zhongjingshe.png" alt="中国经济信息社" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">中国经济信息社</span>
+        </a>
+        <a href="/search?q=中汽咨询" class="waic-partner-logo" title="中汽咨询">
+          <img src="/static/images/media-logos/zhongqishixun.svg" alt="中汽咨询" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">中汽咨询</span>
+        </a>
+        <a href="/search?q=人民日报" class="waic-partner-logo" title="人民日报">
+          <img src="/static/images/media-logos/peoples-daily.svg" alt="人民日报" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">人民日报</span>
+        </a>
+        <a href="/search?q=人民网" class="waic-partner-logo" title="人民网">
+          <img src="/static/images/media-logos/peoples-daily.svg" alt="人民网" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">人民网</span>
+        </a>
+        <a href="/search?q=亿欧" class="waic-partner-logo" title="亿欧">
+          <img src="/static/images/media-logos/iyiou.svg" alt="亿欧" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">亿欧</span>
+        </a>
+        <a href="/search?q=今日头条" class="waic-partner-logo" title="今日头条">
+          <img src="/static/images/media-logos/toutiao.svg" alt="今日头条" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">今日头条</span>
+        </a>
+        <a href="/search?q=凤凰网" class="waic-partner-logo" title="凤凰网">
+          <img src="/static/images/media-logos/ifeng.png" alt="凤凰网" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">凤凰网</span>
+        </a>
+        <a href="/search?q=动点科技" class="waic-partner-logo" title="动点科技">
+          <img src="/static/images/media-logos/technode.png" alt="动点科技" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">动点科技</span>
+        </a>
+        <a href="/search?q=哔哩哔哩" class="waic-partner-logo" title="哔哩哔哩">
+          <img src="/static/images/media-logos/bilibili.svg" alt="哔哩哔哩" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">哔哩哔哩</span>
+        </a>
+        <a href="/search?q=喜马拉雅" class="waic-partner-logo" title="喜马拉雅">
+          <img src="/static/images/media-logos/ximalaya_dl.png" alt="喜马拉雅" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">喜马拉雅</span>
+        </a>
+        <a href="/search?q=学习强国" class="waic-partner-logo" title="学习强国">
+          <img src="/static/images/media-logos/xuexi.png" alt="学习强国" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">学习强国</span>
+        </a>
+        <a href="/search?q=快手" class="waic-partner-logo" title="快手">
+          <img src="/static/images/media-logos/kuaishou.png" alt="快手" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">快手</span>
+        </a>
+        <a href="/search?q=文汇报" class="waic-partner-logo" title="文汇报">
+          <img src="/static/images/media-logos/wenhuibao.svg" alt="文汇报" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">文汇报</span>
+        </a>
+        <a href="/search?q=新华社" class="waic-partner-logo" title="新华社">
+          <img src="/static/images/media-logos/xinhua.png" alt="新华社" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">新华社</span>
+        </a>
+        <a href="/search?q=新民晚报" class="waic-partner-logo" title="新民晚报">
+          <img src="/static/images/media-logos/xinmin.svg" alt="新民晚报" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">新民晚报</span>
+        </a>
+        <a href="/search?q=新浪" class="waic-partner-logo" title="新浪">
+          <img src="/static/images/media-logos/sina_old_placeholder.svg" alt="新浪" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">新浪</span>
+        </a>
+        <a href="/search?q=机器之心" class="waic-partner-logo" title="机器之心">
+          <img src="/static/images/media-logos/jiqizhixin.png" alt="机器之心" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">机器之心</span>
+        </a>
+        <a href="/search?q=极客公园" class="waic-partner-logo" title="极客公园">
+          <img src="/static/images/media-logos/geekpark.png" alt="极客公园" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">极客公园</span>
+        </a>
+        <a href="/search?q=浦东融媒体" class="waic-partner-logo" title="浦东融媒体">
+          <img src="/static/images/media-logos/pudong-rmt.svg" alt="浦东融媒体" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">浦东融媒体</span>
+        </a>
+        <a href="/search?q=澎湃新闻" class="waic-partner-logo" title="澎湃新闻">
+          <img src="/static/images/media-logos/thepaper.png" alt="澎湃新闻" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">澎湃新闻</span>
+        </a>
+        <a href="/search?q=热点科技" class="waic-partner-logo" title="热点科技">
+          <img src="/static/images/media-logos/hot-tech.png" alt="热点科技" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">热点科技</span>
+        </a>
+        <a href="/search?q=界面新闻" class="waic-partner-logo" title="界面新闻">
+          <img src="/static/images/media-logos/jiemian.svg" alt="界面新闻" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">界面新闻</span>
+        </a>
+        <a href="/search?q=盖世汽车" class="waic-partner-logo" title="盖世汽车">
+          <img src="/static/images/media-logos/gasgoo.png" alt="盖世汽车" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">盖世汽车</span>
+        </a>
+        <a href="/search?q=第一财经" class="waic-partner-logo" title="第一财经">
+          <img src="/static/images/media-logos/yicai.svg" alt="第一财经" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">第一财经</span>
+        </a>
+        <a href="/search?q=美通社" class="waic-partner-logo" title="美通社">
+          <img src="/static/images/media-logos/prnewswire.svg" alt="美通社" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">美通社</span>
+        </a>
+        <a href="/search?q=财联社" class="waic-partner-logo" title="财联社">
+          <img src="/static/images/media-logos/cls.png" alt="财联社" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">财联社</span>
+        </a>
+        <a href="/search?q=量子位" class="waic-partner-logo" title="量子位">
+          <img src="/static/images/media-logos/liangziwei.svg" alt="量子位" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">量子位</span>
+        </a>
+        <a href="/search?q=钛媒体" class="waic-partner-logo" title="钛媒体">
+          <img src="/static/images/media-logos/tmtpost.svg" alt="钛媒体" class="waic-partner-logo-img" loading="lazy" />
+          <span class="waic-partner-logo-name">钛媒体</span>
+        </a>
       </div>
     </section>
 
-    <div class="waic-home-latest-header">
-      <div class="waic-section-heading">
-        <span class="waic-section-kicker">LIVE FEED</span>
-        <h2 class="waic-section-title"><span class="material-icons">new_releases</span> 最新上传</h2>
+    <section class="waic-home-latest-shell" data-purpose="latest-uploads">
+      <div class="waic-home-latest-top">
+        <div class="waic-section-heading">
+          <h2 class="waic-module-title"><span class="material-icons">new_releases</span> 最新上传</h2>
+          <p class="waic-module-note">继续往下浏览最近入库的内容流，进入完整列表可查看更多明细。</p>
+        </div>
+        <a href="/latest" class="waic-home-latest-link">查看全部</a>
       </div>
-      <span class="waic-new-badge waic-badge-pulse">LIVE</span>
-    </div>
+      <div class="waic-home-latest-grid-shell">
+        <div id="page-home"></div>
+      </div>
+    </section>
   </div>
-
-  <div id="page-home"></div>
 </div>
 {% endblock %}
 
 {% block bottomimports %}
-	<script src="{% static "js/index.js" %}?v={{ VERSION }}"></script>
+{{ block.super }}
+<script src="{% static "js/index.js" %}?v={{ VERSION }}&waic-home=20260530"></script>
 {% endblock bottomimports %}
