@@ -9,7 +9,7 @@ from .permissions import UserPermission  # noqa: F401
 from .playlist import Playlist, PlaylistMedia  # noqa: F401
 from .rating import Rating, RatingCategory  # noqa: F401
 from .share import SharedLink  # noqa: F401
-from .subtitle import Language, Subtitle, TranscriptSegment, TranscriptionRequest  # noqa: F401
+from .subtitle import Language, Subtitle, TranscriptSegment, TranscriptionRequest, VideoCaptionerRequest  # noqa: F401
 from .utils import CODECS  # noqa: F401
 from .utils import ENCODE_EXTENSIONS  # noqa: F401
 from .utils import ENCODE_EXTENSIONS_KEYS  # noqa: F401

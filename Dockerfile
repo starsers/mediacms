@@ -188,6 +188,15 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 FROM full-deps AS full
 
+RUN apt-get update -y && \
+    apt-get install --no-install-recommends -y python3.11 python3.11-venv && \
+    python3.11 -m venv /opt/videocaptioner && \
+    /opt/videocaptioner/bin/pip install --no-cache-dir --upgrade pip && \
+    /opt/videocaptioner/bin/pip install --no-cache-dir videocaptioner && \
+    ln -sf /opt/videocaptioner/bin/videocaptioner /usr/local/bin/videocaptioner && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY . /home/mediacms.io/mediacms
 COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/static/
 COPY --from=frontend-build /app/frontend/dist/static/ /home/mediacms.io/mediacms/frontend/dist/static/

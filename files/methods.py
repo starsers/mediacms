@@ -497,7 +497,10 @@ def user_allowed_to_upload(request):
 
 def can_transcribe_video(user):
     """Checks if a user can transcribe a video."""
-    if not getattr(settings, 'USE_WHISPER_TRANSCRIBE', False):
+    if not (
+        getattr(settings, 'USE_WHISPER_TRANSCRIBE', False)
+        or getattr(settings, 'USE_VIDEOCAPTIONER_TRANSCRIBE', False)
+    ):
         return False
 
     if is_mediacms_editor(user):

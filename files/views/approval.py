@@ -183,17 +183,32 @@ def toggle_archive(request, friendly_token):
 @login_required
 @require_POST
 def trigger_transcribe(request, friendly_token):
-    """Trigger DashScope speech-to-text transcription for video/audio."""
+    """Trigger VideoCaptioner subtitle generation for video/audio."""
     media = get_object_or_404(Media, friendly_token=friendly_token)
     if media.media_type not in ("video", "audio"):
         return JsonResponse({"ok": False, "error": "only video/audio supported"}, status=400)
     if media.subtitles.exists():
         return JsonResponse({"ok": False, "error": "subtitles already exist"}, status=400)
+    if not getattr(settings, "USE_VIDEOCAPTIONER_TRANSCRIBE", False):
+        return JsonResponse({"ok": False, "error": "subtitle generation backend is disabled"}, status=503)
+    if media.videocaptioner_requests.filter(status__in=("pending", "running")).exists():
+        return JsonResponse({"ok": False, "error": "subtitle generation already running"}, status=400)
 
-    from files.tasks import transcribe_media
+    from files.models import Language, VideoCaptionerRequest
+    from files.tasks import video_captioner_transcribe
 
-    task = transcribe_media.delay(media.friendly_token)
-    return JsonResponse({"ok": True, "task_id": task.id, "message": "transcription started"})
+    language, _ = Language.objects.update_or_create(
+        code=getattr(settings, "VIDEOCAPTIONER_SUBTITLE_LANGUAGE_CODE", "zh-Hans"),
+        defaults={"title": getattr(settings, "VIDEOCAPTIONER_SUBTITLE_LANGUAGE_TITLE", "简体中文")},
+    )
+    request_obj = VideoCaptionerRequest.objects.create(
+        media=media,
+        language=language,
+        asr=getattr(settings, "VIDEOCAPTIONER_ASR", "bijian"),
+        source_language=getattr(settings, "VIDEOCAPTIONER_LANGUAGE", "auto"),
+    )
+    task = video_captioner_transcribe.apply_async(args=[request_obj.id], countdown=1)
+    return JsonResponse({"ok": True, "task_id": task.id, "message": "subtitle generation started"})
 
 
 @csrf_exempt

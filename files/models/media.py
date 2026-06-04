@@ -517,12 +517,9 @@ class Media(models.Model):
                                "text", "spreadsheet", "presentation"):
             _tasks.ai_analyze_media.apply_async(
                 args=[self.friendly_token], countdown=3)
-        if self.media_type in ("video", "audio"):
-            # Use local Whisper instead of DashScope API
-            # Skip transcription if media already has subtitles
+        if getattr(settings, "AUTO_WHISPER_TRANSCRIBE_ON_UPLOAD", False) and self.media_type in ("video", "audio"):
             has_subtitle = Subtitle.objects.filter(media=self).exists()
             if not has_subtitle:
-                # Trigger Whisper transcription (local, offline)
                 TranscriptionRequest.objects.get_or_create(
                     media=self, translate_to_english=False,
                     defaults={'status': 'pending'})

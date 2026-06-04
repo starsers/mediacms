@@ -52,6 +52,7 @@ from .models import (
     Subtitle,
     Tag,
     TranscriptionRequest,
+    VideoCaptionerRequest,
     VideoTrimRequest,
 )
 from .models.subtitle import sync_subtitle_segments
@@ -528,53 +529,71 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
         return False
 
 
-@task(name="transcribe_media", queue="long_tasks", soft_time_limit=60 * 60 * 2)
-def transcribe_media(friendly_token):
-    """DashScope Paraformer speech-to-text transcription.
-    Called from trigger_transcribe API endpoint.
-    Creates subtitle tracks attached to the media."""
-    import time as _time
-    from files.models import Media, Subtitle, Language, TranscriptionRequest
-
-    _start = _time.time()
-
-    try:
-        media = Media.objects.get(friendly_token=friendly_token)
-    except Media.DoesNotExist:
+@task(name="video_captioner_transcribe", queue="long_tasks", soft_time_limit=60 * 60 * 2)
+def video_captioner_transcribe(request_id):
+    request = VideoCaptionerRequest.objects.select_related("media", "language").filter(id=request_id, status="pending").first()
+    if not request:
+        logger.info(f"No pending VideoCaptioner request {request_id}")
         return False
 
-    # Create or update transcription request
-    request, _ = TranscriptionRequest.objects.get_or_create(
-        media=media, defaults={'status': 'running'}
-    )
-    request.status = 'running'
-    request.save(update_fields=['status'])
+    media = request.media
+    request.status = "running"
+    request.save(update_fields=["status"])
 
-    try:
-        # Use the AI pipeline for transcription
-        from files.ai_pipeline import analyze_audio, analyze_video
+    with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as tmpdirname:
+        output_dir = os.path.join(tmpdirname, "out")
+        os.makedirs(output_dir, exist_ok=True)
 
-        if media.media_type == 'video':
-            analyze_video(media)
-        elif media.media_type == 'audio':
-            analyze_audio(media)
-        else:
-            request.status = 'fail'
-            request.logs = 'Unsupported media type for transcription'
-            request.save(update_fields=['status', 'logs'])
+        cmd = [
+            getattr(settings, "VIDEOCAPTIONER_COMMAND", "videocaptioner"),
+            "transcribe",
+            media.media_file.path,
+            "--asr",
+            request.asr,
+            "--language",
+            request.source_language,
+            "-o",
+            output_dir,
+            "--format",
+            "srt",
+        ]
+
+        logger.info(f"VideoCaptioner transcribe: ready to run command {' '.join(cmd)}")
+        start_time = datetime.now()
+        try:
+            ret = run_command(cmd, cwd=os.path.dirname(os.path.realpath(media.media_file.path)))
+        except Exception as e:
+            request.status = "fail"
+            request.logs = f"VideoCaptioner command failed: {e}"
+            request.save(update_fields=["status", "logs"])
             return False
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
 
-        duration = _time.time() - _start
-        request.status = 'success'
-        request.logs = f'Transcription completed in {duration:.1f}s'
-        request.save(update_fields=['status', 'logs'])
-        return True
+        subtitle_name = f"{get_file_name(media.media_file.name).rsplit('.', 1)[0]}.srt"
+        output_name = os.path.join(output_dir, subtitle_name)
 
-    except Exception as e:
-        duration = _time.time() - _start
-        request.status = 'fail'
-        request.logs = f'Transcription failed: {e}'
-        request.save(update_fields=['status', 'logs'])
+        if os.path.exists(output_name):
+            subtitle = Subtitle.objects.create(media=media, user=media.user, language=request.language)
+            try:
+                with open(output_name, "rb") as f:
+                    subtitle.subtitle_file.save(subtitle_name, File(f))
+                subtitle.convert_to_srt()
+                sync_subtitle_segments(subtitle, source_type="ai")
+            except Exception as e:
+                subtitle.delete()
+                request.status = "fail"
+                request.logs = f"VideoCaptioner produced a subtitle that could not be imported: {e}"
+                request.save(update_fields=["status", "logs"])
+                return False
+            request.status = "success"
+            request.logs = f"VideoCaptioner transcription took {duration:.2f} seconds."
+            request.save(update_fields=["status", "logs"])
+            return True
+
+        request.status = "fail"
+        request.logs = f"VideoCaptioner transcription failed after {duration:.2f} seconds. Error: {ret.get('error') or ret.get('out')}"
+        request.save(update_fields=["status", "logs"])
         return False
 
 
