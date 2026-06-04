@@ -16,6 +16,7 @@ from django.conf import settings
 from django.core.files import File as DjangoFile
 
 from .models import Subtitle, Language
+from .models.subtitle import sync_subtitle_segments
 
 
 def _get_api_key():
@@ -194,6 +195,7 @@ def analyze_audio(media):
             user = _get_first_user()
             sub = Subtitle(media=media, language=lang, user=user)
             sub.subtitle_file.save(f'{media.friendly_token}_ai.vtt', DjangoFile(f), save=True)
+            sync_subtitle_segments(sub, source_type="ai")
 
     finally:
         if audio_path and os.path.exists(audio_path):

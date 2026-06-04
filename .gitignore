@@ -45,3 +45,4 @@ FRONTEND_PAGES.md
 static\jianshen\assets\
 
 frontend/dist/**
+.env

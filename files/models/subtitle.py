@@ -6,7 +6,8 @@ from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models import F, Func, Value
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.urls import reverse
 from pgvector.django import VectorField
@@ -107,6 +108,13 @@ class TranscriptionRequest(models.Model):
         return f"Transcription request for {self.media.title} - {self.status}"
 
 
+def sync_media_transcript_text(media):
+    text = "\n".join(filter(None, [subtitle.subtitle_text for subtitle in media.subtitles.all()]))
+    media.__class__.objects.filter(pk=media.pk).update(transcript_text=text)
+    media.transcript_text = text
+    return text
+
+
 class TranscriptSegment(models.Model):
     SOURCE_SUBTITLE = "subtitle"
     SOURCE_WHISPER = "whisper"
@@ -148,12 +156,66 @@ class TranscriptSegment(models.Model):
     def __str__(self):
         return f"{self.media_id}:{self.segment_index}"
 
+    @classmethod
+    def rebuild_for_subtitle(cls, subtitle, source_type=SOURCE_SUBTITLE):
+        if not subtitle.subtitle_file:
+            cls.objects.filter(subtitle=subtitle).delete()
+            return 0
+
+        subs = pysubs2.load(subtitle.subtitle_file.path, encoding="utf-8")
+        rows = []
+        for index, line in enumerate(subs):
+            text = (line.text or "").replace("\\N", " ").strip()
+            if not text:
+                continue
+            rows.append(
+                cls(
+                    media=subtitle.media,
+                    subtitle=subtitle,
+                    language=subtitle.language,
+                    segment_index=index,
+                    start_seconds=int(line.start) / 1000.0,
+                    end_seconds=int(line.end) / 1000.0,
+                    content=text,
+                    source_type=source_type,
+                )
+            )
+
+        cls.objects.filter(subtitle=subtitle).delete()
+        if rows:
+            cls.objects.bulk_create(rows)
+            cls.objects.filter(subtitle=subtitle).update(
+                content_search=Func(Value("simple"), F("content"), function="to_tsvector")
+            )
+        return len(rows)
+
+
+def sync_subtitle_segments(subtitle, source_type=TranscriptSegment.SOURCE_SUBTITLE):
+    from .. import tasks
+
+    TranscriptSegment.rebuild_for_subtitle(subtitle, source_type=source_type)
+    sync_media_transcript_text(subtitle.media)
+    tasks.update_search_vector.apply_async(
+        args=[subtitle.media.friendly_token],
+        countdown=1,
+    )
+
 
 @receiver(post_save, sender=Subtitle)
 def subtitle_save(sender, instance, created, **kwargs):
+    if instance.subtitle_file:
+        try:
+            sync_subtitle_segments(instance)
+        except Exception:
+            pass
+
+
+@receiver(post_delete, sender=Subtitle)
+def subtitle_delete(sender, instance, **kwargs):
     from .. import tasks
 
+    sync_media_transcript_text(instance.media)
     tasks.update_search_vector.apply_async(
         args=[instance.media.friendly_token],
-        countdown=10,
+        countdown=1,
     )

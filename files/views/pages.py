@@ -43,6 +43,7 @@ from ..methods import (
     is_mediacms_editor,
 )
 from ..models import Category, Media, Page, Playlist, Subtitle, Tag, VideoTrimRequest
+from ..models.subtitle import sync_subtitle_segments
 from ..tasks import save_user_action, video_trim_task
 from ..waic_categories import waic_fixed_category_options, waic_fixed_category_queryset
 
@@ -386,6 +387,7 @@ def add_subtitle(request):
                 subtitle = form.save()
                 try:
                     subtitle.convert_to_srt()
+                    sync_subtitle_segments(subtitle)
                     messages.add_message(request, messages.INFO, "Caption was added!")
                     return HttpResponseRedirect(subtitle.media.get_absolute_url())
                 except Exception as e:  # noqa
@@ -453,6 +455,7 @@ def edit_subtitle(request):
         subtitle_text = form.data["subtitle"]
         with open(subtitle.subtitle_file.path, "w") as ff:
             ff.write(subtitle_text)
+        sync_subtitle_segments(subtitle)
 
         messages.add_message(request, messages.INFO, "Caption was edited")
         return HttpResponseRedirect(subtitle.media.get_absolute_url())

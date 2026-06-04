@@ -398,6 +398,10 @@ class Media(models.Model):
         for subtitle in self.subtitles.all():
             items.append(subtitle.subtitle_text)
 
+        segment_text = " ".join(self.transcript_segments.order_by("segment_index").values_list("content", flat=True))
+        if segment_text:
+            items.append(segment_text)
+
         items = [item for item in items if item]
         text = " ".join(items)
         text = " ".join([token for token in text.lower().split(" ") if token not in STOP_WORDS])
@@ -409,10 +413,33 @@ class Media(models.Model):
         return True
 
     def find_subtitle_matches(self, query: str):
-        """Find subtitle segments containing the search query.
-        Returns list of {text, start_seconds, end_seconds} for matching VTT segments.
-        """
-        import re
+        """Find subtitle segments containing the search query."""
+        query = (query or "").strip()
+        if len(query) < 2:
+            return []
+
+        segment_matches = list(
+            self.transcript_segments.filter(content__icontains=query)
+            .order_by("start_seconds", "segment_index")
+            .values("content", "start_seconds", "end_seconds")[:20]
+        )
+        if segment_matches:
+            seen = set()
+            unique = []
+            for match in segment_matches:
+                key = ((match["content"] or "").strip(), int(match["start_seconds"] or 0))
+                if key in seen:
+                    continue
+                seen.add(key)
+                unique.append({
+                    "text": match["content"],
+                    "start": match["start_seconds"],
+                    "end": match["end_seconds"],
+                })
+                if len(unique) >= 5:
+                    break
+            return unique
+
         try:
             import pysubs2
         except ImportError:
@@ -429,20 +456,19 @@ class Media(models.Model):
                     if query_lower in line.text.lower():
                         matches.append({
                             "text": line.text.strip(),
-                            "start": int(line.start) / 1000.0,  # pysubs2 uses ms
+                            "start": int(line.start) / 1000.0,
                             "end": int(line.end) / 1000.0,
                         })
             except Exception:
                 continue
 
-        # Deduplicate & limit
         seen = set()
         unique = []
-        for m in matches:
-            key = (m["text"], int(m["start"]))
+        for match in matches:
+            key = (match["text"], int(match["start"]))
             if key not in seen:
                 seen.add(key)
-                unique.append(m)
+                unique.append(match)
             if len(unique) >= 5:
                 break
         return unique

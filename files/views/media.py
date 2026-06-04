@@ -1276,7 +1276,6 @@ class MediaSearch(APIView):
                     media = media_fallback
                     _text_fallback_used = True
                 else:
-                    subtitle_media_ids = []
                     subtitle_candidates = Media.objects.filter(basic_query).distinct()
                     if category:
                         subtitle_candidates = subtitle_candidates.filter(category__title__contains=category)
@@ -1292,9 +1291,11 @@ class MediaSearch(APIView):
                     except NameError:
                         pass
 
-                    for candidate in subtitle_candidates.prefetch_related("subtitles")[:500]:
-                        if candidate.find_subtitle_matches(original_query_str):
-                            subtitle_media_ids.append(candidate.id)
+                    subtitle_media_ids = list(
+                        subtitle_candidates.filter(transcript_segments__content__icontains=original_query_str)
+                        .values_list("id", flat=True)
+                        .distinct()
+                    )
 
                     if subtitle_media_ids:
                         media = subtitle_candidates.filter(id__in=subtitle_media_ids)
@@ -1349,6 +1350,8 @@ class MediaSearch(APIView):
                 gte = datetime(year, 1, 1)
             if gte:
                 media = media.filter(add_date__gte=gte)
+
+        media = media.distinct()
 
         if not _vector_ordered:
             media = media.order_by(f"{ordering}{sort_by}")

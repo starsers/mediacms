@@ -54,6 +54,7 @@ from .models import (
     TranscriptionRequest,
     VideoTrimRequest,
 )
+from .models.subtitle import sync_subtitle_segments
 
 logger = get_task_logger(__name__)
 
@@ -513,25 +514,7 @@ def whisper_transcribe(friendly_token, translate_to_english=False):
             with open(output_name, 'rb') as f:
                 subtitle.subtitle_file.save(subtitle_name, File(f))
 
-            # 同步字幕纯文本到 Media.transcript_text（用于搜索命中）
-            with open(output_name, 'r', encoding='utf-8') as f:
-                lines = f.read().split('\n')
-            texts = []
-            for line in lines:
-                line = line.strip()
-                if not line or line == 'WEBVTT' or '-->' in line:
-                    continue
-                # 跳过 VTT 序号行（纯数字）
-                if line.isdigit():
-                    continue
-                texts.append(line)
-            subtitle_text = '\n'.join(texts)
-            media.transcript_text = subtitle_text
-            media.save(update_fields=['transcript_text'])
-            # 更新 Subtitle.subtitle_text 及 PG 全文索引
-            subtitle.subtitle_text = subtitle_text
-            subtitle.save(update_fields=['subtitle_text'])
-            media.update_search_vector()
+            sync_subtitle_segments(subtitle, source_type="whisper")
 
             request.status = "success"
             request.logs = f"Transcription took {duration:.2f} seconds."  # noqa
@@ -659,6 +642,23 @@ def update_search_vector(friendly_token):
         return False
 
     return True
+
+
+@task(name="backfill_transcript_segments", queue="short_tasks")
+def backfill_transcript_segments(friendly_token=None):
+    if friendly_token:
+        subtitles = Subtitle.objects.filter(media__friendly_token=friendly_token).select_related("media", "language")
+    else:
+        subtitles = Subtitle.objects.select_related("media", "language")
+
+    rebuilt = 0
+    for subtitle in subtitles:
+        try:
+            sync_subtitle_segments(subtitle)
+            rebuilt += 1
+        except Exception:
+            continue
+    return rebuilt
 
 
 @task(name="produce_sprite_from_video", queue="long_tasks")
