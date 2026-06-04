@@ -7,7 +7,27 @@ from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
 # TODO: put them in a more DRY way
 
 
-class MediaSerializer(serializers.ModelSerializer):
+class CategoriesInfoMixin(serializers.Serializer):
+    categories_info = serializers.SerializerMethodField()
+
+    def get_categories_info(self, obj):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+
+        if user and user.is_authenticated:
+            accessible_rbac = set(user.get_rbac_categories_as_member().values_list("pk", flat=True))
+        else:
+            accessible_rbac = set()
+
+        ret = []
+        for cat in obj.category.all():
+            if cat.is_rbac_category and cat.pk not in accessible_rbac:
+                continue
+            ret.append({"title": cat.title, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
+        return ret
+
+
+class MediaSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
     # to be used in APIs as show related media
     user = serializers.ReadOnlyField(source="user.username")
     url = serializers.SerializerMethodField()
@@ -15,6 +35,7 @@ class MediaSerializer(serializers.ModelSerializer):
     thumbnail_url = serializers.SerializerMethodField()
     author_profile = serializers.SerializerMethodField()
     author_thumbnail = serializers.SerializerMethodField()
+    subtitles_count = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
@@ -33,6 +54,9 @@ class MediaSerializer(serializers.ModelSerializer):
 
     def get_author_thumbnail(self, obj):
         return self.context["request"].build_absolute_uri(obj.author_thumbnail())
+
+    def get_subtitles_count(self, obj):
+        return obj.subtitles.count()
 
     class Meta:
         model = Media
@@ -79,6 +103,8 @@ class MediaSerializer(serializers.ModelSerializer):
             "user_featured",
             "size",
             "is_important",
+            "categories_info",
+            "subtitles_count",
             # "category",
         )
 
@@ -99,33 +125,17 @@ class MediaSerializer(serializers.ModelSerializer):
                     self.fields['category'].queryset = non_rbac_categories.union(rbac_categories)
 
 
-class CategoriesInfoMixin(serializers.Serializer):
-    categories_info = serializers.SerializerMethodField()
-
-    def get_categories_info(self, obj):
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-
-        if user and user.is_authenticated:
-            accessible_rbac = set(user.get_rbac_categories_as_member().values_list("pk", flat=True))
-        else:
-            accessible_rbac = set()
-
-        ret = []
-        for cat in obj.category.all():
-            if cat.is_rbac_category and cat.pk not in accessible_rbac:
-                continue
-            ret.append({"title": cat.title, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
-        return ret
-
-
 class SingleMediaSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     url = serializers.SerializerMethodField()
     is_shared = serializers.SerializerMethodField()
+    subtitles_count = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
+
+    def get_subtitles_count(self, obj):
+        return obj.subtitles.count()
 
     def get_is_shared(self, obj):
         """Check if media has custom permissions or RBAC categories"""
@@ -151,6 +161,7 @@ class SingleMediaSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
             "size",
             "video_height",
             "is_reviewed",
+            "subtitles_count",
         )
         fields = (
             "url",
@@ -197,6 +208,7 @@ class SingleMediaSerializer(CategoriesInfoMixin, serializers.ModelSerializer):
             "slideshow_items",
             "is_important",
             "approval_status",
+            "subtitles_count",
         )
 
 

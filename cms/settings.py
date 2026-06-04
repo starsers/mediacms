@@ -7,7 +7,7 @@ DEBUG = False
 
 # PORTAL NAME, this is the portal title and
 # is also shown on several places as emails
-PORTAL_NAME = "MediaCMS"
+PORTAL_NAME = "WAIC 素材平台"
 PORTAL_DESCRIPTION = ""
 TIME_ZONE = "Europe/London"
 
@@ -312,6 +312,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -319,7 +320,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
 
@@ -489,7 +489,7 @@ LANGUAGES = [
     ('he', _('Hebrew')),
 ]
 
-LANGUAGE_CODE = 'en'  # default language
+LANGUAGE_CODE = 'zh-hans'  # default language
 
 TINYMCE_DEFAULT_CONFIG = {
     "theme": "silver",
@@ -582,7 +582,7 @@ NUMBER_OF_MEDIA_USER_CAN_UPLOAD = 100
 FFMPEG_DEFAULT_PRESET = "medium"  # see https://trac.ffmpeg.org/wiki/Encode/H.264
 
 # If 'all' is in the list, no check is performed
-ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf", "document", "text", "spreadsheet", "presentation"]
+ALLOWED_MEDIA_UPLOAD_TYPES = ["video", "audio", "image", "pdf", "document"]
 
 # transcription options
 # the mediacms-full docker image needs to be used in order to be able to use transcription

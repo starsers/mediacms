@@ -474,12 +474,20 @@ def notifications(request):
 @login_required
 def approvals(request):
     """Personal workspace: approval center"""
+    from .permissions import _check_can_approve
+
+    if not _check_can_approve(request.user):
+        return HttpResponseRedirect("/permissions")
     return render(request, "cms/approvals.html", {})
 
 
 @login_required
 def permissions_center(request):
     """Personal workspace: permissions center"""
+    from .permissions import _check_can_approve
+
+    if _check_can_approve(request.user):
+        return HttpResponseRedirect("/approvals")
     return render(request, "cms/permissions.html", {})
 
 

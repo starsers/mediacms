@@ -57,7 +57,7 @@
 {% block topimports %}
 <link href="{% static "css/media.css" %}" rel="preload" as="style">
 <link href="{% static "css/media.css" %}" rel="stylesheet">
-{%endblock topimports %}
+{% endblock topimports %}
 
 {% block content %}
     {% if is_media_allowed_type %}
@@ -74,6 +74,7 @@
 {% endblock content %}
 
 {% block bottomimports %}
+    {{ block.super }}
     <script src="{% static "js/media.js" %}?v={{ VERSION }}"></script>
     <script>
     window.WAIC_MEDIA_FALLBACK = {
@@ -249,25 +250,47 @@
       setTimeout(renderNativeViewer, 4200);
     })();
 
-    // Subtitle timestamp seek: jump to ?t=SECONDS
+    (function() {
+      var fixed = false;
+      var observer = new MutationObserver(function() {
+        if (fixed) return;
+        var emptyMessage = document.querySelector('.items-list-empty-message');
+        if (!emptyMessage) {
+          document.querySelectorAll('h2').forEach(function(h2) {
+            var text = h2.textContent.trim();
+            if (text.indexOf('否') !== -1 && text.indexOf('评论') !== -1 && text.indexOf('还') !== -1) {
+              emptyMessage = h2;
+            }
+          });
+        }
+        if (emptyMessage && emptyMessage.textContent.trim().indexOf('否') !== -1 && emptyMessage.textContent.trim().indexOf('评论') !== -1) {
+          emptyMessage.textContent = '还没有评论';
+        }
+        document.querySelectorAll('textarea[placeholder*="Add a"], textarea[placeholder*="添加一个"]').forEach(function(textarea) {
+          textarea.placeholder = '添加评论...';
+        });
+        if (emptyMessage) fixed = true;
+      });
+      observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+      setTimeout(function() { observer.disconnect(); }, 8000);
+    })();
+
     (function() {
       var params = new URLSearchParams(location.search);
       var t = parseFloat(params.get('t'));
       if (!t || t <= 0) return;
 
       function trySeek() {
-        // Try VideoJS player first
         var player = window.videojs && videojs.players ? Object.values(videojs.players)[0] : null;
         if (player && player.currentTime && player.duration()) {
           player.currentTime(t);
           player.play();
           return true;
         }
-        // Try plain video element — must have loaded enough to seek
-        var v = document.querySelector('video');
-        if (v && v.readyState >= 2 && v.duration) {
-          v.currentTime = t;
-          v.play();
+        var video = document.querySelector('video');
+        if (video && video.readyState >= 2 && video.duration) {
+          video.currentTime = t;
+          video.play();
           return true;
         }
         return false;
@@ -281,9 +304,7 @@
       setTimeout(poll, 500);
     })();
 
-    // ===== Permission Apply Button for members =====
     (function() {
-      // Only show for logged-in non-admin/non-editor users
       if (!window.MediaCMS || !window.MediaCMS.user || window.MediaCMS.user.is.anonymous) return;
       if (window.MediaCMS.user.is.admin || window.MediaCMS.user.is.editor) return;
 
@@ -291,147 +312,194 @@
       var mediaToken = params.get('m');
       if (!mediaToken) return;
 
-      // Check permission for this media
       var apiBase = window.MediaCMS.site ? (window.MediaCMS.site.url || '') : '';
       apiBase = apiBase.replace(/\/+$/, '');
 
       function getCSRF() {
-        var c = document.cookie.split(';').map(function(s) { return s.trim(); });
-        var csrf = c.find(function(s) { return s.startsWith('csrftoken='); });
+        var csrf = document.cookie.split(';').map(function(s) { return s.trim(); }).find(function(s) {
+          return s.indexOf('csrftoken=') === 0;
+        });
         return csrf ? csrf.split('=')[1] : '';
       }
 
-      function injectApplyButton(mediaId, categories, tags) {
-        // Poll for actions container to appear
+      function injectApplyButton(mediaId) {
         var attempts = 0;
         function tryInject() {
-          // Find the actions row — look for the share button or download button
-          var actionsContainer = document.querySelector('.item-actions, [class*="actions"], [class*="action"]');
-          // More specific: find a LayoutTable containing the share button
-          var shareBtn = document.querySelector('button [class*="share"], button:has([class*="share"])');
-          if (!shareBtn) {
-            shareBtn = document.querySelector('[class*="share"]');
-          }
-          // Fallback: look for the like button area
-          if (!shareBtn) {
-            var btns = document.querySelectorAll('button');
-            for (var i = 0; i < btns.length; i++) {
-              if (btns[i].textContent && btns[i].textContent.indexOf('分享') !== -1) {
-                shareBtn = btns[i];
+          if (document.querySelector('.waic-apply-perm-btn')) return;
+          var shareNode = document.querySelector('[class*="share"]');
+          if (!shareNode) {
+            var buttons = document.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i += 1) {
+              if (buttons[i].textContent && buttons[i].textContent.indexOf('分享') !== -1) {
+                shareNode = buttons[i];
                 break;
               }
             }
           }
-
-          if (!shareBtn) {
-            if (++attempts < 30) setTimeout(tryInject, 500);
+          if (!shareNode) {
+            attempts += 1;
+            if (attempts < 30) setTimeout(tryInject, 500);
             return;
           }
 
-          // Find the parent container of action buttons
-          var container = shareBtn.closest('[class*="actions"]') || shareBtn.closest('div');
+          var container = shareNode.closest('[class*="actions"]') || shareNode.closest('div');
           if (!container) return;
 
-          // Create apply button
           var btn = document.createElement('button');
+          btn.type = 'button';
           btn.className = 'waic-apply-perm-btn';
-          btn.innerHTML = '🔒 申请权限';
-          btn.style.cssText = 'padding:6px 14px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;margin:4px;';
-          btn.onclick = function() { showApplyDialog(mediaId, categories, tags); };
-
-          // Insert after the container's last child or next to download button
+          btn.innerHTML = '<span class="material-icons" aria-hidden="true">lock</span>申请权限';
+          btn.onclick = function() { showApplyDialog(mediaId); };
           container.appendChild(btn);
-
-          // On hover, subtle darkening
-          btn.onmouseenter = function() { btn.style.background = '#d97706'; };
-          btn.onmouseleave = function() { btn.style.background = '#f59e0b'; };
         }
         setTimeout(tryInject, 1500);
       }
 
-      function showApplyDialog(mediaId, categories, tags) {
-        // Remove existing dialog
+      function showApplyDialog(mediaId) {
         var old = document.getElementById('waic-apply-dialog');
         if (old) old.remove();
 
         var overlay = document.createElement('div');
         overlay.id = 'waic-apply-dialog';
-        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:99999;display:flex;align-items:center;justify-content:center;';
-
-        var dialogHTML = '' +
-          '<div style="background:#fff;border-radius:12px;width:400px;max-width:90vw;box-shadow:0 10px 40px rgba(0,0,0,0.2);overflow:hidden;">' +
-            '<div style="padding:20px;border-bottom:1px solid #e5e7eb;">' +
-              '<h3 style="margin:0;font-size:16px;">🔒 申请权限</h3>' +
+        overlay.innerHTML = '' +
+          '<div class="waic-apply-dialog-panel">' +
+            '<div class="waic-apply-dialog-head">' +
+              '<h3><span class="material-icons" aria-hidden="true">lock</span>申请权限</h3>' +
             '</div>' +
-            '<div style="padding:8px 0;">' +
-              '<a href="#" data-scope="media" data-id="' + mediaId + '" style="display:block;padding:8px 20px;color:#1a56db;text-decoration:none;border-bottom:1px solid #f0f0f0;font-weight:600;">🎬 申请此素材的下载/剪辑权限</a>' +
-              '<a href="/permissions" style="display:block;padding:8px 20px;color:#888;text-decoration:none;">📋 更多选项 → 前往权限中心</a>' +
+            '<div class="waic-apply-dialog-body">' +
+              '<a href="#" data-scope="media" data-id="' + mediaId + '"><span class="material-icons" aria-hidden="true">movie</span><span>申请此素材的下载/剪辑权限</span></a>' +
+              '<a href="/permissions"><span class="material-icons" aria-hidden="true">rule</span><span>更多选项，前往权限中心</span></a>' +
             '</div>' +
-            '<div style="padding:12px 20px;border-top:1px solid #e5e7eb;text-align:right;">' +
-              '<button id="waic-apply-cancel" style="padding:6px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer;">取消</button>' +
+            '<div class="waic-apply-dialog-foot">' +
+              '<button id="waic-apply-cancel" type="button">取消</button>' +
             '</div>' +
           '</div>';
-
-        overlay.innerHTML = dialogHTML;
         document.body.appendChild(overlay);
 
-        // Events
-        overlay.addEventListener('click', function(e) {
-          if (e.target === overlay) overlay.remove();
+        overlay.addEventListener('click', function(event) {
+          if (event.target === overlay) overlay.remove();
         });
         document.getElementById('waic-apply-cancel').onclick = function() { overlay.remove(); };
 
-        // Apply links
         overlay.querySelectorAll('a[data-scope]').forEach(function(link) {
-          link.onclick = function(e) {
-            e.preventDefault();
-            var scope = this.dataset.scope;
-            var id = this.dataset.id;
-            var body = {scope_type: scope};
-            if (scope === 'category') body.category_id = parseInt(id);
-            else if (scope === 'tag') body.tag_id = parseInt(id);
-            else body.media_id = parseInt(id);
-
-            var csrf = getCSRF();
+          link.onclick = function(event) {
+            event.preventDefault();
+            var body = { scope_type: 'media', media_id: parseInt(this.dataset.id, 10) };
             fetch(apiBase + '/api/v1/perm/request/', {
               method: 'POST',
               body: JSON.stringify(body),
-              headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf}
-            }).then(function(r) { return r.json(); }).then(function(data) {
+              headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRF() }
+            }).then(function(resp) {
+              return resp.json();
+            }).then(function(data) {
               overlay.remove();
               if (data.ok) {
-                var toast = document.createElement('div');
-                toast.textContent = '✅ 已提交申请，等待管理员审批';
-                toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
-                document.body.appendChild(toast);
-                setTimeout(function() { toast.remove(); }, 3000);
+                showToast('已提交申请，等待管理员审批', true);
               } else {
-                alert('提交失败: ' + (data.error || '未知错误'));
+                showToast('提交失败：' + (data.error || '未知错误'), false);
               }
-            }).catch(function() { alert('网络错误'); });
+            }).catch(function() {
+              showToast('网络错误，请稍后重试', false);
+            });
           };
         });
       }
 
-      // Get media info from API
+      function showToast(message, success) {
+        var toast = document.createElement('div');
+        toast.className = 'waic-action-toast' + (success ? ' is-success' : ' is-error');
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 3000);
+      }
+
       var mediaId = {{ media_id|default:0 }};
       if (!mediaId) return;
 
-      // Check permission
-      fetch(apiBase + '/api/v1/perm/check/?media_id=' + mediaId).then(function(r) { return r.json(); }).then(function(perm) {
-        if (!perm.can_download) {
-          // Get categories and tags from the page
-          var categories = [];
-          var tags = [];
-          document.querySelectorAll('[class*="categories"] a, a[href*="/search?c="]').forEach(function(a) {
-            categories.push({title: a.textContent.trim(), href: a.href});
+      fetch(apiBase + '/api/v1/perm/check/?media_id=' + mediaId)
+        .then(function(resp) { return resp.json(); })
+        .then(function(perm) {
+          if (!perm.can_download) injectApplyButton(mediaId);
+        })
+        .catch(function() {});
+    })();
+
+    (function() {
+      var subtitlesCount = {{ media_object.subtitles.count|default:0 }};
+      if (subtitlesCount > 0) return;
+
+      function getCSRF() {
+        var match = document.cookie.match(/csrftoken=([^;]+)/);
+        return match ? match[1] : '';
+      }
+
+      function hideOldButtons() {
+        var old = document.querySelector('.transcribe');
+        if (old) old.style.display = 'none';
+        var videoJsButton = document.querySelector('.vjs-ai-subtitle-btn');
+        if (videoJsButton) videoJsButton.style.display = 'none';
+      }
+
+      var injected = false;
+      var observer = new MutationObserver(function() {
+        if (injected) return;
+        var shareRow = document.querySelector('.share');
+        if (!shareRow || !shareRow.parentNode) return;
+
+        var btn = document.createElement('span');
+        btn.setAttribute('role', 'button');
+        btn.setAttribute('tabindex', '0');
+        btn.setAttribute('title', 'AI字幕');
+        btn.setAttribute('aria-label', 'AI字幕');
+        btn.className = 'waic-ai-subtitle-inline';
+        btn.innerHTML = '<span class="material-icons" aria-hidden="true">closed_caption</span><span class="waic-ai-subtitle-text">AI字幕</span>';
+
+        function triggerAiSubtitle(event) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (btn.getAttribute('aria-disabled') === 'true') return;
+
+          var tokenMatch = window.location.search.match(/[?&]m=([^&]+)/);
+          if (!tokenMatch) return;
+
+          btn.setAttribute('aria-disabled', 'true');
+          btn.classList.add('is-loading');
+          fetch('/api/v1/media/' + encodeURIComponent(tokenMatch[1]) + '/transcribe/', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'X-CSRFToken': getCSRF() }
+          }).then(function(resp) {
+            return resp.json();
+          }).then(function(data) {
+            if (data.ok) {
+              btn.classList.remove('is-loading');
+              btn.classList.add('is-success');
+              btn.innerHTML = '<span class="material-icons" aria-hidden="true">check_circle</span><span class="waic-ai-subtitle-text">已开始</span>';
+            } else {
+              btn.setAttribute('aria-disabled', 'false');
+              btn.classList.remove('is-loading');
+            }
+          }).catch(function() {
+            btn.setAttribute('aria-disabled', 'false');
+            btn.classList.remove('is-loading');
           });
-          document.querySelectorAll('[class*="tags"] a, a[href*="/search?t="]').forEach(function(a) {
-            tags.push({title: a.textContent.trim(), href: a.href});
-          });
-          injectApplyButton(mediaId, categories, tags);
         }
+
+        btn.onclick = triggerAiSubtitle;
+        btn.onkeydown = function(event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            triggerAiSubtitle(event);
+          }
+        };
+
+        shareRow.parentNode.insertBefore(btn, shareRow.nextSibling);
+        injected = true;
+        observer.disconnect();
       });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+      hideOldButtons();
+      setInterval(hideOldButtons, 500);
     })();
     </script>
 {% endblock bottomimports %}

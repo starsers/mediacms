@@ -85,6 +85,40 @@
     })();
     </script>
 
+    <script>
+    (function() {
+        function isAdminUser() {
+            return !!(
+                window.MediaCMS &&
+                window.MediaCMS.user &&
+                window.MediaCMS.user.is &&
+                window.MediaCMS.user.is.admin
+            );
+        }
+
+        function fixPermissionNav() {
+            if (!isAdminUser()) return;
+            var link = document.querySelector('.page-sidebar .nav-item-permissions a, .page-sidebar a[href="/permissions"]');
+            if (!link) { setTimeout(fixPermissionNav, 200); return; }
+            link.setAttribute('href', '/approvals');
+            link.setAttribute('title', '权限审批');
+            var textNode = link.querySelector('.menu-item-title, .nav-menu-item-title, span:last-child');
+            if (textNode) {
+                textNode.textContent = '权限审批';
+            } else {
+                link.childNodes.forEach(function(node) {
+                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                        node.textContent = '权限审批';
+                    }
+                });
+            }
+        }
+
+        setTimeout(fixPermissionNav, 500);
+        document.addEventListener('DOMContentLoaded', function() { setTimeout(fixPermissionNav, 300); });
+    })();
+    </script>
+
     {% block bottomimports %}{% endblock bottomimports %}
 
 </body>

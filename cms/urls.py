@@ -9,7 +9,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
 
 schema_view = get_schema_view(
-    openapi.Info(title="MediaCMS API", default_version='v1', contact=openapi.Contact(url="https://mediacms.io"), x_logo={"url": "../../static/images/logo_dark.svg"}),
+    openapi.Info(title="WAIC 素材平台 API", default_version='v1', contact=openapi.Contact(url="https://waic.cn"), x_logo={"url": "../../static/images/logo_dark.svg"}),
     public=True,
     permission_classes=(AllowAny,),
 )
@@ -34,6 +34,6 @@ urlpatterns = [
     path("tinymce/", include("tinymce.urls")),
 ]
 
-admin.site.site_header = "MediaCMS Admin"
-admin.site.site_title = "MediaCMS"
+admin.site.site_header = "WAIC 管理后台"
+admin.site.site_title = "WAIC 素材平台"
 admin.site.index_title = "Admin"

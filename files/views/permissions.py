@@ -2,6 +2,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from files.models import Media, Category, Tag
@@ -15,6 +16,26 @@ def _check_can_approve(user):
     reviewer = getattr(settings, 'APPROVAL_REVIEWER', 'admin')
     reviewers = [reviewer] if isinstance(reviewer, str) else reviewer
     return user.is_superuser or user.username in reviewers
+
+
+def _serialize_access_request(access_request):
+    """Serialize an access request for the admin approval UI."""
+    return {
+        'id': access_request.id,
+        'user': access_request.user.username,
+        'scope_type': access_request.scope_type,
+        'media_id': access_request.media_id,
+        'media_title': access_request.media.title if access_request.media else None,
+        'category_id': access_request.category_id,
+        'category_name': access_request.category.title if access_request.category else None,
+        'tag_id': access_request.tag_id,
+        'tag_name': access_request.tag.title if access_request.tag else None,
+        'status': access_request.status,
+        'reason': access_request.reason,
+        'created_at': access_request.created_at.isoformat(),
+        'reviewed_at': access_request.reviewed_at.isoformat() if access_request.reviewed_at else None,
+        'reviewed_by': access_request.reviewed_by.username if access_request.reviewed_by else None,
+    }
 
 
 @csrf_exempt
@@ -87,6 +108,14 @@ def request_upload_access(request):
     if has_upload:
         return JsonResponse({'ok': True, 'message': '已有上传权限'})
 
+    pending = AccessRequest.objects.filter(
+        user=request.user,
+        scope_type='upload',
+        status='pending',
+    ).first()
+    if pending:
+        return JsonResponse({'ok': True, 'id': pending.id, 'status': pending.status, 'message': '上传权限申请已在审核中'})
+
     # Create a special access request (scope_type='upload')
     req = AccessRequest.objects.create(
         user=request.user,
@@ -142,7 +171,8 @@ def approve_access(request):
 
         req.status = 'approved'
         req.reviewed_by = request.user
-        req.save()
+        req.reviewed_at = timezone.now()
+        req.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
 
         # Notify the requesting user
         notify_users(
@@ -156,7 +186,8 @@ def approve_access(request):
         req.status = 'rejected'
         req.reviewed_by = request.user
         req.reason = reason
-        req.save()
+        req.reviewed_at = timezone.now()
+        req.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'reason'])
 
         # Notify the requesting user
         notify_users(
@@ -205,28 +236,31 @@ def grant_permission(request):
 
 @login_required
 def pending_requests(request):
-    """List pending access requests (for admin)"""
+    """List access requests for admin approval UI."""
     if not _check_can_approve(request.user):
         return JsonResponse({'error': 'Not authorized'}, status=403)
 
-    pending = AccessRequest.objects.filter(status='pending').select_related(
+    status_filter = request.GET.get('status', 'pending')
+    requests_qs = AccessRequest.objects.select_related(
         'user', 'media', 'category', 'tag'
-    ).order_by('-created_at')[:50]
+    )
+
+    if status_filter != 'all':
+        valid_statuses = {value for value, _label in AccessRequest.STATUS}
+        if status_filter not in valid_statuses:
+            status_filter = 'pending'
+        requests_qs = requests_qs.filter(status=status_filter)
+
+    counts = {
+        status: AccessRequest.objects.filter(status=status).count()
+        for status, _label in AccessRequest.STATUS
+    }
+    requests_qs = requests_qs.order_by('-created_at')[:100]
 
     return JsonResponse({
-        'count': pending.count(),
-        'results': [
-            {
-                'id': r.id,
-                'user': r.user.username,
-                'scope_type': r.scope_type,
-                'media_title': r.media.title if r.media else None,
-                'category_name': r.category.title if r.category else None,
-                'tag_name': r.tag.title if r.tag else None,
-                'created_at': r.created_at.isoformat(),
-            }
-            for r in pending
-        ]
+        'count': requests_qs.count(),
+        'counts': counts,
+        'results': [_serialize_access_request(r) for r in requests_qs],
     })
 
 

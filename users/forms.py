@@ -7,7 +7,11 @@ from .models import Channel, User
 
 
 class SignupForm(forms.Form):
-    name = forms.CharField(max_length=100, label="Name")
+    name = forms.CharField(
+        max_length=100,
+        label="姓名",
+        widget=forms.TextInput(attrs={"placeholder": "姓名"}),
+    )
 
     def signup(self, request, user):
         user.name = self.cleaned_data["name"]
@@ -29,15 +33,25 @@ class UserForm(forms.ModelForm):
             "is_approved",
             # "allow_contact",
         )
+        labels = {
+            "name": "姓名",
+            "description": "简介",
+            "logo": "头像",
+            "notification_on_comments": "接收评论通知",
+            "advancedUser": "高级用户",
+            "is_manager": "管理员",
+            "is_editor": "编辑者",
+            "is_approved": "已批准",
+        }
 
     def clean_logo(self):
         image = self.cleaned_data.get("logo", False)
         if image:
             if image.size > 2 * 1024 * 1024:
-                raise forms.ValidationError("Image file too large ( > 2mb )")
+                raise forms.ValidationError("图片文件过大（超过 2MB）")
             return image
         else:
-            raise forms.ValidationError("Please provide a logo")
+            raise forms.ValidationError("请提供头像")
 
     def __init__(self, user, *args, **kwargs):
         super(UserForm, self).__init__(*args, **kwargs)

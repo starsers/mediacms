@@ -5,52 +5,116 @@
 
 {% block content %}
 {% get_current_language as LANGUAGE_CODE %}
-{% if user %}<div id="page-search" class="waic-cyber-page waic-page-surface waic-page-surface--media" data-waic-kicker="SEARCH_MATRIX"><div class="waic-search-loading">{{ "Loading search results..." | custom_translate:LANGUAGE_CODE }}</div></div>{% endif %}
+{% if user %}
+<div id="page-search" class="waic-cyber-page waic-page-surface waic-page-surface--media" data-waic-kicker="SEARCH_MATRIX">
+  {% if request.GET.q %}
+    <div class="waic-search-loading">{{ "Loading search results..." | custom_translate:LANGUAGE_CODE }}</div>
+  {% else %}
+    <div class="waic-search-empty">
+      <span class="material-icons" aria-hidden="true">search</span>
+      <h2>搜索素材</h2>
+      <p>在上方搜索框输入关键词</p>
+      <p>支持搜索标题、描述、分类、标签和字幕内容</p>
+    </div>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}
 
 {% block bottomimports %}
+    {{ block.super }}
     <script src="{% static "js/search.js" %}?v={{ VERSION }}"></script>
     <script>
     (function() {
-      var _matches = {};
-      var _origFetch = window.fetch;
+      var params = new URLSearchParams(location.search);
+      if (params.get('q') && params.get('q').trim()) return;
+
+      function renderEmptyState() {
+        var page = document.getElementById('page-search');
+        if (!page || page.querySelector('.waic-search-empty')) return;
+        page.innerHTML = '' +
+          '<div class="waic-search-empty">' +
+            '<span class="material-icons" aria-hidden="true">search</span>' +
+            '<h2>搜索素材</h2>' +
+            '<p>在上方搜索框输入关键词</p>' +
+            '<p>支持搜索标题、描述、分类、标签和字幕内容</p>' +
+          '</div>';
+      }
+
+      var attempts = 0;
+      function checkReactOutput() {
+        attempts += 1;
+        var page = document.getElementById('page-search');
+        if (!page) {
+          if (attempts < 20) setTimeout(checkReactOutput, 300);
+          return;
+        }
+        if (!page.querySelector('.item, .media-list-row, .search-results-wrap')) {
+          renderEmptyState();
+        }
+        if (attempts < 20) setTimeout(checkReactOutput, 300);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkReactOutput);
+      } else {
+        checkReactOutput();
+      }
+    })();
+
+    (function() {
+      var q = new URLSearchParams(location.search).get('q');
+      if (!q) return;
+
+      var matches = {};
+      var originalFetch = window.fetch;
+
+      function rememberMatches(data) {
+        (data.results || []).forEach(function(result) {
+          if (result.subtitle_matches && result.subtitle_matches.length) {
+            matches[result.friendly_token] = result.subtitle_matches;
+          }
+        });
+        setTimeout(enhanceResults, 500);
+        setTimeout(enhanceResults, 1500);
+        setTimeout(enhanceResults, 3500);
+      }
+
       window.fetch = function(url, opts) {
-        return _origFetch.apply(this, arguments).then(function(resp) {
-          if (typeof url === 'string' && url.indexOf('/api/v1/search') !== -1) {
-            var clone = resp.clone();
-            clone.json().then(function(data) {
-              (data.results || []).forEach(function(r) {
-                if (r.subtitle_matches && r.subtitle_matches.length) {
-                  _matches[r.friendly_token] = r.subtitle_matches;
-                }
-              });
-              setTimeout(enhanceResults, 500);
-              setTimeout(enhanceResults, 1500);
-            });
+        return originalFetch.apply(this, arguments).then(function(resp) {
+          var requestUrl = typeof url === 'string' ? url : (url && url.url) || '';
+          if (requestUrl.indexOf('/api/v1/search') !== -1) {
+            resp.clone().json().then(rememberMatches).catch(function() {});
           }
           return resp;
         });
       };
 
+      originalFetch('/api/v1/search?q=' + encodeURIComponent(q))
+        .then(function(resp) { return resp.json(); })
+        .then(rememberMatches)
+        .catch(function() {});
+
       function enhanceResults() {
         var links = document.querySelectorAll('a[href*="/view?m="]');
         links.forEach(function(link) {
-          var m = new URL(link.href, location.origin).searchParams.get('m');
-          if (!m || !_matches[m]) return;
+          var token = new URL(link.href, location.origin).searchParams.get('m');
+          if (!token || !matches[token]) return;
+
           var card = link.closest('[class*="item"], [class*="result"], [class*="card"], li, div');
           if (!card || card.querySelector('.waic-sub-hits')) return;
 
           var wrap = document.createElement('div');
           wrap.className = 'waic-sub-hits';
-          wrap.style.cssText = 'margin-top:4px;font-size:0.75rem;line-height:1.5;';
-          _matches[m].slice(0, 3).forEach(function(seg) {
-            var t = Math.floor(seg.start);
-            var mm = Math.floor(t / 60), ss = String(t % 60).padStart(2, '0');
+          matches[token].slice(0, 3).forEach(function(seg) {
+            var t = Math.floor(seg.start || 0);
+            var mm = Math.floor(t / 60);
+            var ss = String(t % 60).padStart(2, '0');
+            var text = String(seg.text || '');
             var a = document.createElement('a');
-            a.href = '/view?m=' + m + '&t=' + t;
-            a.style.cssText = 'display:block;color:var(--waic-blue,#007bff);padding:1px 0;text-decoration:none;';
-            a.title = seg.text;
-            a.innerHTML = '⏱ ' + mm + ':' + ss + ' …' + seg.text.substring(0, 40) + (seg.text.length > 40 ? '…' : '');
+            a.href = '/view?m=' + encodeURIComponent(token) + '&t=' + t;
+            a.title = text;
+            a.textContent = mm + ':' + ss + ' - ' + text.substring(0, 40) + (text.length > 40 ? '...' : '');
             wrap.appendChild(a);
           });
           card.appendChild(wrap);

@@ -290,4 +290,4 @@ admin.site.register(Language, LanguageAdmin)
 admin.site.register(VideoTrimRequest, VideoTrimRequestAdmin)
 admin.site.register(TranscriptionRequest, TranscriptionRequestAdmin)
 
-Media._meta.app_config.verbose_name = "Media"
+Media._meta.app_config.verbose_name = "媒体文件"

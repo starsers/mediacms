@@ -221,6 +221,7 @@ class MediaList(APIView):
                 media = self._get_media_queryset(request)
                 already_sorted = True
 
+        _text_fallback_used = False
         if query:
             query = helpers.clean_query(query)
             q_parts = [q_part.rstrip("y") for q_part in query.split() if q_part not in STOP_WORDS]
@@ -232,6 +233,46 @@ class MediaList(APIView):
                 query = None
         if query:
             media = media.filter(search=query)
+            if not media.exists() and original_query_str and len(original_query_str) >= 2:
+                from django.db.models import Q as _Q
+
+                def apply_search_filters(queryset):
+                    if category:
+                        queryset = queryset.filter(category__title__contains=category)
+                    if tag:
+                        queryset = queryset.filter(tags__title=tag)
+                    if media_type:
+                        queryset = queryset.filter(media_type=media_type)
+                    if author:
+                        queryset = queryset.filter(user__username=author)
+                    try:
+                        if upload_date:
+                            queryset = queryset.filter(add_date__gte=gte)
+                    except NameError:
+                        pass
+                    return queryset
+
+                media_fallback = apply_search_filters(Media.objects.filter(basic_query).distinct())
+                media_fallback = media_fallback.filter(
+                    _Q(title__icontains=original_query_str) |
+                    _Q(description__icontains=original_query_str) |
+                    _Q(transcript_text__icontains=original_query_str) |
+                    _Q(ai_summary__icontains=original_query_str) |
+                    _Q(transcript_segments__content__icontains=original_query_str)
+                ).distinct()
+
+                if media_fallback.exists():
+                    media = media_fallback
+                    _text_fallback_used = True
+                else:
+                    subtitle_media_ids = []
+                    subtitle_candidates = apply_search_filters(Media.objects.filter(basic_query).distinct())
+                    for candidate in subtitle_candidates.prefetch_related("subtitles")[:500]:
+                        if candidate.find_subtitle_matches(original_query_str):
+                            subtitle_media_ids.append(candidate.id)
+                    if subtitle_media_ids:
+                        media = subtitle_candidates.filter(id__in=subtitle_media_ids)
+                        _text_fallback_used = True
 
         if tag:
             media = media.filter(tags__title=tag)
@@ -1204,6 +1245,7 @@ class MediaSearch(APIView):
                 query = None
         else:
             original_query_str = ""
+        _text_fallback_used = False
         if query:
             media = media.filter(search=query)
             # 中文回退：PG simple 分词器不认中文，兜底用 icontains 搜多个字段
@@ -1214,8 +1256,9 @@ class MediaSearch(APIView):
                     _Q(title__icontains=original_query_str) |
                     _Q(description__icontains=original_query_str) |
                     _Q(transcript_text__icontains=original_query_str) |
-                    _Q(ai_summary__icontains=original_query_str)
-                )
+                    _Q(ai_summary__icontains=original_query_str) |
+                    _Q(transcript_segments__content__icontains=original_query_str)
+                ).distinct()
                 if category:
                     media_fallback = media_fallback.filter(category__title__contains=category)
                 if tag:
@@ -1231,10 +1274,35 @@ class MediaSearch(APIView):
                     pass
                 if media_fallback.exists():
                     media = media_fallback
+                    _text_fallback_used = True
+                else:
+                    subtitle_media_ids = []
+                    subtitle_candidates = Media.objects.filter(basic_query).distinct()
+                    if category:
+                        subtitle_candidates = subtitle_candidates.filter(category__title__contains=category)
+                    if tag:
+                        subtitle_candidates = subtitle_candidates.filter(tags__title=tag)
+                    if media_type:
+                        subtitle_candidates = subtitle_candidates.filter(media_type=media_type)
+                    if author:
+                        subtitle_candidates = subtitle_candidates.filter(user__username=author)
+                    try:
+                        if upload_date:
+                            subtitle_candidates = subtitle_candidates.filter(add_date__gte=gte)
+                    except NameError:
+                        pass
+
+                    for candidate in subtitle_candidates.prefetch_related("subtitles")[:500]:
+                        if candidate.find_subtitle_matches(original_query_str):
+                            subtitle_media_ids.append(candidate.id)
+
+                    if subtitle_media_ids:
+                        media = subtitle_candidates.filter(id__in=subtitle_media_ids)
+                        _text_fallback_used = True
 
         # Vector semantic search: compute query embedding and add similarity score
         _vector_ordered = False
-        if query:
+        if query and not _text_fallback_used and not media.exists():
             _vector_query = params.get("q", "").strip()
             if _vector_query and len(_vector_query) >= 2:
                 try:

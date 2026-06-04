@@ -308,10 +308,14 @@ def analyze_image(media) -> bool:
     """
     # Gather existing tags and categories
     tags_text, cats_text, tag_name_set, category_map = _get_existing_context()
+
+    from files.models import Tag
+    total = Tag.objects.count()
+    max_new = 1 if total > 10 else 2
     
     prompt = f"""你是一个中文内容分类助手。请分析这张图片，为它分配合适的标签和分类。
 
-== 系统中已有的标签 ==
+== 系统中已有的标签（共{total}个） ==
 {tags_text}
 
 == 系统中已有的分类 ==
@@ -334,10 +338,12 @@ def analyze_image(media) -> bool:
 }}
 
 规则：
-1. tags_to_apply: 从「已有标签」中选最匹配的 2-5 个，名称必须完全一致
-2. tags_to_create: 需要但找不到的，建议新建 1-3 个
-3. category_match: 最合适的已有分类名或 null
-4. 所有标签和分类名称必须使用中文"""
+1. 所有标签必须使用中文！禁止创建英文标签（AI、DNA等国际通用缩写除外）
+2. tags_to_apply: 从「已有标签」中选最匹配的 2-3 个，名称必须完全一致
+3. tags_to_create: 仅在已有标签完全无法覆盖时才建议新建（最多{max_new}个），且必须是中文、2-8字、描述主题而非文件属性
+4. 不要创建描述文件格式的标签（如image、图片、照片等）
+5. 不要创建过于泛泛的标签（如test、color、background、red、green）
+6. category_match: 选择一个最合适的分类，名称必须完全一致；如果没有则填 null"""
     
     result = _call_qwen_vision(media.media_file.path, prompt)
     if not result:
@@ -378,35 +384,52 @@ def analyze_image(media) -> bool:
 def analyze_media_file(media) -> bool:
     """
     Analyze audio/video media.
-    Match existing tags first, then create new tags when needed.
+    For now: generate a content-aware summary based on filename + metadata.
+    Full transcription (Paraformer) can be added later.
     """
     title = media.title or os.path.basename(media.media_file.name)
     tags_text, cats_text, tag_name_set, category_map = _get_existing_context()
 
-    prompt = f"""你是一个中文内容分类助手。请基于媒体文件信息推测内容，并分配标签。
+    from files.models import Tag
+    total = Tag.objects.count()
+    max_new = 1 if total > 10 else 2
 
-文件名: {title}
-媒体类型: {media.media_type}
-时长: {media.duration}s (0 表示未知)
+    prompt = f"""你是一个中文内容分类助手。请根据以下媒体文件的文件名和元数据，推测其内容并分配合适的标签和分类。
 
-== 系统中已有的标签 ==
+== 系统中已有的标签（共{total}个） ==
 {tags_text}
 
+== 系统中已有的分类 ==
+{cats_text}
+
+== 媒体文件信息 ==
+文件名: {title}
+类型: {media.media_type}
+时长: {media.duration}秒 (0表示未知)
+
+== 你的任务 ==
 返回一个 JSON 对象（只返回 JSON，不要其他文字）：
+
 {{
-  "summary": "1-2 句话的内容推测（中文）",
+  "summary": "基于文件名对内容的1-2句话推测（中文，用'可能包含'等推测语气）",
   "language": "内容语言代码（zh/en/ja等）",
   "tags_to_apply": ["标签1", "标签2"],
   "tags_to_create": ["新标签名"],
-  "tags_to_skip": ["模糊标签"]
+  "tags_to_skip": ["模糊标签"],
+  "category_match": "已有分类名或null",
+  "category_suggestion": "建议新建的分类名或null",
+  "category_reason": "分类依据的一句话说明"
 }}
 
 规则：
-1. tags_to_apply 必须来自已有标签，名称完全一致，建议 2-5 个
-2. tags_to_create 仅在确实需要且不存在时给出，建议 1-3 个
-3. 所有标签使用中文"""
+1. 所有标签必须使用中文！禁止创建英文标签（AI、DNA等国际通用缩写除外）
+2. tags_to_apply: 从「已有标签」中选最匹配的 2-3 个，名称必须完全一致
+3. tags_to_create: 仅在已有标签完全无法覆盖时才建议新建（最多{max_new}个），且必须是中文、2-8字、描述主题而非文件属性
+4. 不要创建描述文件格式的标签（如video、audio、视频、音频等）
+5. 不要创建过于泛泛的标签（如资料、文件、内容、其他）
+6. category_match: 选择一个最合适的分类，名称必须完全一致；如果没有则填 null"""
 
-    result = _call_qwen_text(prompt, max_tokens=400)
+    result = _call_qwen_text(prompt, max_tokens=600)
     if not result:
         return False
 
@@ -426,13 +449,18 @@ def analyze_media_file(media) -> bool:
 
     ai_meta = {
         'duration': media.duration,
-        'tags_to_apply': data.get('tags_to_apply', []),
-        'tags_to_create': data.get('tags_to_create', []),
-        'tags_to_skip': data.get('tags_to_skip', []),
+        'category_reason': data.get('category_reason', ''),
     }
+    if data.get('tags_to_apply'):
+        ai_meta['tags_applied'] = data['tags_to_apply']
     media.ai_metadata = ai_meta
 
     _auto_tag(media, data)
+    _auto_categorize(
+        media,
+        category_match=data.get('category_match'),
+        category_suggestion=data.get('category_suggestion'),
+    )
 
     media.save(update_fields=['ai_summary', 'language', 'ai_metadata'])
     return True
@@ -467,40 +495,68 @@ def _get_existing_context() -> tuple:
 # ── Tag management ───────────────────────────────────────────────────────
 
 def _auto_tag(media, ai_tag_data: dict) -> None:
-    """Apply AI tag decisions with match-first logic.
+    """Apply AI tag decisions with match-first logic and quality filtering.
     
     ai_tag_data keys:
     - tags_to_apply: list[str] — existing tag names AI matched
     - tags_to_create: list[str] — new tag names AI recommends creating
     - tags_to_skip: list[str] — tags AI considered but rejected (logged only)
+
+    Quality rules:
+    1. Prefer matching existing tags.
+    2. Tags must be Chinese or well-known short uppercase abbreviations.
+    3. Generic file-format descriptors are rejected.
     """
     from files.models import Tag
     
+    total_tags = Tag.objects.count()
     applied_count = 0
     created_count = 0
+    max_new = 1 if total_tags > 10 else 2
     
-    # 1. Apply matched existing tags
+    # 1. Apply matched existing tags (case-insensitive match)
     for name in (ai_tag_data.get('tags_to_apply') or []):
         name = name.strip()[:50]
         if not name:
             continue
-        tag = Tag.objects.filter(title=name).first()
+        tag = Tag.objects.filter(title__iexact=name).first()
+        if not tag:
+            tag = Tag.objects.filter(title=name).first()
         if tag:
             media.tags.add(tag)
             applied_count += 1
     
-    # 2. Create genuinely new tags
+    # 2. Create genuinely new tags only if they pass quality checks.
     for name in (ai_tag_data.get('tags_to_create') or []):
+        if created_count >= max_new:
+            logger.info(f"AI tag '{name}' skipped: tag limit reached ({max_new} new allowed)")
+            continue
         name = name.strip()[:50]
-        if not name:
+        if not name or len(name) < 2:
+            continue
+        if not _is_valid_tag_name(name):
+            logger.info(f"AI tag '{name}' rejected: must be Chinese or a known abbreviation")
+            continue
+        skip_words = {
+            'video', 'audio', 'image', 'pdf', 'text', 'document', 'file',
+            'test', 'simple', 'color', 'background', 'red', 'green', 'blue',
+            'solid', 'minimal', 'design', 'graphic', 'transcription',
+            'photo', 'picture', '照片', '图片', '视频', '音频', '文档',
+        }
+        if name.lower() in skip_words:
+            logger.info(f"AI tag '{name}' rejected: generic descriptor")
+            continue
+        existing = Tag.objects.filter(title__iexact=name).first()
+        if existing:
+            media.tags.add(existing)
+            applied_count += 1
             continue
         tag, created = Tag.objects.get_or_create(
             title=name,
             defaults={'source': 'ai', 'user': media.user}
         )
         if created:
-            confidence = min(0.95, 0.65 + len(name) * 0.02)
-            Tag.objects.filter(pk=tag.pk).update(source='ai', confidence=confidence)
+            Tag.objects.filter(pk=tag.pk).update(source='ai')
             created_count += 1
         media.tags.add(tag)
     
@@ -510,6 +566,15 @@ def _auto_tag(media, ai_tag_data: dict) -> None:
         logger.info(f"AI skipped tags for {media.friendly_token}: {skipped}")
     
     logger.info(f"Auto-tag {media.friendly_token}: {applied_count} matched, {created_count} created, {len(skipped)} skipped")
+
+
+def _is_valid_tag_name(name: str) -> bool:
+    """Return True for Chinese tags or short all-caps abbreviations such as AI."""
+    if any('\u4e00' <= ch <= '\u9fff' for ch in name):
+        return True
+    if name.isupper() and name.isascii() and 2 <= len(name) <= 4:
+        return True
+    return False
 
 
 # ── Auto-categorization ──────────────────────────────────────────────────
@@ -545,9 +610,13 @@ def _auto_categorize(media, category_match: str = '', category_suggestion: str =
 def _build_tag_category_prompt(content_text: str, existing_tags: str, existing_cats: str,
                                 content_type: str = "document") -> str:
     """Build the AI prompt for tag/category decisions."""
+    from files.models import Tag
+    total = Tag.objects.count()
+    max_new = 1 if total > 10 else 2
+
     return f"""你是一个中文内容分类助手。请分析以下{content_type}内容，为它分配合适的标签和分类。
 
-== 系统中已有的标签 ==
+== 系统中已有的标签（共{total}个） ==
 {existing_tags}
 
 == 系统中已有的分类 ==
@@ -571,12 +640,13 @@ def _build_tag_category_prompt(content_text: str, existing_tags: str, existing_c
 }}
 
 规则：
-1. tags_to_apply: 从「已有标签」中选出最匹配的 2-5 个，名称必须完全一致
-2. tags_to_create: 内容明显需要、但已有标签中找不到的，建议新建 1-3 个（中文、简洁）
-3. tags_to_skip: AI 想到了但觉得不够好/过于宽泛的标签（可选）
-4. category_match: 从中选一个最合适的分类，名称必须完全一致；如果没有则填 null
-5. category_suggestion: 如果 category_match 为 null，建议一个新建的分类名（中文、3-8字）
-6. 所有标签和分类名称必须使用中文"""
+1. 所有标签必须使用中文！禁止创建英文标签（AI、DNA等国际通用缩写除外）
+2. tags_to_apply: 从「已有标签」中选出最匹配的 2-3 个，名称必须完全一致
+3. tags_to_create: 仅在已有标签完全无法覆盖时才建议新建（最多{max_new}个），且必须是中文、2-8字、描述主题而非文件属性
+4. 不要创建描述文件格式的标签（如video、audio、PDF、文档等）
+5. 不要创建过于泛泛的标签（如资料、文件、内容、其他）
+6. category_match: 从中选一个最合适的分类，名称必须完全一致；如果没有则填 null
+7. category_suggestion: 如果 category_match 为 null，建议一个新建的分类名（中文、3-6字）"""
 
 
 # ── Type-specific analyzers ──────────────────────────────────────────────

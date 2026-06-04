@@ -23,7 +23,7 @@ class MultipleSelect(forms.CheckboxSelectMultiple):
 
 
 class MediaMetadataForm(forms.ModelForm):
-    new_tags = forms.CharField(label="Tags", help_text="a comma separated list of tags.", required=False)
+    new_tags = forms.CharField(label="标签", help_text="用逗号分隔的标签列表", required=False)
 
     class Meta:
         model = Media
@@ -46,15 +46,23 @@ class MediaMetadataForm(forms.ModelForm):
             "thumbnail_time": forms.NumberInput(attrs={'min': 0, 'step': 0.1}),
         }
         labels = {
-            "friendly_token": "Slug",
-            "uploaded_poster": "Poster Image",
-            "thumbnail_time": "Thumbnail Time (seconds)",
+            "friendly_token": "URL 别名",
+            "title": "标题",
+            "add_date": "发布日期",
+            "description": "描述",
+            "enable_comments": "允许评论",
+            "uploaded_poster": "封面图片",
+            "thumbnail_time": "缩略图时间（秒）",
+            "is_important": "标记为重要",
         }
         help_texts = {
             "title": "",
-            "friendly_token": "Media URL slug",
-            "thumbnail_time": "Select the time in seconds for the video thumbnail",
-            "uploaded_poster": "Maximum file size: 5MB",
+            "friendly_token": "媒体链接的自定义短标识",
+            "thumbnail_time": "设置视频缩略图的截取时间（秒）",
+            "uploaded_poster": "最大文件大小: 5MB",
+            "description": "",
+            "enable_comments": "是否允许用户对该媒体发表评论",
+            "is_important": "标记为重要后将向所有用户发送通知",
         }
 
     def __init__(self, user, *args, **kwargs):
@@ -95,7 +103,7 @@ class MediaMetadataForm(forms.ModelForm):
         if getattr(settings, 'ALLOW_CUSTOM_MEDIA_URLS', False):
             self.helper.layout.insert(0, CustomField('friendly_token'))
 
-        self.helper.layout.append(FormActions(Submit('submit', 'Update Media', css_class='primaryAction')))
+        self.helper.layout.append(FormActions(Submit('submit', '保存修改', css_class='primaryAction')))
 
     def clean_friendly_token(self):
         token = self.cleaned_data.get("friendly_token", "").strip()
@@ -144,6 +152,19 @@ class MediaPublishForm(forms.ModelForm):
         self.had_explicit_permission = self.instance.permissions.exists() if self.instance.pk else False
         is_embed_mode = self._check_embed_mode()
         self.fields['category'].queryset = waic_fixed_category_queryset()
+
+        self.fields["featured"].label = "精选"
+        self.fields["featured"].help_text = "由管理员设为全站精选内容"
+        self.fields["reported_times"].label = "被举报次数"
+        self.fields["reported_times"].help_text = "该媒体被举报的次数"
+        self.fields["is_reviewed"].label = "已审核"
+        self.fields["is_reviewed"].help_text = "审核通过后可在公开列表中显示"
+        self.fields["allow_download"].label = "允许下载"
+        self.fields["allow_download"].help_text = "是否显示下载按钮"
+        self.fields["shared"].label = "共享"
+        self.fields["category"].label = "分类"
+        self.fields["category"].help_text = "媒体可归入一个或多个分类"
+        self.fields["confirm_state"].label = "确认共享状态变更"
 
         self.fields["shared"].initial = self.was_shared
         self.initial["shared"] = self.was_shared
@@ -199,7 +220,7 @@ class MediaPublishForm(forms.ModelForm):
             CustomField('allow_download'),
         )
 
-        self.helper.layout.append(FormActions(Submit('submit', 'Publish Media', css_class='primaryAction')))
+        self.helper.layout.append(FormActions(Submit('submit', '发布', css_class='primaryAction')))
 
     def _check_embed_mode(self):
         """Check if the current request is in embed mode"""
@@ -262,12 +283,12 @@ class WhisperSubtitlesForm(forms.ModelForm):
             "allow_whisper_transcribe_and_translate",
         )
         labels = {
-            "allow_whisper_transcribe": "Transcription",
-            "allow_whisper_transcribe_and_translate": "English Translation",
+            "allow_whisper_transcribe": "语音转文字",
+            "allow_whisper_transcribe_and_translate": "英文翻译",
         }
         help_texts = {
-            "allow_whisper_transcribe": "",
-            "allow_whisper_transcribe_and_translate": "",
+            "allow_whisper_transcribe": "使用本地 Whisper 模型自动生成字幕",
+            "allow_whisper_transcribe_and_translate": "同时生成英文字幕翻译",
         }
 
     def __init__(self, user, *args, **kwargs):
@@ -295,11 +316,11 @@ class WhisperSubtitlesForm(forms.ModelForm):
         )
 
         if not both_readonly:
-            self.helper.layout.append(FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction')))
+            self.helper.layout.append(FormActions(Submit('submit_whisper', '提交', css_class='primaryAction')))
         else:
             # Optional: Add a disabled button with explanatory text
             self.helper.layout.append(
-                FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction', disabled=True), HTML('<small class="text-muted">Cannot submit - both options are already enabled</small>'))
+                FormActions(Submit('submit_whisper', '提交', css_class='primaryAction', disabled=True), HTML('<small class="text-muted">两个选项都已启用，无法重复提交</small>'))
             )
 
     def clean_allow_whisper_transcribe(self):
@@ -321,10 +342,11 @@ class SubtitleForm(forms.ModelForm):
         fields = ["language", "subtitle_file"]
 
         labels = {
-            "subtitle_file": "Upload Caption File",
+            "subtitle_file": "上传字幕文件",
+            "language": "语言",
         }
         help_texts = {
-            "subtitle_file": "SubRip (.srt) and WebVTT (.vtt) are supported file formats.",
+            "subtitle_file": "支持 SubRip (.srt) 和 WebVTT (.vtt) 格式",
         }
 
     def __init__(self, media_item, *args, **kwargs):
@@ -342,7 +364,7 @@ class SubtitleForm(forms.ModelForm):
             CustomField('language'),
         )
 
-        self.helper.layout.append(FormActions(Submit('submit', 'Submit', css_class='primaryAction')))
+        self.helper.layout.append(FormActions(Submit('submit', '提交', css_class='primaryAction')))
 
     def save(self, *args, **kwargs):
         self.instance.user = self.instance.media.user

@@ -88,7 +88,7 @@ class MediaList(APIView):
             is_reviewed = "all"
 
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-        qs = Media.objects.filter()
+        qs = Media.objects.filter().select_related("user").prefetch_related("encodings__profile")
         if state:
             qs = qs.filter(state=state)
         if encoding_status:
@@ -160,7 +160,7 @@ class CommentList(APIView):
 
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
-        qs = Comment.objects.filter()
+        qs = Comment.objects.filter().select_related("user", "media")
         media = qs.order_by(f"{ordering}{sort_by}")
 
         paginator = pagination_class()
