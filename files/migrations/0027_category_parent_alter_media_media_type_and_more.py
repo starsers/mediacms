@@ -22,10 +22,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='media',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['title'], name='media_title_trgm_idx', opclasses=['gin_trgm_ops']),
-        ),
-        migrations.AddIndex(
-            model_name='media',
             index=pgvector.django.indexes.HnswIndex(ef_construction=64, fields=['embedding'], m=16, name='media_embedding_idx', opclasses=['vector_cosine_ops']),
         ),
     ]
